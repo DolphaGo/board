@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "types": [
+            "vite/client", // if using vite
+            "jest"
+        ],
+        "target": "ESNext",
+        "module": "ESNext",
+        "jsx": "preserve",
+        "noEmit": true,
+        "strict": true,
+        "moduleResolution": "node",
+        "baseUrl": "./",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "noUnusedLocals": true,
+        "resolveJsonModule": true,
+        "noImplicitAny": false // for v-pagination-3
+    },
+    "include": [ "src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue" ]
+}
