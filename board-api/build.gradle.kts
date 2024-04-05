@@ -3,7 +3,7 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 val jar: Jar by tasks
 val bootJar: BootJar by tasks
 bootJar.enabled = true
-bootJar.mainClass.set("me.dolphago.BoardApiApplicationKt")
+bootJar.mainClass.set("dev.dolphago.BoardApiApplicationKt")
 bootJar.manifest {
     attributes(
         mapOf(
@@ -16,7 +16,7 @@ bootJar.manifest {
 jar.enabled = true
 
 ext {
-    set("mainClassName", "me.dolphago.BoardApiApplicationKt")
+    set("mainClassName", "dev.dolphago.BoardApiApplicationKt")
 }
 
 apply<JibConfigPlugin>()
@@ -25,6 +25,8 @@ dependencies {
     implementation(project(":board-entity"))
     implementation(project(":board-support"))
 
+    implementation(Dependencies.MYSQL)
+    implementation(Dependencies.H2)
     implementation(Dependencies.API)
     implementation(Dependencies.JPA)
     implementation(Dependencies.FEIGN)
