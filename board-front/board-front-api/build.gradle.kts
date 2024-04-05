@@ -10,7 +10,7 @@ val bootJar: BootJar by tasks
 
 jar.enabled = true
 bootJar.enabled = true
-bootJar.mainClass.set("me.dolphago.BoardFrontApiApplicationKt")
+bootJar.mainClass.set("dev.dolphago.BoardFrontApiApplicationKt")
 bootJar.manifest {
     attributes(
         mapOf(
@@ -23,7 +23,7 @@ bootJar.manifest {
 var frontUiDir = "$rootDir/board-front/board-front-ui"
 
 ext {
-    set("mainClassName", "me.dolphago.BoardFrontApiApplicationKt")
+    set("mainClassName", "dev.dolphago.BoardFrontApiApplicationKt")
 }
 
 dependencies {

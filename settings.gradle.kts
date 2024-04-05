@@ -7,7 +7,7 @@ include("board-front:board-front-api")
 findProject(":board-front:board-front-api")?.name = "board-front-api"
 
 pluginManagement {
-    val kotlinVersion = "1.7.22"
+    val kotlinVersion = "1.9.23"
     val springBootVersion = "3.2.4"
     val springDependencyManagementVersion = "1.1.4"
     val sonarqubeVersion = "3.0"
