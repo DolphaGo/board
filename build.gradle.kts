@@ -35,7 +35,7 @@ allprojects {
         plugin("kover")
     }
 
-    group = "me.dolphago"
+    group = "dev.dolphago"
 
     repositories {
         mavenCentral()
