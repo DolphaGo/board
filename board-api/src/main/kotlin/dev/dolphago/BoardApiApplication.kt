@@ -1,4 +1,4 @@
-package me.dolphago
+package dev.dolphago
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication

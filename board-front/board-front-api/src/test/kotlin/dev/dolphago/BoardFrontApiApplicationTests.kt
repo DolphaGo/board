@@ -1,4 +1,4 @@
-package me.dolphago
+package dev.dolphago
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest

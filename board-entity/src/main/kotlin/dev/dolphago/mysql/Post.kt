@@ -1,4 +1,4 @@
-package me.dolphago.mysql
+package dev.dolphago.mysql
 
 import jakarta.persistence.*
 
