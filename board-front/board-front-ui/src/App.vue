@@ -17,5 +17,4 @@ export default defineComponent({
 </script>
 
 <style>
-@import url('https://knit.navercorp.com/libs/knit/2.0.0/css/knit.min.css');
 </style>
