@@ -20,12 +20,12 @@ object Dependencies {
 
     val MYSQL = listOf(
         "mysql:mysql-connector-java:8.0.32",
-        "com.github.gavlyukovskiy:p6spy-spring-boot-starter:3.9.1"
+        "com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.1"
     )
 
     val H2 = listOf(
         "com.h2database:h2",
-        "com.github.gavlyukovskiy:p6spy-spring-boot-starter:3.9.1"
+        "com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.1"
     )
 
     val REDIS = listOf(
