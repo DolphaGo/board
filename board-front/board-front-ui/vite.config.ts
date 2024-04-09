@@ -10,5 +10,8 @@ export default defineConfig({
       'src': resolve(__dirname, 'src'),
     },
   },
+  server: {
+    port: 3000,
+  },
   plugins: [vue(), analyzer()]
 })
