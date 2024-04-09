@@ -8,9 +8,6 @@ jar.enabled = true
 
 dependencies {
     implementation(project(":board-support"))
-
-    implementation(Dependencies.H2)
     implementation(Dependencies.JPA)
-    implementation(Dependencies.MYSQL)
     kapt(Dependencies.JPA_KAPT)
 }
