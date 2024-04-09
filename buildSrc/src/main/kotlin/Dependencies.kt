@@ -43,7 +43,7 @@ object Dependencies {
         "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.4"
     )
 
-    val LOGGING = "io.github.microutils:kotlin-logging-jvm:2.1.23"
+    val LOGGING = "io.github.microutils:kotlin-logging-jvm:3.0.5"
 
     val TEST = listOf(
         "org.jetbrains.kotlin:kotlin-test",
