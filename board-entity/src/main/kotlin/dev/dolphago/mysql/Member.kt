@@ -19,9 +19,6 @@ data class Member(
     @Column(name = "nickname", nullable = false)
     val nickname: String,
 
-    @Column(name = "age", nullable = false)
-    val age: Int,
-
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
     val role : Authority
