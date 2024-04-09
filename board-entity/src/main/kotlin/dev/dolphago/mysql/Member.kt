@@ -5,19 +5,27 @@ import jakarta.persistence.*
 @Entity
 @Table(name = "member")
 data class Member(
-    @Column(name = "mid", nullable = false)
-    val mid: String,
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    var id: Long? = null,
 
-    @Column(name = "name", nullable = false)
-    val name: String,
+    @Column(name = "username", nullable = false)
+    val username: String,
+
+    @Column(name = "password", nullable = false)
+    val password: String,
+
+    @Column(name = "nickname", nullable = false)
+    val nickname: String,
 
     @Column(name = "age", nullable = false)
     val age: Int,
+
+    @Column(name = "role")
+    @Enumerated(EnumType.STRING)
+    val role : Authority
 ) : EntityListener() {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    var id: Long? = null
 
     @OneToMany(mappedBy = "member")
     val posts: List<Post> = listOf()
