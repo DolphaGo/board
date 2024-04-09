@@ -8,16 +8,16 @@ jar.enabled = false
 bootJar.enabled = false
 
 plugins {
-    id("org.springframework.boot")
-    id("io.spring.dependency-management")
-    id("org.sonarqube")
-    id("com.google.cloud.tools.jib")
-    id("org.jlleitschuh.gradle.ktlint")
-    id("org.jetbrains.kotlinx.kover")
-    kotlin("plugin.spring")
-    kotlin("plugin.jpa")
-    kotlin("jvm")
-    kotlin("kapt")
+    id("org.springframework.boot") version Versions.springBootVersion
+    id("io.spring.dependency-management") version Versions.springDependencyManagementVersion
+    id("org.sonarqube") version Versions.sonarqubeVersion
+    id("com.google.cloud.tools.jib") version Versions.jibVersion apply false
+    id("org.jlleitschuh.gradle.ktlint") version Versions.ktlintVersion
+    id("org.jetbrains.kotlinx.kover") version Versions.koverVersion
+    kotlin("plugin.spring") version Versions.kotlinVersion
+    kotlin("plugin.jpa") version Versions.kotlinVersion
+    kotlin("jvm") version Versions.kotlinVersion
+    kotlin("kapt") version Versions.kotlinVersion
 }
 
 allprojects {
