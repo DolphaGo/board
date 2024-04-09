@@ -19,6 +19,12 @@ data class Member(
     @Column(name = "nickname", nullable = false)
     val nickname: String,
 
+    @Column(name = "email", nullable = false)
+    val email: String,
+
+    @Column(name = "phone_number")
+    val phoneNumber: String,
+
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
     val role : Authority
