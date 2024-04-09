@@ -11,7 +11,6 @@ plugins {
     id("org.springframework.boot") version Versions.springBootVersion
     id("io.spring.dependency-management") version Versions.springDependencyManagementVersion
     id("org.sonarqube") version Versions.sonarqubeVersion
-    id("com.google.cloud.tools.jib") version Versions.jibVersion apply false
     id("org.jlleitschuh.gradle.ktlint") version Versions.ktlintVersion
     id("org.jetbrains.kotlinx.kover") version Versions.koverVersion
     kotlin("plugin.spring") version Versions.kotlinVersion

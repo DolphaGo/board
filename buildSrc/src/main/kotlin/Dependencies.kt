@@ -35,8 +35,8 @@ object Dependencies {
     )
 
     val FEIGN = listOf(
-        "org.springframework.cloud:spring-cloud-starter-openfeign:${Versions.springCloudVersion}",
-        "io.github.openfeign:feign-okhttp:10.10.1"
+        "org.springframework.cloud:spring-cloud-starter-openfeign",
+        "io.github.openfeign:feign-okhttp"
     )
 
     val JACKSON = listOf(
