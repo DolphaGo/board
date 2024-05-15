@@ -48,7 +48,7 @@ tasks.processResources {
     dependsOn(buildFrontend)
 }
 
-val buildFrontend by tasks.register<PnpmTask>("buildPnpm") {
-    dependsOn(tasks.pnpmInstall)
+val buildFrontend by tasks.registering(PnpmTask::class) {
+    dependsOn("pnpmInstall")
     args.set(listOf("run", "build"))
 }
