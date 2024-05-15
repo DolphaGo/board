@@ -3,6 +3,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.provideDelegate
+import java.util.*
 
 class JibConfigPlugin : Plugin<Project> {
     override fun apply(project: Project) {
@@ -14,7 +15,7 @@ class JibConfigPlugin : Plugin<Project> {
                 val imageVersion: String? by project
 
                 // 이미지 이름 설정
-                val imageName = "ghcr.io/$githubUsername/${project.rootProject.name}${project.path.replace(":", "/").toLowerCase()}"
+                val imageName = "ghcr.io/$githubUsername/${project.rootProject.name}${project.path.replace(":", "/").lowercase(Locale.getDefault())}"
 
                 println("======================== jib ========================")
                 println("projectName : ${project.name}")
