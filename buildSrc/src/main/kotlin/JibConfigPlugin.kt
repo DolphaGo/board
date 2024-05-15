@@ -3,34 +3,22 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.provideDelegate
-import java.util.*
 
 class JibConfigPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.pluginManager.withPlugin("com.google.cloud.tools.jib") {
             project.extensions.configure<JibExtension> {
-                val githubUsername = "DolphaGo"
-                val githubToken = "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"
                 val mainClassName: String by project
-                val imageVersion: String? by project
 
-                // 이미지 이름 설정
-                val imageName = "ghcr.io/$githubUsername/${project.rootProject.name}${project.path.replace(":", "/").lowercase(Locale.getDefault())}"
-
-                println("======================== jib ========================")
-                println("projectName : ${project.name}")
-                println("imageName : $imageName")
-                println("imageVersion : $imageVersion")
-                println("=====================================================")
-
-                from.image = "openjdk:17-jre-slim"  // 베이스 이미지를 OpenJDK 17로 설정
+                from.image = System.getenv("FROM_IMAGE")
                 to {
-                    image = "$imageName:$imageVersion"
+                    image = System.getenv("TO_IMAGE")
                     auth {
-                        username = githubUsername
-                        password = githubToken
+                        username = System.getenv("GHCR_USERNAME")
+                        password = System.getenv("GHCR_PASSWORD")
                     }
                 }
+
                 container {
                     environment = mapOf("MAIN_CLASS" to mainClassName)
                     creationTime.set("USE_CURRENT_TIMESTAMP")

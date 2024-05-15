@@ -17,7 +17,6 @@ jar.enabled = true
 
 ext {
     set("mainClassName", "dev.dolphago.BoardApiApplicationKt")
-    set("imageVersion", "latest")
 }
 
 apply<JibConfigPlugin>()

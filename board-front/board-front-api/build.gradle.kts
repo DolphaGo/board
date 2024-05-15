@@ -24,7 +24,6 @@ var frontUiDir = "$rootDir/board-front/board-front-ui"
 
 ext {
     set("mainClassName", "dev.dolphago.BoardFrontApiApplicationKt")
-    set("imageVersion", "latest")
 }
 
 dependencies {
