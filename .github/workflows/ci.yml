@@ -22,10 +22,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Prepare Image Name
+        id: prep
+        run: |
+          IMAGE_NAME="${{ matrix.module }}".replace('/', '-').toLowerCase()
+          echo "::set-output name=image_name::$IMAGE_NAME"
+
       - name: Build and Push Image using Jib
         run: ./gradlew :${{ matrix.module }}:jib
         env:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GHCR_TOKEN }}
           FROM_IMAGE: ubuntu-24.04
-          TO_IMAGE: ghcr.io/dolphago/${{ matrix.module }}:latest
+          TO_IMAGE: ghcr.io/dolphago/${{ steps.prep.outputs.image_name }}:latest
