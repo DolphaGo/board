@@ -8,24 +8,26 @@ class JibConfigPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.pluginManager.withPlugin("com.google.cloud.tools.jib") {
             project.extensions.configure<JibExtension> {
-                val imageName: String by lazy {
-                    project.rootProject.name + project.path.replace(":", "/").toLowerCase()
-                }
-                val imageVersion: String? by project
+                val githubUsername = "DolphaGo"
+                val githubToken = "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"
                 val mainClassName: String by project
+                val imageVersion: String? by project
+
+                // 이미지 이름 설정
+                val imageName = "ghcr.io/$githubUsername/${project.rootProject.name}${project.path.replace(":", "/").toLowerCase()}"
 
                 println("======================== jib ========================")
                 println("projectName : ${project.name}")
                 println("imageName : $imageName")
-                println("imageVersion : ${imageVersion ?: "local"}")
+                println("imageVersion : $imageVersion")
                 println("=====================================================")
 
-                from.image = "{{fromImage}}"
+                from.image = "openjdk:17-jre-slim"  // 베이스 이미지를 OpenJDK 17로 설정
                 to {
-                    image = "{{toImage}}"
+                    image = "$imageName:$imageVersion"
                     auth {
-                        username = "{{userName}}"
-                        password = "{{password}}"
+                        username = githubUsername
+                        password = githubToken
                     }
                 }
                 container {
