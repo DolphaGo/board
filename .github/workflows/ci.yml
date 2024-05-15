@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: ['board-api', 'board-front-api']
 
     steps:
       - uses: actions/checkout@v2
@@ -19,16 +22,10 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-
-      - name: Build with Gradle
-        run: ./gradlew build
-
-      - name: Build and Push Docker image
-        run: ./gradlew jib --image=ghcr.io/DolphaGo/board:latest
+      - name: Build and Push Image using Jib
+        run: ./gradlew :${{ matrix.module }}:jib
         env:
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GHCR_TOKEN }}
           FROM_IMAGE: openjdk:17-jre-slim
-          TO_IMAGE: ghcr.io/${{ github.repository_owner }}/board:latest
+          TO_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ matrix.module }}:latest
