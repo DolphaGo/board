@@ -10,11 +10,11 @@ class JibConfigPlugin : Plugin<Project> {
             project.extensions.configure<JibExtension> {
                 val mainClassName: String by project
 
-//                from.image = System.getenv("FROM_IMAGE")
+                from.image = System.getenv("FROM_IMAGE")
                 to {
                     image = System.getenv("TO_IMAGE")
                     auth {
-                        username = System.getenv("GHCR_USERNAME")
+                        username = "DolphaGo"
                         password = System.getenv("GHCR_PASSWORD")
                     }
                 }
