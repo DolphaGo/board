@@ -12,7 +12,7 @@ import java.time.LocalDateTime
 @EntityListeners(AuditingEntityListener::class)
 abstract class EntityListener {
     @CreatedDate
-    @Column(name = "create_date", nullable = false)
+    @Column(name = "create_date", nullable = false, updatable = false)
     var createDate: LocalDateTime = LocalDateTime.MIN
         private set
 
