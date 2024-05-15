@@ -14,18 +14,18 @@ jobs:
         module: ['board-api', 'board-front:board-front-api']
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'adopt'
+          distribution: 'temurin'
 
       - name: Build and Push Image using Jib
         run: ./gradlew :${{ matrix.module }}:jib
         env:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GHCR_TOKEN }}
-          FROM_IMAGE: openjdk:17-jre-slim
+          FROM_IMAGE: ubuntu-24.04
           TO_IMAGE: ghcr.io/dolphago/${{ matrix.module }}:latest
