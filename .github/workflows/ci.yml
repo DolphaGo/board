@@ -31,5 +31,5 @@ jobs:
         env:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GHCR_TOKEN }}
-          FROM_IMAGE: ubuntu-24.04
+          FROM_IMAGE: khipu/openjdk17-alpine:latest
           TO_IMAGE: ghcr.io/dolphago/${{ matrix.imageName }}:latest
