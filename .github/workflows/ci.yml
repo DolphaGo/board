@@ -21,11 +21,11 @@ jobs:
         with:
           java-version: '17'
           distribution: 'adopt'
-
       - name: Build and Push Image using Jib
-        run: ./gradlew :${{ matrix.module }}:jib
+        run: |
+          REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          ./gradlew :${{ matrix.module }}:jib -Pjib.to.image=ghcr.io/$REPO_OWNER/${{ matrix.module }}:latest
         env:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GHCR_TOKEN }}
           FROM_IMAGE: openjdk:17-jre-slim
-          TO_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ matrix.module }}:latest
