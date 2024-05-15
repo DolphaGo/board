@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        module: ['board-api', 'board-front:board-front-api']
+        module: ['board-api', 'board-front/board-front-api']
 
     steps:
       - uses: actions/checkout@v4
