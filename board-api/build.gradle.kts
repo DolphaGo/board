@@ -33,3 +33,5 @@ dependencies {
     implementation(Dependencies.REDIS)
     kapt(Dependencies.JPA_KAPT)
 }
+
+// https://kauth.kakao.com/oauth/authorize?response_type=code&client_id={여기에 REST API KEY를 입력해주세요}&redirect_uri=http://localhost:8080/callback
