@@ -18,10 +18,7 @@ class KakaoController(
     val log = KotlinLogging.logger { }
 
     @GetMapping("/login")
-    fun login(response: HttpServletResponse) {
-        val redirectUrl = kakaoService.login()
-        response.sendRedirect(redirectUrl.toString())
-    }
+    fun login(response: HttpServletResponse) = response.sendRedirect(kakaoService.createRedirectURI().toString())
 
     @GetMapping("/oauth/callback")
     fun redirectLogin(

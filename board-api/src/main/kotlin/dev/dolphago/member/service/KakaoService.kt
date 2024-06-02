@@ -14,7 +14,7 @@ class KakaoService(
     val kakaoConfig: KakaoConfig
 ) {
     companion object {
-        val GRANT_TYPE = "authorization_code"
+        const val GRANT_TYPE = "authorization_code"
     }
 
     private val log = KotlinLogging.logger {}
@@ -50,8 +50,7 @@ class KakaoService(
         }
     }
 
-    // https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=35ce5a67d57b9e0c9f82b04882655b56&redirect_uri=http://localhost:8080/kakao/oauth/callback
-    fun login(): URI = URI.create(
+    fun createRedirectURI(): URI = URI.create(
         "${kakaoConfig.authUrl}?response_type=code&client_id=${kakaoConfig.restApiKey}&redirect_uri=${kakaoConfig.redirectUrl}"
     )
 }
