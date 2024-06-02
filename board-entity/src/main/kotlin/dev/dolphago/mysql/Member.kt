@@ -18,20 +18,14 @@ data class Member(
     @Column(name = "id")
     var id: Long? = null,
 
-    @Column(name = "username", nullable = false)
-    val username: String,
-
-    @Column(name = "password", nullable = false)
-    val password: String,
+    @Column(name = "email", nullable = false)
+    val email: String,
 
     @Column(name = "nickname", nullable = false)
     val nickname: String,
 
-    @Column(name = "email", nullable = false)
-    val email: String,
-
-    @Column(name = "phone_number")
-    val phoneNumber: String,
+    @Column(name = "phone_number", nullable = true)
+    val phoneNumber: String? = null,
 
     @Column(name = "role")
     @Enumerated(EnumType.STRING)

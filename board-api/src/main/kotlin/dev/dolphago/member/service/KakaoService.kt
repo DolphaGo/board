@@ -4,14 +4,21 @@ import dev.dolphago.member.client.KakaoClient
 import dev.dolphago.member.config.KakaoConfig
 import dev.dolphago.member.dto.KakaoAccount
 import dev.dolphago.member.dto.KakaoToken
+import dev.dolphago.member.repository.MemberRepository
+import dev.dolphago.mysql.Authority
+import dev.dolphago.mysql.Member
+import jakarta.transaction.Transactional
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import java.net.URI
+import java.util.*
 
 @Service
 class KakaoService(
     val client: KakaoClient,
-    val kakaoConfig: KakaoConfig
+    val kakaoConfig: KakaoConfig,
+    val memberRepository: MemberRepository,
+    val nicknameService: NicknameService
 ) {
     companion object {
         const val GRANT_TYPE = "authorization_code"
@@ -19,33 +26,43 @@ class KakaoService(
 
     private val log = KotlinLogging.logger {}
 
-    fun getKakaoAccount(code: String): KakaoAccount? {
+    fun getKakaoAccount(code: String): String {
         val token = getToken(code)
         log.info { "token = $token" }
-        try {
-            return client.getInfo(
-                URI(kakaoConfig.userApiUrl),
-                token.tokenType + " " + token.accessToken
-            ).kakaoAccount
-        } catch (e: Exception) {
-            log.error { "something error.. $e" }
-            return null
+        val kakaoAccount = client.getInfo(
+            URI(kakaoConfig.userApiUrl),
+            token.tokenType + " " + token.accessToken
+        ).kakaoAccount
+
+        val email = kakaoAccount.email
+
+        val member = memberRepository.findByEmail(email)
+        if (member == null) {
+            val newMember = Member(
+                email = email,
+                nickname = nicknameService.getRandomNickname(),
+                role = Authority.ROLE_USER
+            )
+
+            memberRepository.save(newMember)
+
+            return newMember.nickname
         }
+
+        return member.nickname
     }
 
     private fun getToken(code: String): KakaoToken {
         try {
-            val token = client.getToken(
+            return client.getToken(
                 URI(kakaoConfig.tokenUrl),
                 GRANT_TYPE,
                 kakaoConfig.restApiKey,
                 kakaoConfig.redirectUrl,
                 code
             )
-
-            return token
         } catch (e: Exception) {
-            log.error { "Something error when getting token.. $e" }
+            log.error { "Something error when getting kakao token.. $e" }
             return KakaoToken.fail()
         }
     }

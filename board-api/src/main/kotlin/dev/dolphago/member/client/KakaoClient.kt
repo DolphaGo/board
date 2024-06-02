@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestParam
 import java.net.URI
 
-
 @FeignClient(name = "kakaoClient", configuration = [KakaoFeignConfiguration::class])
 interface KakaoClient {
     @PostMapping

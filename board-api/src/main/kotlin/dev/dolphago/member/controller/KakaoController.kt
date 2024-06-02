@@ -23,8 +23,9 @@ class KakaoController(
     @GetMapping("/oauth/callback")
     fun redirectLogin(
         @RequestParam("code") code: String,
-    ): KakaoAccount? {
+    ): String {
         log.info { "code => $code" }
-        return kakaoService.getKakaoAccount(code)
+        val nickname = kakaoService.getKakaoAccount(code)
+        return "$nickname 님 안녕하세요."
     }
 }
