@@ -2,6 +2,7 @@ package dev.dolphago.member.controller
 
 import dev.dolphago.member.dto.KakaoAccount
 import dev.dolphago.member.service.KakaoService
+import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -17,7 +18,10 @@ class KakaoController(
     val log = KotlinLogging.logger { }
 
     @GetMapping("/login")
-    fun login() : String = kakaoService.login()
+    fun login(response: HttpServletResponse) {
+        val redirectUrl = kakaoService.login()
+        response.sendRedirect(redirectUrl.toString())
+    }
 
     @GetMapping("/oauth/callback")
     fun redirectLogin(
