@@ -2,16 +2,13 @@ package dev.dolphago.member.service
 
 import dev.dolphago.member.client.KakaoClient
 import dev.dolphago.member.config.KakaoConfig
-import dev.dolphago.member.dto.KakaoAccount
 import dev.dolphago.member.dto.KakaoToken
 import dev.dolphago.member.repository.MemberRepository
 import dev.dolphago.mysql.Authority
 import dev.dolphago.mysql.Member
-import jakarta.transaction.Transactional
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import java.net.URI
-import java.util.*
 
 @Service
 class KakaoService(
@@ -35,21 +32,19 @@ class KakaoService(
         ).kakaoAccount
 
         val email = kakaoAccount.email
-
-        val member = memberRepository.findByEmail(email)
-        if (member == null) {
-            val newMember = Member(
-                email = email,
-                nickname = nicknameService.getRandomNickname(),
-                role = Authority.ROLE_USER
-            )
-
-            memberRepository.save(newMember)
-
-            return newMember.nickname
+        return memberRepository.findByEmail(email)?.nickname ?: run {
+            return saveNewMember(email).nickname
         }
+    }
 
-        return member.nickname
+    private fun saveNewMember(email: String): Member {
+        val newMember = Member(
+            email = email,
+            nickname = nicknameService.getRandomNickname(),
+            role = Authority.ROLE_USER
+        )
+
+        return memberRepository.save(newMember)
     }
 
     private fun getToken(code: String): KakaoToken {

@@ -1,7 +1,7 @@
 object Versions {
-    const val springBootVersion = "3.2.5"
-    const val springDependencyManagementVersion = "1.1.4"
-    const val springCloudDependenciesVersion = "2023.0.1"
+    const val springBootVersion = "3.3.4"
+    const val springDependencyManagementVersion = "1.1.6"
+    const val springCloudDependenciesVersion = "2023.0.3"
     const val springDocVersion = "2.5.0"
     const val querydslVersion = "5.0.0"
     const val kotlinVersion = "1.9.22"
