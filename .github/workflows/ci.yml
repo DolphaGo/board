@@ -23,7 +23,7 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Build and Push Image using Jib
@@ -31,5 +31,5 @@ jobs:
         env:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GHCR_TOKEN }}
-          FROM_IMAGE: khipu/openjdk17-alpine:latest
+          FROM_IMAGE: khipu/openjdk21-alpine:latest
           TO_IMAGE: ghcr.io/dolphago/${{ matrix.imageName }}:latest
