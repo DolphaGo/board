@@ -1,3 +1,24 @@
 spring:
   profiles:
     include: db
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            loggerLevel: full
+            connectTimeout: 600000
+            readTimeout: 600000
+
+logging:
+  level:
+    feignClient: debug
+  group:
+    feignClient: dev.dolphago.member.client
+
+kakao:
+  rest-api-key: 35ce5a67d57b9e0c9f82b04882655b56
+  redirect-url: http://localhost:8080/kakao/oauth/callback
+  user-api-url: https://kapi.kakao.com/v2/user/me
+  auth-url: https://kauth.kakao.com/oauth/authorize
+  token-url: https://kauth.kakao.com/oauth/token

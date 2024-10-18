@@ -8,26 +8,17 @@ class JibConfigPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.pluginManager.withPlugin("com.google.cloud.tools.jib") {
             project.extensions.configure<JibExtension> {
-                val imageName: String by lazy {
-                    project.rootProject.name + project.path.replace(":", "/").toLowerCase()
-                }
-                val imageVersion: String? by project
                 val mainClassName: String by project
 
-                println("======================== jib ========================")
-                println("projectName : ${project.name}")
-                println("imageName : $imageName")
-                println("imageVersion : ${imageVersion ?: "local"}")
-                println("=====================================================")
-
-                from.image = "{{fromImage}}"
+                from.image = System.getenv("FROM_IMAGE")
                 to {
-                    image = "{{toImage}}"
+                    image = System.getenv("TO_IMAGE")
                     auth {
-                        username = "{{userName}}"
-                        password = "{{password}}"
+                        username = "DolphaGo"
+                        password = System.getenv("GHCR_PASSWORD")
                     }
                 }
+
                 container {
                     environment = mapOf("MAIN_CLASS" to mainClassName)
                     creationTime.set("USE_CURRENT_TIMESTAMP")

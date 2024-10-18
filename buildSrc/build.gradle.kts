@@ -17,10 +17,10 @@ java {
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 }
 
 dependencies {
-    implementation("com.google.cloud.tools:jib-gradle-plugin:3.3.1")
+    implementation("com.google.cloud.tools:jib-gradle-plugin:3.4.3")
 }

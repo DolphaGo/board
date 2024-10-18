@@ -1,8 +1,8 @@
-import com.github.gradle.node.npm.task.NpxTask
+import com.github.gradle.node.pnpm.task.PnpmTask
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
-    id("com.github.node-gradle.node") version "3.3.0"
+    id("com.github.node-gradle.node") version "7.0.2"
 }
 
 val jar: Jar by tasks
@@ -34,22 +34,10 @@ dependencies {
 
 apply<JibConfigPlugin>()
 
-tasks.npmSetup {
-    doFirst {
-        // doSomething
-    }
-}
-
 node {
-    version.set("16.14.2")
+    version.set("21.7.3")
     nodeProjectDir.set(file(frontUiDir))
     download.set(true)
-}
-
-tasks.npmInstall {
-    nodeModulesOutputFilter {
-        exclude("notExistingFile")
-    }
 }
 
 tasks.processResources {
@@ -59,8 +47,7 @@ tasks.processResources {
     dependsOn(buildFrontend)
 }
 
-val buildFrontend by tasks.registering(NpxTask::class) {
-    dependsOn(tasks.npmInstall)
-    command.set("npm")
+val buildFrontend by tasks.registering(PnpmTask::class) {
+    dependsOn("pnpmInstall")
     args.set(listOf("run", "build"))
 }

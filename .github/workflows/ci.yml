@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - module: 'board-api'
+            imageName: 'board-api'
+          - module: 'board-front:board-front-api'
+            imageName: 'board-front-board-front-api'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build and Push Image using Jib
+        run: ./gradlew :${{ matrix.module }}:jib
+        env:
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_PASSWORD: ${{ secrets.GHCR_TOKEN }}
+          FROM_IMAGE: khipu/openjdk21-alpine:latest
+          TO_IMAGE: ghcr.io/dolphago/${{ matrix.imageName }}:latest

@@ -8,16 +8,15 @@ jar.enabled = false
 bootJar.enabled = false
 
 plugins {
-    id("org.springframework.boot")
-    id("io.spring.dependency-management")
-    id("org.sonarqube")
-    id("com.google.cloud.tools.jib")
-    id("org.jlleitschuh.gradle.ktlint")
-    id("org.jetbrains.kotlinx.kover")
-    kotlin("plugin.spring")
-    kotlin("plugin.jpa")
-    kotlin("jvm")
-    kotlin("kapt")
+    id("org.springframework.boot") version Versions.springBootVersion
+    id("io.spring.dependency-management") version Versions.springDependencyManagementVersion
+    id("org.sonarqube") version Versions.sonarqubeVersion
+    id("org.jlleitschuh.gradle.ktlint") version Versions.ktlintVersion
+    id("org.jetbrains.kotlinx.kover") version Versions.koverVersion
+    kotlin("plugin.spring") version Versions.kotlinVersion
+    kotlin("plugin.jpa") version Versions.kotlinVersion
+    kotlin("jvm") version Versions.kotlinVersion
+    kotlin("kapt") version Versions.kotlinVersion
 }
 
 allprojects {
@@ -31,8 +30,8 @@ allprojects {
         plugin("com.google.cloud.tools.jib")
         plugin("org.springframework.boot")
         plugin("io.spring.dependency-management")
+        plugin("org.jetbrains.kotlinx.kover")
         plugin("org.sonarqube")
-        plugin("kover")
     }
 
     group = "dev.dolphago"
@@ -48,51 +47,78 @@ allprojects {
     tasks.withType<Test> {
         useJUnitPlatform()
         maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).takeIf { it > 0 } ?: 1
-        finalizedBy("koverMergedVerify")
+        finalizedBy("koverVerify")
     }
 
-    koverMerged {
-        enable()
-        filters {
-            classes {
-                excludes += listOf("*.*Config*", "*.*Application*", "*.configuration.*")
-            }
-        }
-
-        verify {
-            enable()
-            onCheck.set(true)
-            rule {
-                isEnabled = true
-                target = kotlinx.kover.api.VerificationTarget.ALL
-
-                overrideClassFilter {
-                    excludes += listOf("*.*Config*", "*.*Application*", "*.configuration.*")
+    koverReport {
+        defaults {
+            filters {
+                excludes {
+                    classes("*.*Config*", "*.*Application*")
+                    packages("*.configuration.*")
+                    annotatedBy("*Generated*")
                 }
+            }
 
-                bound {
-                    minValue = 0
-                    counter = kotlinx.kover.api.CounterType.LINE
-                    valueType = kotlinx.kover.api.VerificationValueType.COVERED_PERCENTAGE
+            xml {
+                onCheck = true
+                filters {
+                    excludes {
+                        classes("*.*Config*", "*.*Application*")
+                        packages("*.configuration.*")
+                        annotatedBy("*Generated*")
+                    }
+                }
+            }
+
+            verify {
+                onCheck = true
+                rule {
+                    isEnabled = true
+                    entity = kotlinx.kover.gradle.plugin.dsl.GroupingEntityType.APPLICATION
+                    filters {
+                        excludes {
+                            classes("*.*Config*", "*.*Application*")
+                            packages("*.configuration.*")
+                            annotatedBy("*Generated*")
+                        }
+                    }
+
+                    bound {
+                        minValue = 0
+                        metric = kotlinx.kover.gradle.plugin.dsl.MetricType.LINE
+                        aggregation = kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
+                    }
                 }
             }
         }
     }
 
     sonarqube.properties {
-        property("sonar.coverage.jacoco.xmlReportPaths", "$buildDir/reports/kover/merged/xml/report.xml")
+        property("sonar.coverage.jacoco.xmlReportPaths", "${project.layout.buildDirectory}/reports/kover/report.xml")
+        property("sonar.gradle.skipCompile", "true")
+    }
+
+    tasks.withType<JavaCompile>() {
+        options.compilerArgs.add("-parameters")
     }
 
     tasks.withType<KotlinCompile> {
         kotlinOptions {
             freeCompilerArgs = listOf("-Xjsr305=strict")
-            jvmTarget = "17"
+            jvmTarget = "21"
         }
     }
 
     java {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom("org.springframework.cloud:spring-cloud-dependencies:${Versions.springCloudDependenciesVersion}")
+        }
     }
 
     dependencies {

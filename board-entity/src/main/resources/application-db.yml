@@ -5,8 +5,7 @@ spring:
     password:
   jpa:
     hibernate:
-      ddl-auto: create-drop
-
+      ddl-auto: update
 ---
 
 spring:
@@ -19,4 +18,4 @@ spring:
     password:
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
