@@ -1,13 +1,15 @@
 import {createRouter, createWebHashHistory, RouteParams} from 'vue-router'
-import BoardList from './components/BoardList.vue'
+import Homepage from './components/Homepage.vue'
 import PostDetail from './components/PostDetail.vue'
+import PostEditor from "./components/PostEditor.vue";
 
 export type AppRouteNames = ''
 
 export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: '/', component: BoardList },
+    { path: '/', component: Homepage },
+    { path: '/post/edit', component: PostEditor },
     { path: '/post/:id', component: PostDetail }
   ],
 })
