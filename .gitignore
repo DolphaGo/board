@@ -6,6 +6,7 @@ uploads/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+**/application-local-secrets.yml
 
 ### STS ###
 .apt_generated

@@ -14,3 +14,11 @@ cloud:
 spring:
   autoconfigure:
     exclude: io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration
+
+
+---
+
+spring:
+  profiles:
+    active: local
+    include: "local-secrets"

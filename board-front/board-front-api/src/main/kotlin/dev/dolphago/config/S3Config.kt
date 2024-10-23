@@ -1,6 +1,5 @@
 package dev.dolphago.config
 
-import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -21,12 +20,6 @@ class S3Config {
 
     @Value("\${cloud.aws.region.static}")
     private var region: String? = null
-
-    @PostConstruct
-    fun init() {
-        println("############################## Access Key ID: $accessKey")
-        println("############################## Secret Access Key: $secretKey")
-    }
 
     @Bean
     fun amazonS3Client(): S3Client {
