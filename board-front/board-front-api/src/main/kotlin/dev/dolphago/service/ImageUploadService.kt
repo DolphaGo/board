@@ -16,7 +16,7 @@ class ImageUploadService(
 
     fun upload(file: MultipartFile): String {
         val randomId = DolphaGoUtils.generateNanoId()
-        val fileName = "$randomId-${file.originalFilename}"
+        val fileName = "$DIRECTORY/$randomId-${file.originalFilename}"
         val putObjectRequest = PutObjectRequest.builder()
             .bucket(awsProperties.s3.bucket)
             .key(fileName)
@@ -24,5 +24,9 @@ class ImageUploadService(
 
         s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.bytes))
         return "https://${awsProperties.s3.bucket}.s3.ap-northeast-2.amazonaws.com/$fileName"
+    }
+
+    companion object {
+        private const val DIRECTORY = "board"
     }
 }
