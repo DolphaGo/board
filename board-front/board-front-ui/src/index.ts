@@ -2,7 +2,7 @@ import {CONFIG} from './config'
 import axios, {AxiosResponseHeaders} from 'axios'
 
 export const request = axios.create({
-  baseURL: `${CONFIG.VITE_FRONT_API_URL || ''}/api/v1`,
+  baseURL: `${CONFIG.VITE_FRONT_API_URL || ''}/api`,
   headers: {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',

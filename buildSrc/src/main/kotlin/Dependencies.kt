@@ -50,4 +50,9 @@ object Dependencies {
         "io.mockk:mockk:1.12.3",
         "org.springframework.boot:spring-boot-starter-test"
     )
+
+    val COROUTINE = listOf(
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutineVersion}",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-reactor:${Versions.coroutineVersion}"
+    )
 }

@@ -8,4 +8,5 @@ jar.enabled = true
 
 dependencies {
     implementation(Dependencies.FEIGN)
+    implementation("com.aventrix.jnanoid:jnanoid:2.0.0")
 }

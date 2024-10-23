@@ -30,6 +30,8 @@ dependencies {
     implementation(project(":board-support"))
     implementation(Dependencies.API)
     implementation(Dependencies.FEIGN)
+    implementation(platform("io.awspring.cloud:spring-cloud-aws-dependencies:${Versions.springCloudAwsVersion}"))
+    implementation("io.awspring.cloud:spring-cloud-aws-starter-s3")
 }
 
 apply<JibConfigPlugin>()

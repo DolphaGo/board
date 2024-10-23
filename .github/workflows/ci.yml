@@ -27,9 +27,12 @@ jobs:
           distribution: 'temurin'
 
       - name: Build and Push Image using Jib
-        run: ./gradlew :${{ matrix.module }}:jib
         env:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GHCR_TOKEN }}
           FROM_IMAGE: khipu/openjdk21-alpine:latest
           TO_IMAGE: ghcr.io/dolphago/${{ matrix.imageName }}:latest
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+        run: ./gradlew :${{ matrix.module }}:jib
