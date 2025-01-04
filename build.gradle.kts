@@ -1,4 +1,5 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 val jar: Jar by tasks
@@ -12,7 +13,6 @@ plugins {
     id("io.spring.dependency-management") version Versions.springDependencyManagementVersion
     id("org.sonarqube") version Versions.sonarqubeVersion
     id("org.jlleitschuh.gradle.ktlint") version Versions.ktlintVersion
-    id("org.jetbrains.kotlinx.kover") version Versions.koverVersion
     kotlin("plugin.spring") version Versions.kotlinVersion
     kotlin("plugin.jpa") version Versions.kotlinVersion
     kotlin("jvm") version Versions.kotlinVersion
@@ -30,7 +30,6 @@ allprojects {
         plugin("com.google.cloud.tools.jib")
         plugin("org.springframework.boot")
         plugin("io.spring.dependency-management")
-        plugin("org.jetbrains.kotlinx.kover")
         plugin("org.sonarqube")
     }
 
@@ -50,50 +49,6 @@ allprojects {
         finalizedBy("koverVerify")
     }
 
-    koverReport {
-        defaults {
-            filters {
-                excludes {
-                    classes("*.*Config*", "*.*Application*")
-                    packages("*.configuration.*")
-                    annotatedBy("*Generated*")
-                }
-            }
-
-            xml {
-                onCheck = true
-                filters {
-                    excludes {
-                        classes("*.*Config*", "*.*Application*")
-                        packages("*.configuration.*")
-                        annotatedBy("*Generated*")
-                    }
-                }
-            }
-
-            verify {
-                onCheck = true
-                rule {
-                    isEnabled = true
-                    entity = kotlinx.kover.gradle.plugin.dsl.GroupingEntityType.APPLICATION
-                    filters {
-                        excludes {
-                            classes("*.*Config*", "*.*Application*")
-                            packages("*.configuration.*")
-                            annotatedBy("*Generated*")
-                        }
-                    }
-
-                    bound {
-                        minValue = 0
-                        metric = kotlinx.kover.gradle.plugin.dsl.MetricType.LINE
-                        aggregation = kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
-                    }
-                }
-            }
-        }
-    }
-
     sonarqube.properties {
         property("sonar.coverage.jacoco.xmlReportPaths", "${project.layout.buildDirectory}/reports/kover/report.xml")
         property("sonar.gradle.skipCompile", "true")
@@ -103,10 +58,13 @@ allprojects {
         options.compilerArgs.add("-parameters")
     }
 
-    tasks.withType<KotlinCompile> {
-        kotlinOptions {
-            freeCompilerArgs = listOf("-Xjsr305=strict")
-            jvmTarget = "21"
+    kotlin{
+        target {
+            @OptIn(ExperimentalKotlinGradlePluginApi::class)
+            compilerOptions {
+                freeCompilerArgs = listOf("-Xjsr305=strict")
+                jvmTarget = JvmTarget.JVM_21
+            }
         }
     }
 
