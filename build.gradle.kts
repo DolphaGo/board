@@ -50,7 +50,7 @@ allprojects {
     }
 
     sonarqube.properties {
-        property("sonar.coverage.jacoco.xmlReportPaths", "${project.layout.buildDirectory}/reports/kover/report.xml")
+        property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/kover/report.xml")
         property("sonar.gradle.skipCompile", "true")
     }
 
