@@ -31,6 +31,7 @@ dependencies {
     implementation(Dependencies.JPA)
     implementation(Dependencies.FEIGN)
     implementation(Dependencies.REDIS)
+    implementation(Dependencies.COROUTINE)
     kapt(Dependencies.JPA_KAPT)
 }
 
