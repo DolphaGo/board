@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
@@ -13,6 +12,7 @@ plugins {
     id("io.spring.dependency-management") version Versions.springDependencyManagementVersion
     id("org.sonarqube") version Versions.sonarqubeVersion
     id("org.jlleitschuh.gradle.ktlint") version Versions.ktlintVersion
+    id("org.jetbrains.kotlinx.kover") version Versions.koverVersion
     kotlin("plugin.spring") version Versions.kotlinVersion
     kotlin("plugin.jpa") version Versions.kotlinVersion
     kotlin("jvm") version Versions.kotlinVersion
@@ -31,6 +31,7 @@ allprojects {
         plugin("org.springframework.boot")
         plugin("io.spring.dependency-management")
         plugin("org.sonarqube")
+        plugin("org.jetbrains.kotlinx.kover")
     }
 
     group = "dev.dolphago"
@@ -60,7 +61,6 @@ allprojects {
 
     kotlin{
         target {
-            @OptIn(ExperimentalKotlinGradlePluginApi::class)
             compilerOptions {
                 freeCompilerArgs = listOf("-Xjsr305=strict")
                 jvmTarget = JvmTarget.JVM_21
@@ -84,5 +84,49 @@ allprojects {
         implementation(Dependencies.LOGGING)
         testImplementation(Dependencies.TEST)
         kapt("org.springframework.boot:spring-boot-configuration-processor")
+    }
+
+    koverReport {
+        defaults {
+            filters {
+                excludes {
+                    classes("*.*Config*", "*.*Application*")
+                    packages("*.configuration.*")
+                    annotatedBy("*Generated*")
+                }
+            }
+
+            xml {
+                onCheck = true
+                filters {
+                    excludes {
+                        classes("*.*Config*", "*.*Application*")
+                        packages("*.configuration.*")
+                        annotatedBy("*Generated*")
+                    }
+                }
+            }
+
+            verify {
+                onCheck = true
+                rule {
+                    isEnabled = true
+                    entity = kotlinx.kover.gradle.plugin.dsl.GroupingEntityType.APPLICATION
+                    filters {
+                        excludes {
+                            classes("*.*Config*", "*.*Application*")
+                            packages("*.configuration.*")
+                            annotatedBy("*Generated*")
+                        }
+                    }
+
+                    bound {
+                        minValue = 0
+                        metric = kotlinx.kover.gradle.plugin.dsl.MetricType.LINE
+                        aggregation = kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
+                    }
+                }
+            }
+        }
     }
 }
