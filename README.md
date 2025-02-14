@@ -1,6 +1,9 @@
 # kotlin-board
 코프링 연습용 게시판 프로젝트
 
+- SpringBoot: 3.4.2
+- Kotlin: 2.1.10
+
 > 모듈 구성
 
 - board-front
