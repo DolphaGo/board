@@ -1,0 +1,29 @@
+package dev.dolphago.controller
+
+import dev.dolphago.service.ChatRoomService
+import io.mockk.mockk
+import io.mockk.verify
+import org.springframework.http.HttpStatus
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class ChatRoomControllerTest {
+    private val chatRoomService = mockk<ChatRoomService>(relaxed = true)
+    private val chatRoomController = ChatRoomController(chatRoomService)
+
+    @Test
+    fun `joinChatRoom은 채팅방 id가 비어 있으면 400을 반환하고 서비스를 호출하지 않는다`() {
+        val response = chatRoomController.joinChatRoom("   ", JoinChatRoomRequest(memberId = 1L))
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        verify(exactly = 0) { chatRoomService.joinChatRoom(any(), any()) }
+    }
+
+    @Test
+    fun `leaveChatRoom은 채팅방 id가 비어 있으면 400을 반환하고 서비스를 호출하지 않는다`() {
+        val response = chatRoomController.leaveChatRoom("   ", LeaveChatRoomRequest(memberId = 1L))
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        verify(exactly = 0) { chatRoomService.leaveChatRoom(any(), any()) }
+    }
+}

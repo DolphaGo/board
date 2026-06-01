@@ -41,13 +41,28 @@ class ChatRoomController(
     fun joinChatRoom(
         @PathVariable id: String,
         @RequestBody request: JoinChatRoomRequest,
-    ): ResponseEntity<ChatRoom> = ResponseEntity.ok(chatRoomService.joinChatRoom(id, request.memberId))
+    ): ResponseEntity<ChatRoom> {
+        // URL path의 방 id가 비어 있으면 어떤 방에 입장하는 요청인지 알 수 없다.
+        // 이런 HTTP 입력 오류는 서비스까지 넘기지 않고 컨트롤러에서 400으로 끝낸다.
+        if (id.isBlank()) {
+            return ResponseEntity.badRequest().build()
+        }
+
+        return ResponseEntity.ok(chatRoomService.joinChatRoom(id, request.memberId))
+    }
 
     @PostMapping("/{id}/leave")
     fun leaveChatRoom(
         @PathVariable id: String,
         @RequestBody request: LeaveChatRoomRequest,
-    ): ResponseEntity<ChatRoom> = ResponseEntity.ok(chatRoomService.leaveChatRoom(id, request.memberId))
+    ): ResponseEntity<ChatRoom> {
+        // 입장과 같은 이유로 방 id가 없으면 나가기 요청도 API 계약상 잘못된 요청이다.
+        if (id.isBlank()) {
+            return ResponseEntity.badRequest().build()
+        }
+
+        return ResponseEntity.ok(chatRoomService.leaveChatRoom(id, request.memberId))
+    }
 
     @GetMapping("/members/{memberId}")
     fun getMemberChatRooms(
