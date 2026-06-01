@@ -212,4 +212,34 @@ describe('# Post editor component', () => {
     })
     expect(push).toBeCalledWith('/post/99')
   })
+
+  it('should switch editor role in the form and reset notice when switching back to user', async () => {
+    mockedPostService.createPost.mockResolvedValue({
+      id: 100,
+      title: '일반 글',
+      content: '공지 아님',
+      imageUrls: [],
+      viewCount: 0,
+      display: true,
+      notice: false,
+    })
+    const wrapper = mount(PostEditor)
+
+    expect(wrapper.find('[data-testid="notice-checkbox"]').exists()).toBe(false)
+
+    await wrapper.get('[data-testid="role-admin"]').trigger('click')
+    await wrapper.get('[data-testid="notice-checkbox"]').setValue(true)
+    await wrapper.get('[data-testid="role-user"]').trigger('click')
+    await wrapper.get('#issue-title').setValue('일반 글')
+    await wrapper.get('#issue-body').setValue('공지 아님')
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="notice-checkbox"]').exists()).toBe(false)
+    expect(mockedPostService.createPost).toBeCalledWith({
+      title: '일반 글',
+      content: '공지 아님',
+      imageUrls: [],
+    })
+  })
 })

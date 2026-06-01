@@ -8,6 +8,26 @@
         class="form-control title-input"
         placeholder="Title"
     />
+    <div class="role-switch" aria-label="작성 권한">
+      <button
+          type="button"
+          class="role-switch-button"
+          :class="{ active: selectedAuthorRole === 'user' }"
+          data-testid="role-user"
+          @click="selectAuthorRole('user')"
+      >
+        일반
+      </button>
+      <button
+          type="button"
+          class="role-switch-button"
+          :class="{ active: selectedAuthorRole === 'admin' }"
+          data-testid="role-admin"
+          @click="selectAuthorRole('admin')"
+      >
+        관리자
+      </button>
+    </div>
     <div class="tabs">
       <button
           :class="{ active: activeTab === 'write' }"
@@ -109,11 +129,12 @@ const imageUrlInput = ref('');
 const imageUploadMessage = ref('');
 const imageUploading = ref(false);
 const notice = ref(false);
+const selectedAuthorRole = ref<'user' | 'admin'>(props.authorRole);
 const activeTab = ref('write');
 const submitting = ref(false);
 const submitMessage = ref('');
 
-const isAdminEditor = computed(() => props.authorRole === 'admin');
+const isAdminEditor = computed(() => selectedAuthorRole.value === 'admin');
 
 // Convert markdown to HTML using Marked
 const markdownPreview = computed(() => {
@@ -193,6 +214,16 @@ const toggleNotice = (event: Event) => {
   notice.value = event.target instanceof HTMLInputElement && event.target.checked;
 };
 
+const selectAuthorRole = (role: 'user' | 'admin') => {
+  selectedAuthorRole.value = role;
+
+  if (role === 'user') {
+    // UI에서 관리자 모드로 공지를 체크했다가 일반 모드로 돌아오면
+    // 백엔드 권한 검사 전에 프론트 payload도 일반 글 계약으로 되돌린다.
+    notice.value = false;
+  }
+};
+
 const submit = async () => {
   submitting.value = true;
   submitMessage.value = '';
@@ -269,6 +300,29 @@ const submit = async () => {
 
 .title-input {
   margin-bottom: 16px;
+}
+
+.role-switch {
+  display: inline-flex;
+  gap: 4px;
+  margin: 0 0 14px;
+}
+
+.role-switch-button {
+  background: #f6f8fa;
+  border: 1px solid #d1d5da;
+  color: #333333;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 32px;
+  padding: 0 12px;
+}
+
+.role-switch-button.active {
+  background: #222222;
+  border-color: #222222;
+  color: #ffffff;
 }
 
 .body-input {
