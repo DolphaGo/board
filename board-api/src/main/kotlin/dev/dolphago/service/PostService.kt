@@ -4,6 +4,7 @@ import dev.dolphago.comment.repository.CommentRepository
 import dev.dolphago.member.repository.MemberRepository
 import dev.dolphago.mysql.Post
 import dev.dolphago.post.repository.PostRepository
+import dev.dolphago.recommend.repository.PostRecommendRepository
 import dev.dolphago.search.PostSearchIndexService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -14,6 +15,7 @@ class PostService(
     private val postRepository: PostRepository,
     private val memberRepository: MemberRepository,
     private val commentRepository: CommentRepository,
+    private val postRecommendRepository: PostRecommendRepository,
     private val postSearchIndexService: PostSearchIndexService,
 ) {
     fun getPost(postId: Long): Post {
@@ -40,8 +42,8 @@ class PostService(
                 // 댓글은 display=true인 것만 사용자에게 노출된다.
                 // 목록 댓글 수 역시 실제로 보이는 댓글 기준으로 맞춰야 UX와 DB 상태가 어긋나지 않는다.
                 commentCount = post.id?.let(commentRepository::countByPostIdAndDisplayTrue) ?: 0,
-                // 추천 엔티티는 아직 없으므로 계약만 유지한다. 다음 단계에서 실제 집계로 교체한다.
-                recommendCount = 0,
+                // 추천 취소/숨김이 가능하도록 display=true인 추천만 목록 수치에 포함한다.
+                recommendCount = post.id?.let(postRecommendRepository::countByPostIdAndDisplayTrue) ?: 0,
             )
         }
     }

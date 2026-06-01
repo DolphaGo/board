@@ -127,7 +127,7 @@ class PostControllerTest {
                 PostListItem(
                     post = post,
                     commentCount = 2,
-                    recommendCount = 0,
+                    recommendCount = 5,
                 ),
             )
 
@@ -144,7 +144,7 @@ class PostControllerTest {
                     authorNickname = "writer",
                     createdAt = post.createDate,
                     commentCount = 2,
-                    recommendCount = 0,
+                    recommendCount = 5,
                 ),
             ),
             response.body,

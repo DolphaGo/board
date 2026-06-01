@@ -6,6 +6,7 @@ import dev.dolphago.mysql.Authority
 import dev.dolphago.mysql.Member
 import dev.dolphago.mysql.Post
 import dev.dolphago.post.repository.PostRepository
+import dev.dolphago.recommend.repository.PostRecommendRepository
 import dev.dolphago.search.PostSearchDocument
 import dev.dolphago.search.PostSearchIndexService
 import io.mockk.every
@@ -20,8 +21,16 @@ class PostServiceTest {
     private val postRepository = mockk<PostRepository>()
     private val memberRepository = mockk<MemberRepository>()
     private val commentRepository = mockk<CommentRepository>()
+    private val postRecommendRepository = mockk<PostRecommendRepository>()
     private val postSearchIndexService = mockk<PostSearchIndexService>()
-    private val postService = PostService(postRepository, memberRepository, commentRepository, postSearchIndexService)
+    private val postService =
+        PostService(
+            postRepository = postRepository,
+            memberRepository = memberRepository,
+            commentRepository = commentRepository,
+            postRecommendRepository = postRecommendRepository,
+            postSearchIndexService = postSearchIndexService,
+        )
 
     @Test
     fun `게시글 생성 후 ES 검색 문서로 색인한다`() {
@@ -106,14 +115,16 @@ class PostServiceTest {
             )
         every { postRepository.findByDisplayTrueOrderByIdDesc() } returns listOf(post)
         every { commentRepository.countByPostIdAndDisplayTrue(10L) } returns 2L
+        every { postRecommendRepository.countByPostIdAndDisplayTrue(10L) } returns 5L
 
         val posts = postService.listPosts()
 
         assertEquals(post, posts.single().post)
         assertEquals(2L, posts.single().commentCount)
-        assertEquals(0L, posts.single().recommendCount)
+        assertEquals(5L, posts.single().recommendCount)
         assertEquals(3L, post.viewCount)
         verify(exactly = 1) { postRepository.findByDisplayTrueOrderByIdDesc() }
         verify(exactly = 1) { commentRepository.countByPostIdAndDisplayTrue(10L) }
+        verify(exactly = 1) { postRecommendRepository.countByPostIdAndDisplayTrue(10L) }
     }
 }
