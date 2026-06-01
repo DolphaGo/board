@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import {resolve} from "path";
 import analyzer from "rollup-plugin-analyzer";
 import {createPostSearchFixture} from "./src/api/postSearchFixture";
+import {createSearchRankingFixture} from "./src/api/searchRankingFixture";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -32,6 +33,27 @@ export default defineConfig({
           // 개발 서버에서만 동작하는 fixture 응답을 내려준다.
           res.setHeader('Content-Type', 'application/json; charset=utf-8')
           res.end(JSON.stringify(createPostSearchFixture(keyword)))
+        })
+        server.middlewares.use('/api/search/rankings', (req, res, next) => {
+          if (req.method === 'POST') {
+            // local fixture는 검색어 기록 저장소를 갖지 않는다.
+            // 실제 정규화/누적은 Spring API의 ranking endpoint에서 학습한다.
+            res.statusCode = 204
+            res.end()
+            return
+          }
+
+          if (req.method !== 'GET') {
+            next()
+            return
+          }
+
+          const requestUrl = new URL(req.url ?? '', 'http://localhost')
+          const limit = Number(requestUrl.searchParams.get('limit') ?? '10')
+
+          // 프론트만 실행해도 우측 실시간 검색어 영역이 API fallback HTML을 받지 않게 한다.
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify(createSearchRankingFixture(limit)))
         })
         server.middlewares.use('/api/posts', (req, res, next) => {
           if (req.method === 'GET') {
