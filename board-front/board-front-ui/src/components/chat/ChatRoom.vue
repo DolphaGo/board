@@ -134,6 +134,10 @@ export default defineComponent({
     const sendTalkMessage = () => {
       // Vue 템플릿 이벤트 핸들러에는 KeyboardEvent/MouseEvent가 전달될 수 있다.
       // STOMP 메시지 타입과 DOM 이벤트 객체가 섞이지 않도록 화면 이벤트용 래퍼를 둔다.
+      if (!newMessage.value.trim()) {
+        return
+      }
+
       sendMessage('TALK')
     }
 
