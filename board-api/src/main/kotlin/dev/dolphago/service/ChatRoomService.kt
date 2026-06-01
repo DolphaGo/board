@@ -24,7 +24,12 @@ class ChatRoomService(
         }
     }
 
-    fun createChatRoom(name: String, description: String?, createdBy: Long): ChatRoom {
+    fun createChatRoom(
+        name: String,
+        description: String?,
+        createdBy: Long,
+        maxParticipants: Int = 100
+    ): ChatRoom {
         memberRepository.findById(createdBy).orElseThrow {
             throw IllegalArgumentException("사용자를 찾을 수 없습니다: $createdBy")
         }
@@ -33,6 +38,9 @@ class ChatRoomService(
             name = name,
             description = description,
             creatorId = createdBy,
+            // 정원은 ChatRoom 엔티티가 가진 비즈니스 규칙이다.
+            // 생성 시점에 명시적으로 저장해야 joinChatRoom에서 같은 값을 기준으로 입장을 제한할 수 있다.
+            maxParticipants = maxParticipants,
             participants = mutableSetOf(createdBy)
         )
 

@@ -25,7 +25,8 @@ class ChatRoomController(
         val chatRoom = chatRoomService.createChatRoom(
             name = request.name,
             description = request.description,
-            createdBy = request.createdBy
+            createdBy = request.createdBy,
+            maxParticipants = request.maxParticipants
         )
         return ResponseEntity.ok(chatRoom)
     }
@@ -52,7 +53,8 @@ class ChatRoomController(
 data class CreateChatRoomRequest(
     val name: String,
     val description: String?,
-    val createdBy: Long // Member ID
+    val createdBy: Long, // Member ID
+    val maxParticipants: Int = 100
 )
 
 data class JoinChatRoomRequest(
@@ -61,4 +63,4 @@ data class JoinChatRoomRequest(
 
 data class LeaveChatRoomRequest(
     val memberId: Long
-) 
+)
