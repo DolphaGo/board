@@ -17,20 +17,15 @@ data class Post(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     var id: Long? = null,
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
-    val member: Member, // 작성자
-
+    val member: Member,
     @Column(name = "title", nullable = false)
-    val title: String, // 제목
-
+    val title: String,
     @Column(name = "content", nullable = false)
-    val content: String, // 내용
-
-    var viewCount: Long, // 조회 수
-
-    val display: Boolean // 노출 여부
+    val content: String,
+    var viewCount: Long,
+    val display: Boolean,
 ) : EntityListener() {
     fun increaseViewCount() {
         // 상세 조회처럼 "게시글을 실제로 읽은 행위"가 있을 때만 조회수를 올린다.
