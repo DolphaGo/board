@@ -23,7 +23,12 @@ class ChatController(
         @Payload message: ChatMessage,
         headerAccessor: SimpMessageHeaderAccessor,
     ) {
-        // Add username in web socket session
+        // roomId가 없으면 어떤 채팅방에 입장한 사용자인지 알 수 없으므로 세션 사용자명도 저장하지 않는다.
+        if (message.roomId.isBlank()) {
+            return
+        }
+
+        // WebSocket 세션에 사용자명을 저장해 두면 연결 종료 이벤트 등에서 "누가 나갔는지"를 확인할 수 있다.
         val sessionAttributes = headerAccessor.sessionAttributes ?: mutableMapOf<String, Any>()
         sessionAttributes["username"] = message.sender
         headerAccessor.sessionAttributes = sessionAttributes

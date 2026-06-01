@@ -66,4 +66,21 @@ class ChatControllerTest {
 
         verify(exactly = 0) { messagingTemplate.convertAndSend(any<String>(), any<ChatMessage>()) }
     }
+
+    @Test
+    fun `addUser는 roomId가 비어 있으면 세션 저장과 발행을 하지 않는다`() {
+        val message =
+            ChatMessage(
+                type = MessageType.ENTER,
+                roomId = "   ",
+                sender = "study-user",
+                content = "방 없는 입장",
+            )
+        val headerAccessor = SimpMessageHeaderAccessor.create()
+
+        chatController.addUser(message, headerAccessor)
+
+        assertEquals(null, headerAccessor.sessionAttributes?.get("username"))
+        verify(exactly = 0) { messagingTemplate.convertAndSend(any<String>(), any<ChatMessage>()) }
+    }
 }
