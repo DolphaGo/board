@@ -30,7 +30,9 @@ dependencies {
     implementation(Dependencies.API)
     implementation(Dependencies.JPA)
     implementation(Dependencies.FEIGN)
+    implementation(Dependencies.MONGO)
     implementation(Dependencies.REDIS)
+    implementation(Dependencies.WEBSOCKET)
     implementation(Dependencies.COROUTINE)
     kapt(Dependencies.JPA_KAPT)
 }

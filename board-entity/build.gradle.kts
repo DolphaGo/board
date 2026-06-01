@@ -9,5 +9,6 @@ jar.enabled = true
 dependencies {
     implementation(project(":board-support"))
     implementation(Dependencies.JPA)
+    implementation(Dependencies.MONGO)
     kapt(Dependencies.JPA_KAPT)
 }

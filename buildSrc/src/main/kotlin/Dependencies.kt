@@ -32,6 +32,14 @@ object Dependencies {
         "org.springframework.boot:spring-boot-starter-data-redis"
     )
 
+    val WEBSOCKET = listOf(
+        "org.springframework.boot:spring-boot-starter-websocket"
+    )
+
+    val MONGO = listOf(
+        "org.springframework.boot:spring-boot-starter-data-mongodb"
+    )
+
     val FEIGN = listOf(
         "org.springframework.cloud:spring-cloud-starter-openfeign",
         "io.github.openfeign:feign-okhttp"
