@@ -26,8 +26,12 @@ const normalizeSearchRankingLimit = (limit: number): number =>
 
 export const searchRankingService = {
   recordKeyword: async (keyword: string): Promise<void> => {
-    // 랭킹 기록은 서버가 정규화한다. 프론트는 사용자가 입력한 원문을 보내고,
-    // 같은 규칙을 여러 화면에 중복 구현하지 않는다.
+    if (keyword.trim().length === 0) {
+      return
+    }
+
+    // 랭킹 기록의 대소문자/공백 정규화는 서버가 담당한다.
+    // 다만 빈 검색어는 서버에서도 400으로 거절하므로 프론트 service 경계에서 요청 자체를 줄인다.
     await axios.post('/api/search/rankings', {
       keyword,
     })

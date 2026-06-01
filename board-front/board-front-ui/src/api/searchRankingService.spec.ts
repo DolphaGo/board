@@ -94,4 +94,10 @@ describe('# Search ranking service', function () {
       keyword: 'kotlin spring',
     })
   })
+
+  it('should ignore blank searched keyword', async function () {
+    await searchRankingService.recordKeyword('   ')
+
+    expect(mockedAxios.post).not.toBeCalled()
+  })
 })
