@@ -2,7 +2,7 @@
   "name": "board-front-ui",
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite -- --mode local",
+    "dev": "vite",
     "format": "prettier-eslint --write \"src/**/*.{vue,ts}\"",
     "build": "vue-tsc --noEmit && vite build",
     "serve": "vite preview",
