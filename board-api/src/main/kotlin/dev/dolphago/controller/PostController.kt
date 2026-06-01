@@ -2,6 +2,7 @@ package dev.dolphago.controller
 
 import dev.dolphago.mysql.Comment
 import dev.dolphago.mysql.Post
+import dev.dolphago.mysql.PostRecommend
 import dev.dolphago.service.PostListItem
 import dev.dolphago.service.PostService
 import org.springframework.http.ResponseEntity
@@ -59,6 +60,22 @@ class PostController(
 
         return ResponseEntity.ok(comment.toResponse())
     }
+
+    @PostMapping("/{id}/recommends")
+    fun createRecommend(
+        @PathVariable id: Long,
+        @RequestBody request: CreateRecommendRequest,
+    ): ResponseEntity<PostRecommendResponse> {
+        // 추천 작성은 추천 수 집계의 입력 데이터다.
+        // 중복 추천 방지 같은 정책은 서비스/저장소 규칙으로 확정된 뒤 별도 테스트로 추가한다.
+        val recommend =
+            postService.createRecommend(
+                postId = id,
+                memberId = request.memberId,
+            )
+
+        return ResponseEntity.ok(recommend.toResponse())
+    }
 }
 
 data class CreatePostRequest(
@@ -70,6 +87,10 @@ data class CreatePostRequest(
 data class CreateCommentRequest(
     val memberId: Long,
     val content: String,
+)
+
+data class CreateRecommendRequest(
+    val memberId: Long,
 )
 
 data class PostResponse(
@@ -98,6 +119,14 @@ data class CommentResponse(
     val memberId: Long?,
     val authorNickname: String,
     val content: String,
+    val display: Boolean,
+    val createdAt: LocalDateTime,
+)
+
+data class PostRecommendResponse(
+    val id: Long?,
+    val postId: Long?,
+    val memberId: Long?,
     val display: Boolean,
     val createdAt: LocalDateTime,
 )
@@ -131,6 +160,15 @@ private fun Comment.toResponse(): CommentResponse =
         memberId = member.id,
         authorNickname = member.nickname,
         content = content,
+        display = display,
+        createdAt = createDate,
+    )
+
+private fun PostRecommend.toResponse(): PostRecommendResponse =
+    PostRecommendResponse(
+        id = id,
+        postId = post.id,
+        memberId = member.id,
         display = display,
         createdAt = createDate,
     )

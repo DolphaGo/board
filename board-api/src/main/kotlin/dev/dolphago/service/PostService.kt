@@ -4,6 +4,7 @@ import dev.dolphago.comment.repository.CommentRepository
 import dev.dolphago.member.repository.MemberRepository
 import dev.dolphago.mysql.Comment
 import dev.dolphago.mysql.Post
+import dev.dolphago.mysql.PostRecommend
 import dev.dolphago.post.repository.PostRepository
 import dev.dolphago.recommend.repository.PostRecommendRepository
 import dev.dolphago.search.PostSearchIndexService
@@ -96,6 +97,30 @@ class PostService(
                 post = post,
                 member = member,
                 content = content,
+                display = true,
+            ),
+        )
+    }
+
+    fun createRecommend(
+        postId: Long,
+        memberId: Long,
+    ): PostRecommend {
+        val post =
+            postRepository.findById(postId).orElseThrow {
+                IllegalArgumentException("게시글을 찾을 수 없습니다: $postId")
+            }
+        val member =
+            memberRepository.findById(memberId).orElseThrow {
+                IllegalArgumentException("사용자를 찾을 수 없습니다: $memberId")
+            }
+
+        // 추천은 게시글에 대한 가벼운 사용자 액션이다.
+        // 목록의 recommendCount는 display=true 추천만 세므로 새 추천도 기본 노출 상태로 저장한다.
+        return postRecommendRepository.save(
+            PostRecommend(
+                post = post,
+                member = member,
                 display = true,
             ),
         )

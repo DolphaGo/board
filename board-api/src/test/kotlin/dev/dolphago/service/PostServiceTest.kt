@@ -6,6 +6,7 @@ import dev.dolphago.mysql.Authority
 import dev.dolphago.mysql.Comment
 import dev.dolphago.mysql.Member
 import dev.dolphago.mysql.Post
+import dev.dolphago.mysql.PostRecommend
 import dev.dolphago.post.repository.PostRepository
 import dev.dolphago.recommend.repository.PostRecommendRepository
 import dev.dolphago.search.PostSearchDocument
@@ -109,6 +110,45 @@ class PostServiceTest {
         assertEquals("검색 스코어링 설명이 좋아요", commentSlot.captured.content)
         assertEquals(true, commentSlot.captured.display)
         verify(exactly = 1) { commentRepository.save(any()) }
+    }
+
+    @Test
+    fun `게시글 추천을 저장한다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "코프링 검색 게시글",
+                content = "상세 화면에서 보여줄 본문",
+                viewCount = 3,
+                display = true,
+            )
+        val recommendSlot = slot<PostRecommend>()
+
+        every { postRepository.findById(10L) } returns Optional.of(post)
+        every { memberRepository.findById(1L) } returns Optional.of(author)
+        every { postRecommendRepository.save(capture(recommendSlot)) } answers {
+            firstArg<PostRecommend>().apply { id = 30L }
+        }
+
+        val recommend =
+            postService.createRecommend(
+                postId = 10L,
+                memberId = 1L,
+            )
+
+        assertEquals(30L, recommend.id)
+        assertEquals(post, recommendSlot.captured.post)
+        assertEquals(author, recommendSlot.captured.member)
+        assertEquals(true, recommendSlot.captured.display)
+        verify(exactly = 1) { postRecommendRepository.save(any()) }
     }
 
     @Test
