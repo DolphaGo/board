@@ -1,5 +1,5 @@
 package dev.dolphago.exception
 
 class CustomException(
-    exceptionCode: ExceptionCode
+    exceptionCode: ExceptionCode,
 ) : RuntimeException(exceptionCode.message)

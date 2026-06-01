@@ -6,11 +6,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class AwsProperties(
     val credentials: Credentials,
     val region: String,
-    val s3: S3
+    val s3: S3,
 ) {
     data class Credentials(
         val accessKey: String,
-        val secretKey: String
+        val secretKey: String,
     )
 
     data class S3(

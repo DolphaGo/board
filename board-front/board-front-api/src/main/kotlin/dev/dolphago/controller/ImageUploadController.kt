@@ -12,12 +12,10 @@ import org.springframework.web.multipart.MultipartFile
 @RestController
 @RequestMapping("/api/v1/images")
 class ImageUploadController(
-    val imageUploadService: ImageUploadService
+    val imageUploadService: ImageUploadService,
 ) {
-
     @PostMapping("/upload")
-    fun uploadImage(@RequestParam("file") file: MultipartFile): String {
-        return imageUploadService.upload(file)
-    }
-
+    fun uploadImage(
+        @RequestParam("file") file: MultipartFile,
+    ): String = imageUploadService.upload(file)
 }

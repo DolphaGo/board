@@ -15,8 +15,8 @@ bootJar.manifest {
     attributes(
         mapOf(
             "Implementation-Title" to project.name,
-            "Implementation-Version" to project.version
-        )
+            "Implementation-Version" to project.version,
+        ),
     )
 }
 
