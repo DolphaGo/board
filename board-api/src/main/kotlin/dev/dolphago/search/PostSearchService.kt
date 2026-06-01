@@ -24,6 +24,7 @@ class PostSearchService(
         size: Int,
     ): List<PostSearchResult> {
         val keyword = SearchKeyword.from(rawKeyword)
+        val syllableKeyword = KoreanSyllableTokenizer.tokenize(keyword.value)
         val safeSize = size.coerceIn(1, MAX_SEARCH_SIZE)
         val query =
             NativeQuery
@@ -51,6 +52,24 @@ class PostSearchService(
                                                     .field("content")
                                                     .query(keyword.value)
                                                     .boost(1.0f)
+                                            }
+                                        }
+                                        // 음절 토큰 필드는 오타/초성/부분 기억을 보조하는 recall 장치다.
+                                        // 원문 title/content BM25 점수를 누르지 않도록 제목 1.5, 본문 0.5로 낮게 둔다.
+                                        .should { s ->
+                                            s.match { m ->
+                                                m
+                                                    .field("titleSyllables")
+                                                    .query(syllableKeyword)
+                                                    .boost(1.5f)
+                                            }
+                                        }
+                                        .should { s ->
+                                            s.match { m ->
+                                                m
+                                                    .field("contentSyllables")
+                                                    .query(syllableKeyword)
+                                                    .boost(0.5f)
                                             }
                                         }.filter { f ->
                                             f.term { t ->

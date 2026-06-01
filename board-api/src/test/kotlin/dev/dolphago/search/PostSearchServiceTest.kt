@@ -116,4 +116,40 @@ class PostSearchServiceTest {
         assertEquals("notice", noticeFilter.term().field())
         assertTrue(noticeFilter.term().value().booleanValue())
     }
+
+    @Test
+    fun `게시글 검색은 한글 음절 토큰 필드를 낮은 가중치로 함께 조회한다`() {
+        val querySlot = slot<NativeQuery>()
+        every {
+            elasticsearchOperations.search(capture(querySlot), PostSearchDocument::class.java)
+        } returns
+            SearchHitsImpl(
+                0,
+                TotalHitsRelation.EQUAL_TO,
+                0.0f,
+                Duration.ZERO,
+                null,
+                null,
+                emptyList(),
+                null,
+                null,
+                null,
+            )
+
+        postSearchService.search("코틀린", 10)
+
+        val query = requireNotNull(querySlot.captured.query)
+        val baseQuery = requireNotNull(query.functionScore().query())
+        val matchQueries =
+            baseQuery
+                .bool()
+                .should()
+                .filter { it.isMatch() }
+                .associate { it.match().field() to it.match() }
+
+        assertEquals("ㅋ ㅗ ㅌ ㅡ ㄹ ㄹ ㅣ ㄴ", matchQueries.getValue("titleSyllables").query().stringValue())
+        assertEquals(1.5f, matchQueries.getValue("titleSyllables").boost())
+        assertEquals("ㅋ ㅗ ㅌ ㅡ ㄹ ㄹ ㅣ ㄴ", matchQueries.getValue("contentSyllables").query().stringValue())
+        assertEquals(0.5f, matchQueries.getValue("contentSyllables").boost())
+    }
 }

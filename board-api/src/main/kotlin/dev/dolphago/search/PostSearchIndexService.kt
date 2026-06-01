@@ -14,13 +14,15 @@ class PostSearchIndexService(
                 id = post.id,
                 title = post.title,
                 content = post.content,
+                titleSyllables = KoreanSyllableTokenizer.tokenize(post.title),
+                contentSyllables = KoreanSyllableTokenizer.tokenize(post.content),
                 viewCount = post.viewCount,
                 display = post.display,
                 notice = post.notice,
             )
 
         // RDB의 Post와 ES 문서는 저장소 목적이 다르다.
-        // 검색 서버에는 검색과 스코어링에 필요한 값만 복사해서 색인한다.
+        // 검색 서버에는 검색과 스코어링에 필요한 값만 복사하고, 음절 토큰처럼 검색 전용 파생 필드는 여기서 만들어 색인한다.
         return elasticsearchOperations.save(document)
     }
 }

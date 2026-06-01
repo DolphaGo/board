@@ -15,6 +15,12 @@ data class PostSearchDocument(
     val title: String = "",
     @Field(type = FieldType.Text, analyzer = "nori")
     val content: String = "",
+    // nori가 형태소 단위 관련도를 맡고, syllables 필드는 사용자가 "ㅋㅌㄹ"처럼 일부 소리만 떠올릴 때의 보조 신호로 쓴다.
+    // 원문 점수를 이기지 않게 검색 쿼리에서 낮은 boost를 주는 것이 핵심이다.
+    @Field(type = FieldType.Text)
+    val titleSyllables: String = "",
+    @Field(type = FieldType.Text)
+    val contentSyllables: String = "",
     @Field(type = FieldType.Long)
     val viewCount: Long = 0,
     @Field(type = FieldType.Boolean)

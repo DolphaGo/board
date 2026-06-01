@@ -44,6 +44,8 @@ class PostSearchIndexServiceTest {
                 id = 10L,
                 title = "코틀린 게시판 검색",
                 content = "Elasticsearch 점수 계산을 연습한다",
+                titleSyllables = KoreanSyllableTokenizer.tokenize("코틀린 게시판 검색"),
+                contentSyllables = KoreanSyllableTokenizer.tokenize("Elasticsearch 점수 계산을 연습한다"),
                 viewCount = 7,
                 display = true,
                 notice = true,
