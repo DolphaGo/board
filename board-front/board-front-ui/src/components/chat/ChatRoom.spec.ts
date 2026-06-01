@@ -164,4 +164,38 @@ describe('# Chat room component', () => {
     expect(audioTrack.stop).toHaveBeenCalledTimes(1)
     expect(globalThis.RTCPeerConnection).not.toHaveBeenCalled()
   })
+
+  it('should stop media tracks and close peer connection after WebRTC setup on unmount', async () => {
+    const videoTrack = { stop: jest.fn() }
+    const audioTrack = { stop: jest.fn() }
+    const mediaStream = {
+      getTracks: () => [videoTrack, audioTrack],
+      getVideoTracks: () => [videoTrack],
+      getAudioTracks: () => [audioTrack],
+    } as unknown as MediaStream
+    const closePeerConnection = jest.fn()
+
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: jest.fn(() => Promise.resolve(mediaStream)),
+      },
+    })
+    Object.defineProperty(globalThis, 'RTCPeerConnection', {
+      configurable: true,
+      value: jest.fn(() => ({
+        addTrack: jest.fn(),
+        close: closePeerConnection,
+      })),
+    })
+
+    const wrapper = mountChatRoom(true)
+    await Promise.resolve()
+
+    wrapper.unmount()
+
+    expect(videoTrack.stop).toHaveBeenCalledTimes(1)
+    expect(audioTrack.stop).toHaveBeenCalledTimes(1)
+    expect(closePeerConnection).toHaveBeenCalledTimes(1)
+  })
 })
