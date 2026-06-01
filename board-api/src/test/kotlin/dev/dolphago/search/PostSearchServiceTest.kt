@@ -152,4 +152,40 @@ class PostSearchServiceTest {
         assertEquals("ㅋ ㅗ ㅌ ㅡ ㄹ ㄹ ㅣ ㄴ", matchQueries.getValue("contentSyllables").query().stringValue())
         assertEquals(0.5f, matchQueries.getValue("contentSyllables").boost())
     }
+
+    @Test
+    fun `게시글 검색은 초성 입력을 초성 토큰 필드로 함께 조회한다`() {
+        val querySlot = slot<NativeQuery>()
+        every {
+            elasticsearchOperations.search(capture(querySlot), PostSearchDocument::class.java)
+        } returns
+            SearchHitsImpl(
+                0,
+                TotalHitsRelation.EQUAL_TO,
+                0.0f,
+                Duration.ZERO,
+                null,
+                null,
+                emptyList(),
+                null,
+                null,
+                null,
+            )
+
+        postSearchService.search("ㅋㅌㄹ", 10)
+
+        val query = requireNotNull(querySlot.captured.query)
+        val baseQuery = requireNotNull(query.functionScore().query())
+        val matchQueries =
+            baseQuery
+                .bool()
+                .should()
+                .filter { it.isMatch() }
+                .associate { it.match().field() to it.match() }
+
+        assertEquals("ㅋ ㅌ ㄹ", matchQueries.getValue("titleInitials").query().stringValue())
+        assertEquals(1.0f, matchQueries.getValue("titleInitials").boost())
+        assertEquals("ㅋ ㅌ ㄹ", matchQueries.getValue("contentInitials").query().stringValue())
+        assertEquals(0.25f, matchQueries.getValue("contentInitials").boost())
+    }
 }

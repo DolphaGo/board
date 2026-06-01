@@ -25,6 +25,7 @@ class PostSearchService(
     ): List<PostSearchResult> {
         val keyword = SearchKeyword.from(rawKeyword)
         val syllableKeyword = KoreanSyllableTokenizer.tokenize(keyword.value)
+        val initialKeyword = KoreanSyllableTokenizer.tokenizeInitials(keyword.value)
         val safeSize = size.coerceIn(1, MAX_SEARCH_SIZE)
         val query =
             NativeQuery
@@ -70,6 +71,24 @@ class PostSearchService(
                                                     .field("contentSyllables")
                                                     .query(syllableKeyword)
                                                     .boost(0.5f)
+                                            }
+                                        }
+                                        // 초성만 입력하는 검색은 원문 BM25 신호가 거의 없으므로 별도 initials 필드가 필요하다.
+                                        // 다만 초성은 충돌이 많다. 예: "ㄱㅅ"는 검색, 감사, 게시 모두가 될 수 있어 낮은 boost로 보조한다.
+                                        .should { s ->
+                                            s.match { m ->
+                                                m
+                                                    .field("titleInitials")
+                                                    .query(initialKeyword)
+                                                    .boost(1.0f)
+                                            }
+                                        }
+                                        .should { s ->
+                                            s.match { m ->
+                                                m
+                                                    .field("contentInitials")
+                                                    .query(initialKeyword)
+                                                    .boost(0.25f)
                                             }
                                         }.filter { f ->
                                             f.term { t ->

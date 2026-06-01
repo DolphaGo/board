@@ -21,6 +21,12 @@ data class PostSearchDocument(
     val titleSyllables: String = "",
     @Field(type = FieldType.Text)
     val contentSyllables: String = "",
+    // initials 필드는 "ㅋㅌㄹ", "ㄱㅅ"처럼 초성만 입력한 사용자를 위한 별도 recall 필드다.
+    // syllables 필드와 섞으면 초성/중성/종성 점수 해석이 흐려지므로 분리해서 boost를 따로 조절한다.
+    @Field(type = FieldType.Text)
+    val titleInitials: String = "",
+    @Field(type = FieldType.Text)
+    val contentInitials: String = "",
     @Field(type = FieldType.Long)
     val viewCount: Long = 0,
     @Field(type = FieldType.Boolean)

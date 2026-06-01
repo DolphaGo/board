@@ -16,6 +16,8 @@ class PostSearchIndexService(
                 content = post.content,
                 titleSyllables = KoreanSyllableTokenizer.tokenize(post.title),
                 contentSyllables = KoreanSyllableTokenizer.tokenize(post.content),
+                titleInitials = KoreanSyllableTokenizer.tokenizeInitials(post.title),
+                contentInitials = KoreanSyllableTokenizer.tokenizeInitials(post.content),
                 viewCount = post.viewCount,
                 display = post.display,
                 notice = post.notice,

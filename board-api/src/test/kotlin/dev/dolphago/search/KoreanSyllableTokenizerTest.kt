@@ -17,4 +17,18 @@ class KoreanSyllableTokenizerTest {
 
         assertEquals("spring boot 4 ㅋ ㅗ ㅌ ㅡ ㄹ ㄹ ㅣ ㄴ", tokens)
     }
+
+    @Test
+    fun `한글 음절은 초성 검색 토큰으로도 분해한다`() {
+        val initials = KoreanSyllableTokenizer.tokenizeInitials("코틀린 게시판 검색")
+
+        assertEquals("ㅋ ㅌ ㄹ ㄱ ㅅ ㅍ ㄱ ㅅ", initials)
+    }
+
+    @Test
+    fun `사용자가 입력한 초성 문자열은 초성 검색 토큰으로 보존한다`() {
+        val initials = KoreanSyllableTokenizer.tokenizeInitials("ㅋㅌㄹ spring 42")
+
+        assertEquals("ㅋ ㅌ ㄹ spring 42", initials)
+    }
 }
