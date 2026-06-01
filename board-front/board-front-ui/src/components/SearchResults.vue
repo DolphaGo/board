@@ -19,6 +19,14 @@
             <span>score {{ result.score.toFixed(2) }}</span>
             <span v-if="highlightCount(result) > 0">highlight {{ highlightCount(result) }}</span>
           </div>
+          <ul v-if="highlightCount(result) > 0" class="highlight-list">
+            <li v-for="snippet in highlightSnippets(result)" :key="`${snippet.field}:${snippet.text}`">
+              <span class="highlight-field">{{ snippet.field }}</span>
+              <!-- ES highlight는 원문 기반 문자열이므로 v-html로 넣지 않는다.
+                   학습용 샘플에서는 XSS 위험을 피하려고 태그까지 텍스트로 보여준다. -->
+              <span class="highlight-text">{{ snippet.text }}</span>
+            </li>
+          </ul>
         </li>
       </ol>
     </section>
@@ -30,6 +38,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import MainLayout from './MainLayout.vue'
 import { postSearchService, type PostSearchResult } from 'src/api/postSearchService'
+import { collectSearchResultHighlights } from './searchResultHighlights'
 
 const route = useRoute()
 const results = ref<PostSearchResult[]>([])
@@ -44,6 +53,8 @@ const searchKeyword = computed(() => {
 
 const highlightCount = (result: PostSearchResult): number =>
   Object.values(result.highlights).reduce((count, values) => count + values.length, 0)
+
+const highlightSnippets = (result: PostSearchResult) => collectSearchResultHighlights(result.highlights)
 
 watch(
   searchKeyword,
@@ -129,5 +140,29 @@ watch(
   gap: 10px;
   color: #757575;
   font-size: 12px;
+}
+
+.highlight-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.highlight-list li {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  color: #333333;
+  font-size: 12px;
+}
+
+.highlight-field {
+  min-width: 52px;
+  color: #777777;
+  font-weight: 700;
+}
+
+.highlight-text {
+  word-break: break-word;
 }
 </style>
