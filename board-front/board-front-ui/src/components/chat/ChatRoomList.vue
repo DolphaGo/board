@@ -149,6 +149,12 @@ export default defineComponent({
         feedbackMessage.value = '채팅방 이름을 입력해주세요.'
         return
       }
+      if (newRoomMaxParticipants.value < 2 || newRoomMaxParticipants.value > 100) {
+        // 백엔드도 2..100 범위만 허용한다.
+        // 브라우저 number input의 min/max만 믿으면 키보드 입력이나 테스트 경로에서 잘못된 값이 API까지 갈 수 있다.
+        feedbackMessage.value = '최대 참여자 수는 2명 이상 100명 이하로 입력해주세요.'
+        return
+      }
 
       try {
         feedbackMessage.value = ''

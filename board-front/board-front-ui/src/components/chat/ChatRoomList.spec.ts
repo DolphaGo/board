@@ -76,6 +76,20 @@ describe('# Chat room list component', () => {
     expect(mockedChatService.createRoom).not.toHaveBeenCalled()
   })
 
+  it('should render a max participants range message when submitting an invalid max participants value', async () => {
+    const wrapper = mount(ChatRoomList)
+    await flushPromises()
+
+    await wrapper.get('.create-btn').trigger('click')
+    await wrapper.get('input[placeholder="채팅방 이름을 입력하세요"]').setValue('범위 확인방')
+    await wrapper.get('input[aria-label="최대 참여자 수"]').setValue(1)
+    await wrapper.get('.confirm-btn').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('.dialog-feedback').text()).toBe('최대 참여자 수는 2명 이상 100명 이하로 입력해주세요.')
+    expect(mockedChatService.createRoom).not.toHaveBeenCalled()
+  })
+
   it('should enter the room with the Enter key from a room item', async () => {
     mockedChatService.getRoomList.mockResolvedValue([
       chatRoomFixture(),
