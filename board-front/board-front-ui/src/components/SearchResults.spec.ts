@@ -1,12 +1,13 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { postSearchService } from 'src/api/postSearchService'
+import { nextTick, reactive } from 'vue'
 import SearchResults from './SearchResults.vue'
 
-const mockRoute = {
+const mockRoute = reactive({
   query: {
     keyword: 'kotlin',
   },
-}
+})
 
 jest.mock('vue-router', () => ({
   useRoute: () => mockRoute,
@@ -21,6 +22,10 @@ jest.mock('src/api/postSearchService', () => ({
 const mockedPostSearchService = postSearchService as jest.Mocked<typeof postSearchService>
 
 describe('# Search results component', () => {
+  beforeEach(() => {
+    mockRoute.query.keyword = 'kotlin'
+  })
+
   it('should render Elasticsearch score and highlight count as board search metadata', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {
@@ -56,5 +61,39 @@ describe('# Search results component', () => {
     expect(wrapper.get('.result-meta').text()).toContain('하이라이트 2개')
     expect(wrapper.findAll('.highlight-list li')).toHaveLength(2)
     expect(wrapper.text()).toContain('<em>코프링</em> 검색 구현')
+  })
+
+  it('should clear failed search state when keyword becomes empty', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
+
+    try {
+      mockedPostSearchService.search.mockRejectedValue(new Error('backend down'))
+
+      const wrapper = mount(SearchResults, {
+        global: {
+          stubs: {
+            MainLayout: {
+              template: '<main><slot /></main>',
+            },
+            RouterLink: {
+              props: ['to'],
+              template: '<a><slot /></a>',
+            },
+          },
+        },
+      })
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('검색 결과를 불러오지 못했습니다.')
+
+      mockRoute.query.keyword = ''
+      await nextTick()
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('검색어를 입력해 주세요.')
+      expect(wrapper.text()).not.toContain('검색 결과를 불러오지 못했습니다.')
+    } finally {
+      consoleErrorSpy.mockRestore()
+    }
   })
 })

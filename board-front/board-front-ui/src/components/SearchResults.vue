@@ -61,6 +61,8 @@ watch(
   async keyword => {
     if (keyword.length === 0) {
       results.value = []
+      error.value = false
+      loading.value = false
       return
     }
 
