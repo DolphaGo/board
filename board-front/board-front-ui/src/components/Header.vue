@@ -1,6 +1,16 @@
 <template>
   <header class="header">
     <div class="logo">DolphaGo's Blog</div>
+    <form class="header-search" role="search" @submit.prevent="submitSearch">
+      <input
+        v-model="keyword"
+        class="header-search-input"
+        type="search"
+        placeholder="게시글 검색"
+        aria-label="게시글 검색"
+      >
+      <button type="submit" class="header-search-button">검색</button>
+    </form>
     <nav>
       <a href="#">Home</a>
       <a href="#">Posts</a>
@@ -11,6 +21,9 @@
 </template>
 
 <script lang="ts" setup>
+import { createHeaderSearch } from './useHeaderSearch'
+
+const { keyword, submitSearch } = createHeaderSearch()
 </script>
 
 <style scoped>
@@ -27,6 +40,31 @@
   z-index: 1000;
 }
 
+.header-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: min(360px, 36vw);
+}
+
+.header-search-input {
+  min-width: 0;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #bdbdbd;
+  font-size: 13px;
+}
+
+.header-search-button {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid #1a1a1a;
+  background: #ffffff;
+  color: #1a1a1a;
+  font-size: 13px;
+  cursor: pointer;
+}
+
 .logo {
   font-weight: bold;
   font-size: 24px;
@@ -36,5 +74,17 @@ nav a {
   margin-left: 15px;
   text-decoration: none;
   color: #333;
+}
+
+@media (max-width: 720px) {
+  .header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .header-search {
+    order: 3;
+    width: 100%;
+  }
 }
 </style>
