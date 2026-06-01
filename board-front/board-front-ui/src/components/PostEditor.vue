@@ -44,10 +44,13 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { marked } from 'marked';
 import { request } from 'src';  // 'request' 객체를 사용하여 서버에 요청
 import { postService } from 'src/api/postService';
+import { submitPostEditorForm } from './postEditorSubmit';
 
+const router = useRouter();
 const title = ref('');
 const bodyText = ref('');
 const activeTab = ref('write');
@@ -99,11 +102,14 @@ const submit = async () => {
   submitMessage.value = '';
 
   try {
-    const post = await postService.createPost({
+    submitMessage.value = await submitPostEditorForm({
       title: title.value,
       content: bodyText.value,
+      createPost: postService.createPost,
+      moveToPostDetail: postId => {
+        router.push(`/post/${postId}`);
+      },
     });
-    submitMessage.value = `게시글 #${post.id} 저장 완료`;
   } catch (error) {
     console.error('Post submit failed', error);
     submitMessage.value = '게시글 저장에 실패했습니다.';
