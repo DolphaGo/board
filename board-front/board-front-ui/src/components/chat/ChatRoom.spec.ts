@@ -94,4 +94,24 @@ describe('# Chat room component', () => {
     expect(wrapper.get('.message.received p').text()).toBe('수신 메시지')
     expect(wrapper.get('.message.received .timestamp').text()).toBe('18:29')
   })
+
+  it('should publish leave message and deactivate STOMP on unmount', () => {
+    const wrapper = mountChatRoom()
+    mockPublish.mockClear()
+
+    wrapper.unmount()
+
+    expect(mockPublish).toHaveBeenCalledTimes(1)
+    expect(mockPublish).toHaveBeenCalledWith({
+      destination: '/app/chat.sendMessage',
+      body: expect.any(String),
+    })
+    expect(JSON.parse(mockPublish.mock.calls[0][0].body)).toMatchObject({
+      type: 'LEAVE',
+      roomId: 'room-1',
+      sender: 'study-user',
+      content: 'study-user님이 퇴장하셨습니다.',
+    })
+    expect(mockDeactivate).toHaveBeenCalledTimes(1)
+  })
 })
