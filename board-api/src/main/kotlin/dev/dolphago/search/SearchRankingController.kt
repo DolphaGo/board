@@ -21,7 +21,12 @@ class SearchRankingController(
     fun getTopKeywords(
         @RequestParam(defaultValue = "10") limit: Long = 10,
     ): ResponseEntity<List<SearchRankingItem>> {
+        if (limit < 1) {
+            return ResponseEntity.badRequest().build()
+        }
+
         // 컨트롤러는 HTTP 요청을 서비스 호출로 바꾸는 얇은 진입점이다.
+        // limit처럼 HTTP 요청 파라미터 자체가 잘못된 값은 여기서 400으로 막는다.
         // Redis ZSET을 어떻게 읽는지는 SearchRankingService에 숨기고,
         // 프론트는 "상위 검색어 목록"이라는 API 계약만 알면 된다.
         return ResponseEntity.ok(searchRankingService.getTopKeywords(limit))

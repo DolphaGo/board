@@ -31,6 +31,14 @@ class SearchRankingControllerTest {
     }
 
     @Test
+    fun `검색어 순위 조회 개수가 1보다 작으면 400을 반환한다`() {
+        val response = controller.getTopKeywords(limit = 0)
+
+        assertEquals(400, response.statusCode.value())
+        verify(exactly = 0) { searchRankingService.getTopKeywords(any()) }
+    }
+
+    @Test
     fun `검색어 기록 요청은 검색어를 랭킹 서비스에 전달한다`() {
         every { searchRankingService.record("Kotlin Spring") } returns Unit
 
