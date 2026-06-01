@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { useRouter } from 'vue-router'
-import { chatService } from 'src/api/chatService'
+import { chatService, type ChatRoom } from 'src/api/chatService'
 import ChatRoomList from './ChatRoomList.vue'
 
 jest.mock('src/api/chatService', () => ({
@@ -22,6 +22,14 @@ const pushMock = jest.fn()
 // Vue 컴포넌트는 클릭 후 DOM 갱신과 Promise 처리가 다음 tick에 반영된다.
 // 테스트가 화면 결과를 읽기 전에 비동기 작업이 끝나도록 한 번 기다린다.
 const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+const chatRoomFixture = (overrides: Partial<ChatRoom> = {}): ChatRoom => ({
+  id: 'room-1',
+  name: '스터디 채팅방',
+  participantCount: 3,
+  createdAt: '2026-06-01T09:00:00.000Z',
+  ...overrides,
+})
 
 describe('# Chat room list component', () => {
   beforeEach(() => {
@@ -57,12 +65,7 @@ describe('# Chat room list component', () => {
 
   it('should enter the room with the Enter key from a room item', async () => {
     mockedChatService.getRoomList.mockResolvedValue([
-      {
-        id: 'room-1',
-        name: '스터디 채팅방',
-        participantCount: 3,
-        createdAt: '2026-06-01T09:00:00.000Z',
-      },
+      chatRoomFixture(),
     ])
 
     const wrapper = mount(ChatRoomList)
@@ -81,12 +84,12 @@ describe('# Chat room list component', () => {
 
   it('should enter the room with the Space key from a room item', async () => {
     mockedChatService.getRoomList.mockResolvedValue([
-      {
+      chatRoomFixture({
         id: 'room-2',
         name: '질문 채팅방',
         participantCount: 5,
         createdAt: '2026-06-01T10:00:00.000Z',
-      },
+      }),
     ])
 
     const wrapper = mount(ChatRoomList)
@@ -101,12 +104,12 @@ describe('# Chat room list component', () => {
 
   it('should render the enter failure message above the room list', async () => {
     mockedChatService.getRoomList.mockResolvedValue([
-      {
+      chatRoomFixture({
         id: 'room-3',
         name: '오류 확인방',
         participantCount: 1,
         createdAt: '2026-06-01T11:00:00.000Z',
-      },
+      }),
     ])
     mockedChatService.joinRoom.mockRejectedValue(new Error('join failed'))
 
