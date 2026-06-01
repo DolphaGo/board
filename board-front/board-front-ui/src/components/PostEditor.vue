@@ -35,7 +35,10 @@
     <div v-if="activeTab === 'preview'" class="markdown-preview">
       <div v-html="markdownPreview"></div>
     </div>
-    <button @click="submit" class="btn-submit">작성하기</button>
+    <button @click="submit" class="btn-submit" :disabled="submitting">
+      {{ submitting ? '저장 중...' : '작성하기' }}
+    </button>
+    <p v-if="submitMessage" class="submit-message">{{ submitMessage }}</p>
   </div>
 </template>
 
@@ -43,10 +46,13 @@
 import { ref, computed } from 'vue';
 import { marked } from 'marked';
 import { request } from 'src';  // 'request' 객체를 사용하여 서버에 요청
+import { postService } from 'src/api/postService';
 
 const title = ref('');
 const bodyText = ref('');
 const activeTab = ref('write');
+const submitting = ref(false);
+const submitMessage = ref('');
 
 // Convert markdown to HTML using Marked
 const markdownPreview = computed(() => {
@@ -88,9 +94,22 @@ const insertImageMarkdown = (url: string) => {
   bodyText.value += `\n${markdownImage}\n`;
 };
 
-const submit = () => {
-  console.log('Issue Submitted:', { title: title.value, body: bodyText.value });
-  // Here you can add the logic to submit the issue to a server.
+const submit = async () => {
+  submitting.value = true;
+  submitMessage.value = '';
+
+  try {
+    const post = await postService.createPost({
+      title: title.value,
+      content: bodyText.value,
+    });
+    submitMessage.value = `게시글 #${post.id} 저장 완료`;
+  } catch (error) {
+    console.error('Post submit failed', error);
+    submitMessage.value = '게시글 저장에 실패했습니다.';
+  } finally {
+    submitting.value = false;
+  }
 };
 </script>
 
@@ -191,5 +210,11 @@ const submit = () => {
 
 .btn-submit:hover {
   background-color: #2c974b;
+}
+
+.submit-message {
+  margin: 12px 0 0;
+  color: #555555;
+  font-size: 13px;
 }
 </style>
