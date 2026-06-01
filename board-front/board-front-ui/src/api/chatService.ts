@@ -17,6 +17,11 @@ export interface ChatRoom {
   createdAt: string
 }
 
+interface CreateChatRoomOptions {
+  description?: string | null
+  maxParticipants?: number
+}
+
 const toChatRoom = (room: ChatRoomResponse): ChatRoom => ({
   id: room.id,
   name: room.name,
@@ -62,13 +67,14 @@ export const chatService = {
   },
 
   // 채팅방 생성
-  createRoom: async (name: string): Promise<ChatRoom> => {
+  createRoom: async (name: string, options: CreateChatRoomOptions = {}): Promise<ChatRoom> => {
     const response = await axios.post<ChatRoomResponse>(`${BASE_URL}/chat/rooms`, {
       name,
-      description: null,
+      description: options.description ?? null,
       // 공부용 MVP라 로그인 기능과 연결하기 전까지는 고정 학습 계정으로 요청한다.
       // 이후 Kakao 로그인과 회원 세션이 붙으면 이 값은 로그인 사용자 id로 교체한다.
       createdBy: STUDY_MEMBER_ID,
+      ...(options.maxParticipants === undefined ? {} : { maxParticipants: options.maxParticipants }),
     })
     return parseChatRoom(response.data)
   },

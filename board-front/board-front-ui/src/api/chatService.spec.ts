@@ -55,6 +55,29 @@ describe('# Chat service', function () {
     expect(room.participantCount).toBe(1)
   })
 
+  it('should create a chat room with description and max participants', async function () {
+    mockedAxios.post.mockResolvedValue({
+      data: {
+        id: 'room-1',
+        name: '스터디 채팅방',
+        createdAt: '2026-06-01T17:00:00',
+        participants: [1],
+      },
+    })
+
+    await chatService.createRoom('스터디 채팅방', {
+      description: '코프링 검색 기능을 같이 공부한다',
+      maxParticipants: 20,
+    })
+
+    expect(mockedAxios.post).toBeCalledWith('/api/chat/rooms', {
+      name: '스터디 채팅방',
+      description: '코프링 검색 기능을 같이 공부한다',
+      createdBy: 1,
+      maxParticipants: 20,
+    })
+  })
+
   it('should reject malformed chat room list responses', async function () {
     mockedAxios.get.mockResolvedValue({
       data: '<html>vite fallback</html>',
