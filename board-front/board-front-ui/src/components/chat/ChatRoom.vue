@@ -78,6 +78,7 @@ export default defineComponent({
     const messages = ref<ChatMessage[]>([])
     const newMessage = ref('')
     const messageContainer = ref<HTMLElement | null>(null)
+    let isUnmounted = false
     
     // WebRTC 관련 상태
     const localVideo = ref<HTMLVideoElement | null>(null)
@@ -154,12 +155,25 @@ export default defineComponent({
     }
 
     // WebRTC 관련 함수들
+    const stopMediaStream = (stream: MediaStream) => {
+      stream.getTracks().forEach(track => track.stop())
+    }
+
     const initializeWebRTC = async () => {
       try {
-        localStream.value = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true
         })
+
+        // getUserMedia()는 사용자 권한 확인 때문에 늦게 끝날 수 있다.
+        // 그 사이 화면을 떠났다면 ref에 보관하지 말고 즉시 track을 정리해야 카메라/마이크가 새지 않는다.
+        if (isUnmounted) {
+          stopMediaStream(stream)
+          return
+        }
+
+        localStream.value = stream
         
         if (localVideo.value) {
           localVideo.value.srcObject = localStream.value
@@ -213,13 +227,15 @@ export default defineComponent({
     })
 
     onUnmounted(() => {
+      isUnmounted = true
+
       if (stompClient.value?.connected) {
         sendMessage('LEAVE')
         stompClient.value.deactivate()
       }
       
       if (localStream.value) {
-        localStream.value.getTracks().forEach(track => track.stop())
+        stopMediaStream(localStream.value)
       }
       
       if (peerConnection.value) {

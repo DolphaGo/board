@@ -28,12 +28,12 @@ jest.mock('@stomp/stompjs', () => ({
   }),
 }))
 
-const mountChatRoom = () =>
+const mountChatRoom = (isVideoEnabled = false) =>
   mount(ChatRoom, {
     props: {
       roomId: 'room-1',
       username: 'study-user',
-      isVideoEnabled: false,
+      isVideoEnabled,
     },
   })
 
@@ -126,5 +126,42 @@ describe('# Chat room component', () => {
 
     expect(mockPublish).not.toHaveBeenCalled()
     expect(mockDeactivate).not.toHaveBeenCalled()
+  })
+
+  it('should stop media tracks when WebRTC setup finishes after unmount', async () => {
+    let resolveMedia: (stream: MediaStream) => void = () => undefined
+    const videoTrack = { stop: jest.fn() }
+    const audioTrack = { stop: jest.fn() }
+    const mediaStream = {
+      getTracks: () => [videoTrack, audioTrack],
+      getVideoTracks: () => [videoTrack],
+      getAudioTracks: () => [audioTrack],
+    } as unknown as MediaStream
+
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: jest.fn(() => new Promise<MediaStream>((resolve) => {
+          resolveMedia = resolve
+        })),
+      },
+    })
+    Object.defineProperty(globalThis, 'RTCPeerConnection', {
+      configurable: true,
+      value: jest.fn(() => ({
+        addTrack: jest.fn(),
+        close: jest.fn(),
+      })),
+    })
+
+    const wrapper = mountChatRoom(true)
+    wrapper.unmount()
+
+    resolveMedia(mediaStream)
+    await Promise.resolve()
+
+    expect(videoTrack.stop).toHaveBeenCalledTimes(1)
+    expect(audioTrack.stop).toHaveBeenCalledTimes(1)
+    expect(globalThis.RTCPeerConnection).not.toHaveBeenCalled()
   })
 })
