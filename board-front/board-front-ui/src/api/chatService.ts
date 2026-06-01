@@ -26,11 +26,39 @@ const toChatRoom = (room: ChatRoomResponse): ChatRoom => ({
   createdAt: room.createdAt,
 })
 
+const isChatRoomResponse = (room: unknown): room is ChatRoomResponse => {
+  if (typeof room !== 'object' || room === null) {
+    return false
+  }
+
+  const candidate = room as Partial<ChatRoomResponse>
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.name === 'string' &&
+    typeof candidate.createdAt === 'string' &&
+    (candidate.participants === undefined || Array.isArray(candidate.participants))
+  )
+}
+
+const parseChatRoom = (room: unknown): ChatRoom => {
+  // Vite dev fallback HTML이나 백엔드 에러 payload가 정상 DTO처럼 흘러오면
+  // 화면이 undefined 값을 렌더링하게 된다. API 경계에서 실패시켜 원인을 빨리 드러낸다.
+  if (!isChatRoomResponse(room)) {
+    throw new Error('Invalid chat room response')
+  }
+
+  return toChatRoom(room)
+}
+
 export const chatService = {
   // 채팅방 목록 조회
   getRoomList: async (): Promise<ChatRoom[]> => {
     const response = await axios.get<ChatRoomResponse[]>(`${BASE_URL}/chat/rooms`)
-    return response.data.map(toChatRoom)
+    if (!Array.isArray(response.data)) {
+      throw new Error('Invalid chat room response')
+    }
+
+    return response.data.map(parseChatRoom)
   },
 
   // 채팅방 생성
@@ -42,7 +70,7 @@ export const chatService = {
       // 이후 Kakao 로그인과 회원 세션이 붙으면 이 값은 로그인 사용자 id로 교체한다.
       createdBy: STUDY_MEMBER_ID,
     })
-    return toChatRoom(response.data)
+    return parseChatRoom(response.data)
   },
 
   // 채팅방 입장
