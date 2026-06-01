@@ -5,6 +5,16 @@ export interface SearchRankingItem {
   score: number
 }
 
+const isSearchRankingItem = (data: unknown): data is SearchRankingItem => {
+  if (typeof data !== 'object' || data === null) {
+    return false
+  }
+
+  const item = data as Partial<SearchRankingItem>
+  return typeof item.keyword === 'string' &&
+    typeof item.score === 'number'
+}
+
 export const searchRankingService = {
   recordKeyword: async (keyword: string): Promise<void> => {
     // 랭킹 기록은 서버가 정규화한다. 프론트는 사용자가 입력한 원문을 보내고,
@@ -20,8 +30,9 @@ export const searchRankingService = {
     })
 
     // 프론트 개발 서버만 켜진 상태에서는 /api 요청이 Vite fallback HTML을 받을 수 있다.
-    // API 계약이 깨진 값을 그대로 렌더링하면 빈 순위 행이 생기므로 배열 여부를 먼저 확인한다.
-    if (!Array.isArray(response.data)) {
+    // API 계약이 깨진 값을 그대로 렌더링하면 빈 순위 행이 생기므로
+    // 배열 여부와 각 항목의 keyword/score 타입을 함께 확인한다.
+    if (!Array.isArray(response.data) || !response.data.every(isSearchRankingItem)) {
       throw new Error('Invalid search ranking response')
     }
 
