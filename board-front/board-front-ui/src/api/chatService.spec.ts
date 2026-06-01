@@ -93,4 +93,13 @@ describe('# Chat service', function () {
 
     await expect(chatService.createRoom('새 채팅방')).rejects.toThrow('Invalid chat room response')
   })
+
+  it.each([
+    ['joinRoom', () => chatService.joinRoom('   ')],
+    ['leaveRoom', () => chatService.leaveRoom('   ')],
+  ])('should ignore blank room id for %s', async function (_, action) {
+    await action()
+
+    expect(mockedAxios.post).not.toBeCalled()
+  })
 })

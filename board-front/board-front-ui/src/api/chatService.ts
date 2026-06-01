@@ -81,11 +81,22 @@ export const chatService = {
 
   // 채팅방 입장
   joinRoom: async (roomId: string): Promise<void> => {
+    // 방 id가 없으면 REST path 자체가 의미 없는 값이 된다.
+    // 서버까지 잘못된 URL을 보내기보다 API service 경계에서 요청을 멈춘다.
+    if (roomId.trim().length === 0) {
+      return
+    }
+
     await axios.post(`${BASE_URL}/chat/rooms/${roomId}/join`, { memberId: STUDY_MEMBER_ID })
   },
 
   // 채팅방 나가기
   leaveRoom: async (roomId: string): Promise<void> => {
+    // 입장과 같은 이유로, 빈 방 id는 나가기 요청도 만들지 않는다.
+    if (roomId.trim().length === 0) {
+      return
+    }
+
     await axios.post(`${BASE_URL}/chat/rooms/${roomId}/leave`, { memberId: STUDY_MEMBER_ID })
   }
 }
