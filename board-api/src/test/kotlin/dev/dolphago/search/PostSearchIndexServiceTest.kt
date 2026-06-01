@@ -7,9 +7,9 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations
 
 class PostSearchIndexServiceTest {
     private val elasticsearchOperations = mockk<ElasticsearchOperations>()
@@ -19,20 +19,22 @@ class PostSearchIndexServiceTest {
     fun `게시글을 ES 검색 문서로 저장한다`() {
         val documentSlot = slot<PostSearchDocument>()
         every { elasticsearchOperations.save(capture(documentSlot)) } answers { firstArg() }
-        val member = Member(
-            id = 1L,
-            email = "writer@example.com",
-            nickname = "writer",
-            role = Authority.ROLE_USER
-        )
-        val post = Post(
-            id = 10L,
-            member = member,
-            title = "코틀린 게시판 검색",
-            content = "Elasticsearch 점수 계산을 연습한다",
-            viewCount = 7,
-            display = true
-        )
+        val member =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = member,
+                title = "코틀린 게시판 검색",
+                content = "Elasticsearch 점수 계산을 연습한다",
+                viewCount = 7,
+                display = true,
+            )
 
         postSearchIndexService.index(post)
 
@@ -42,9 +44,9 @@ class PostSearchIndexServiceTest {
                 title = "코틀린 게시판 검색",
                 content = "Elasticsearch 점수 계산을 연습한다",
                 viewCount = 7,
-                display = true
+                display = true,
             ),
-            documentSlot.captured
+            documentSlot.captured,
         )
         verify(exactly = 1) { elasticsearchOperations.save(any<PostSearchDocument>()) }
     }

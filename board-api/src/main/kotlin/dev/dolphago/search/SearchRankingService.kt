@@ -5,12 +5,12 @@ import org.springframework.stereotype.Service
 
 data class SearchRankingItem(
     val keyword: String,
-    val score: Long
+    val score: Long,
 )
 
 @Service
 class SearchRankingService(
-    private val redisTemplate: StringRedisTemplate
+    private val redisTemplate: StringRedisTemplate,
 ) {
     fun record(rawKeyword: String) {
         val keyword = SearchKeyword.from(rawKeyword)
@@ -24,14 +24,15 @@ class SearchRankingService(
     fun getTopKeywords(limit: Long): List<SearchRankingItem> {
         require(limit > 0) { "조회 개수는 1 이상이어야 합니다." }
 
-        return redisTemplate.opsForZSet()
+        return redisTemplate
+            .opsForZSet()
             .reverseRangeWithScores(RANKING_KEY, 0, limit - 1)
             .orEmpty()
             .mapNotNull { tuple ->
                 val keyword = tuple.value ?: return@mapNotNull null
                 SearchRankingItem(
                     keyword = keyword,
-                    score = tuple.score?.toLong() ?: 0L
+                    score = tuple.score?.toLong() ?: 0L,
                 )
             }
     }

@@ -20,41 +20,45 @@ class ChatRoomServiceTest {
 
     @Test
     fun `채팅방 생성 시 최대 참여자 수를 지정할 수 있다`() {
-        val creator = Member(
-            id = 1L,
-            email = "creator@example.com",
-            nickname = "creator",
-            role = Authority.ROLE_USER
-        )
+        val creator =
+            Member(
+                id = 1L,
+                email = "creator@example.com",
+                nickname = "creator",
+                role = Authority.ROLE_USER,
+            )
 
         every { memberRepository.findById(1L) } returns Optional.of(creator)
         every { chatRoomRepository.save(any()) } answers { firstArg() }
 
-        val room = chatRoomService.createChatRoom(
-            name = "코프링 스터디",
-            description = "Spring Boot와 Kotlin을 같이 공부하는 방",
-            createdBy = 1L,
-            maxParticipants = 30
-        )
+        val room =
+            chatRoomService.createChatRoom(
+                name = "코프링 스터디",
+                description = "Spring Boot와 Kotlin을 같이 공부하는 방",
+                createdBy = 1L,
+                maxParticipants = 30,
+            )
 
         assertEquals(30, room.maxParticipants)
     }
 
     @Test
     fun `정원이 가득 찬 채팅방에는 새 참가자가 입장할 수 없다`() {
-        val room = ChatRoom(
-            id = "room-1",
-            name = "코프링 스터디",
-            creatorId = 1L,
-            maxParticipants = 1,
-            participants = mutableSetOf(1L)
-        )
-        val newMember = Member(
-            id = 2L,
-            email = "study-user@example.com",
-            nickname = "study-user",
-            role = Authority.ROLE_USER
-        )
+        val room =
+            ChatRoom(
+                id = "room-1",
+                name = "코프링 스터디",
+                creatorId = 1L,
+                maxParticipants = 1,
+                participants = mutableSetOf(1L),
+            )
+        val newMember =
+            Member(
+                id = 2L,
+                email = "study-user@example.com",
+                nickname = "study-user",
+                role = Authority.ROLE_USER,
+            )
 
         every { memberRepository.findById(2L) } returns Optional.of(newMember)
         every { chatRoomRepository.findById("room-1") } returns Optional.of(room)

@@ -15,7 +15,7 @@ class KakaoService(
     val client: KakaoClient,
     val kakaoConfig: KakaoConfig,
     val memberRepository: MemberRepository,
-    val nicknameService: NicknameService
+    val nicknameService: NicknameService,
 ) {
     companion object {
         const val GRANT_TYPE = "authorization_code"
@@ -26,10 +26,12 @@ class KakaoService(
     fun getKakaoAccount(code: String): String {
         val token = getToken(code)
         log.info { "token = $token" }
-        val kakaoAccount = client.getInfo(
-            URI(kakaoConfig.userApiUrl),
-            token.tokenType + " " + token.accessToken
-        ).kakaoAccount
+        val kakaoAccount =
+            client
+                .getInfo(
+                    URI(kakaoConfig.userApiUrl),
+                    token.tokenType + " " + token.accessToken,
+                ).kakaoAccount
 
         val email = kakaoAccount.email
         return memberRepository.findByEmail(email)?.nickname ?: run {
@@ -38,11 +40,12 @@ class KakaoService(
     }
 
     private fun saveNewMember(email: String): Member {
-        val newMember = Member(
-            email = email,
-            nickname = nicknameService.getRandomNickname(),
-            role = Authority.ROLE_USER
-        )
+        val newMember =
+            Member(
+                email = email,
+                nickname = nicknameService.getRandomNickname(),
+                role = Authority.ROLE_USER,
+            )
 
         return memberRepository.save(newMember)
     }
@@ -54,7 +57,7 @@ class KakaoService(
                 GRANT_TYPE,
                 kakaoConfig.restApiKey,
                 kakaoConfig.redirectUrl,
-                code
+                code,
             )
         } catch (e: Exception) {
             log.error { "Something error when getting kakao token.. $e" }
@@ -62,7 +65,8 @@ class KakaoService(
         }
     }
 
-    fun createRedirectURI(): URI = URI.create(
-        "${kakaoConfig.authUrl}?response_type=code&client_id=${kakaoConfig.restApiKey}&redirect_uri=${kakaoConfig.redirectUrl}"
-    )
+    fun createRedirectURI(): URI =
+        URI.create(
+            "${kakaoConfig.authUrl}?response_type=code&client_id=${kakaoConfig.restApiKey}&redirect_uri=${kakaoConfig.redirectUrl}",
+        )
 }

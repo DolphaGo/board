@@ -1,6 +1,5 @@
 package dev.dolphago.member.controller
 
-import dev.dolphago.member.dto.KakaoAccount
 import dev.dolphago.member.service.KakaoService
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController
 class KakaoController(
     private val kakaoService: KakaoService,
 ) {
-
     val log = KotlinLogging.logger { }
 
     @GetMapping("/login")

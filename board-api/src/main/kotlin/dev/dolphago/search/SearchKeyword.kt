@@ -3,15 +3,18 @@ package dev.dolphago.search
 import java.util.Locale
 
 @JvmInline
-value class SearchKeyword private constructor(val value: String) {
+value class SearchKeyword private constructor(
+    val value: String,
+) {
     companion object {
         private val whitespaceRegex = Regex("\\s+")
 
         fun from(rawKeyword: String): SearchKeyword {
-            val normalized = rawKeyword
-                .trim()
-                .replace(whitespaceRegex, " ")
-                .lowercase(Locale.ROOT)
+            val normalized =
+                rawKeyword
+                    .trim()
+                    .replace(whitespaceRegex, " ")
+                    .lowercase(Locale.ROOT)
 
             require(normalized.isNotBlank()) { "검색어는 비어 있을 수 없습니다." }
 

@@ -12,7 +12,10 @@ import java.net.URI
 @FeignClient(name = "kakaoClient", configuration = [KakaoFeignConfiguration::class])
 interface KakaoClient {
     @PostMapping
-    fun getInfo(baseUrl: URI, @RequestHeader("Authorization") accessToken: String): KakaoInfo
+    fun getInfo(
+        baseUrl: URI,
+        @RequestHeader("Authorization") accessToken: String,
+    ): KakaoInfo
 
     @PostMapping
     fun getToken(
@@ -20,6 +23,6 @@ interface KakaoClient {
         @RequestParam("grant_type") grantType: String,
         @RequestParam("client_id") restApiKey: String,
         @RequestParam("redirect_uri") redirectUrl: String,
-        @RequestParam("code") code: String
+        @RequestParam("code") code: String,
     ): KakaoToken
 }

@@ -9,15 +9,15 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 class WebSocketConfig : WebSocketMessageBrokerConfigurer {
-
     override fun configureMessageBroker(registry: MessageBrokerRegistry) {
-        registry.enableSimpleBroker("/topic")  // 구독 경로
-        registry.setApplicationDestinationPrefixes("/app")  // 메시지 발행 경로
+        registry.enableSimpleBroker("/topic") // 구독 경로
+        registry.setApplicationDestinationPrefixes("/app") // 메시지 발행 경로
     }
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
-        registry.addEndpoint("/ws")
-            .setAllowedOriginPatterns("*")  // CORS 설정
+        registry
+            .addEndpoint("/ws")
+            .setAllowedOriginPatterns("*") // CORS 설정
             .withSockJS()
     }
-} 
+}

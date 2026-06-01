@@ -7,9 +7,12 @@ data class ChatMessage(
     val roomId: String,
     val sender: String,
     val content: String? = null,
-    val timestamp: LocalDateTime = LocalDateTime.now()
+    val timestamp: LocalDateTime = LocalDateTime.now(),
 )
 
 enum class MessageType {
-    ENTER, TALK, LEAVE, SIGNAL
-} 
+    ENTER,
+    TALK,
+    LEAVE,
+    SIGNAL,
+}

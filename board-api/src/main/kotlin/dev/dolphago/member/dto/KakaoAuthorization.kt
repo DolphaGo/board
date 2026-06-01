@@ -10,5 +10,5 @@ data class KakaoAuthorization(
     val code: String,
     val error: String? = null,
     val errorDescription: String? = null,
-    val state: String? = null
+    val state: String? = null,
 )

@@ -46,9 +46,9 @@ class SearchRankingServiceTest {
         assertEquals(
             listOf(
                 SearchRankingItem(keyword = "kotlin", score = 5),
-                SearchRankingItem(keyword = "spring boot", score = 3)
+                SearchRankingItem(keyword = "spring boot", score = 3),
             ),
-            result
+            result,
         )
     }
 }

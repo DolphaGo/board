@@ -14,11 +14,15 @@ data class ChatRoomResponse(
     val maxParticipants: Int,
     val isPrivate: Boolean,
     val participants: List<MemberSimpleInfo>,
-    val currentParticipants: Int
+    val currentParticipants: Int,
 ) {
     companion object {
-        fun from(chatRoom: ChatRoom, creator: Member, participants: List<Member>): ChatRoomResponse {
-            return ChatRoomResponse(
+        fun from(
+            chatRoom: ChatRoom,
+            creator: Member,
+            participants: List<Member>,
+        ): ChatRoomResponse =
+            ChatRoomResponse(
                 id = chatRoom.id!!,
                 name = chatRoom.name,
                 description = chatRoom.description,
@@ -28,24 +32,22 @@ data class ChatRoomResponse(
                 maxParticipants = chatRoom.maxParticipants,
                 isPrivate = chatRoom.isPrivate,
                 participants = participants.map { MemberSimpleInfo.from(it) },
-                currentParticipants = participants.size
+                currentParticipants = participants.size,
             )
-        }
     }
 }
 
 data class MemberSimpleInfo(
     val id: Long,
     val nickname: String,
-    val email: String
+    val email: String,
 ) {
     companion object {
-        fun from(member: Member): MemberSimpleInfo {
-            return MemberSimpleInfo(
+        fun from(member: Member): MemberSimpleInfo =
+            MemberSimpleInfo(
                 id = member.id!!,
                 nickname = member.nickname,
-                email = member.email
+                email = member.email,
             )
-        }
     }
-} 
+}

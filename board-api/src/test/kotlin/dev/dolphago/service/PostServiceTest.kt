@@ -23,29 +23,32 @@ class PostServiceTest {
 
     @Test
     fun `게시글 생성 후 ES 검색 문서로 색인한다`() {
-        val author = Member(
-            id = 1L,
-            email = "writer@example.com",
-            nickname = "writer",
-            role = Authority.ROLE_USER
-        )
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
         val postSlot = slot<Post>()
 
         every { memberRepository.findById(1L) } returns Optional.of(author)
         every { postRepository.save(capture(postSlot)) } answers {
             firstArg<Post>().apply { id = 10L }
         }
-        every { postSearchIndexService.index(any()) } returns PostSearchDocument(
-            id = 10L,
-            title = "코프링 검색 게시글",
-            content = "Elasticsearch 색인까지 연결한다"
-        )
+        every { postSearchIndexService.index(any()) } returns
+            PostSearchDocument(
+                id = 10L,
+                title = "코프링 검색 게시글",
+                content = "Elasticsearch 색인까지 연결한다",
+            )
 
-        val post = postService.createPost(
-            memberId = 1L,
-            title = "코프링 검색 게시글",
-            content = "Elasticsearch 색인까지 연결한다"
-        )
+        val post =
+            postService.createPost(
+                memberId = 1L,
+                title = "코프링 검색 게시글",
+                content = "Elasticsearch 색인까지 연결한다",
+            )
 
         assertEquals(10L, post.id)
         assertEquals("코프링 검색 게시글", postSlot.captured.title)
@@ -57,20 +60,22 @@ class PostServiceTest {
 
     @Test
     fun `게시글 단건 조회 시 조회수를 1 증가시킨다`() {
-        val author = Member(
-            id = 1L,
-            email = "writer@example.com",
-            nickname = "writer",
-            role = Authority.ROLE_USER
-        )
-        val post = Post(
-            id = 10L,
-            member = author,
-            title = "코프링 검색 게시글",
-            content = "상세 화면에서 보여줄 본문",
-            viewCount = 3,
-            display = true
-        )
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "코프링 검색 게시글",
+                content = "상세 화면에서 보여줄 본문",
+                viewCount = 3,
+                display = true,
+            )
         every { postRepository.findById(10L) } returns Optional.of(post)
 
         val result = postService.getPost(10L)

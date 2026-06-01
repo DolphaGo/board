@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(value = PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class KakaoInfo(
-    val kakaoAccount: KakaoAccount
+    val kakaoAccount: KakaoAccount,
 )
 
 @JsonNaming(value = PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class KakaoAccount(
-    val email: String
+    val email: String,
 )
