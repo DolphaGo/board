@@ -48,6 +48,7 @@ import { defineComponent, ref, onMounted, onUnmounted } from 'vue'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import dayjs from 'dayjs'
+import { chatService } from 'src/api/chatService'
 
 interface ChatMessage {
   type: 'ENTER' | 'TALK' | 'LEAVE' | 'SIGNAL'
@@ -280,6 +281,12 @@ export default defineComponent({
 
     onUnmounted(() => {
       isUnmounted = true
+
+      // STOMP 퇴장 메시지는 채팅 로그용이고, REST leaveRoom은 서버의 참가자 목록 정리용이다.
+      // 화면을 떠나는 중인 요청이므로 await하지 않고 실패만 기록해 unmount 흐름을 막지 않는다.
+      void chatService.leaveRoom(props.roomId).catch(error => {
+        console.error('채팅방 나가기 실패:', error)
+      })
 
       if (stompClient.value?.connected) {
         sendMessage('LEAVE')

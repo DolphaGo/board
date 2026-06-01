@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils'
+import { chatService } from 'src/api/chatService'
 import ChatRoom from './ChatRoom.vue'
 
 const mockPublish = jest.fn()
@@ -6,6 +7,7 @@ const mockSubscribe = jest.fn()
 const mockDeactivate = jest.fn()
 let mockConnected = true
 let subscribedMessageHandler: ((message: { body: string }) => void) | undefined
+const mockedChatService = chatService as jest.Mocked<typeof chatService>
 
 type MockMediaTrack = {
   enabled: boolean
@@ -31,6 +33,12 @@ jest.mock('@stomp/stompjs', () => ({
     this.deactivate = mockDeactivate
     this.activate = jest.fn(() => this.onConnect?.())
   }),
+}))
+
+jest.mock('src/api/chatService', () => ({
+  chatService: {
+    leaveRoom: jest.fn(),
+  },
 }))
 
 const mountChatRoom = (isVideoEnabled = false) =>
@@ -76,6 +84,8 @@ describe('# Chat room component', () => {
     mockPublish.mockClear()
     mockSubscribe.mockClear()
     mockDeactivate.mockClear()
+    mockedChatService.leaveRoom.mockClear()
+    mockedChatService.leaveRoom.mockResolvedValue(undefined)
     mockConnected = true
     subscribedMessageHandler = undefined
   })
@@ -238,6 +248,14 @@ describe('# Chat room component', () => {
       content: 'study-user님이 퇴장하셨습니다.',
     })
     expect(mockDeactivate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should leave the room through the REST API on unmount', () => {
+    const wrapper = mountChatRoom()
+
+    wrapper.unmount()
+
+    expect(mockedChatService.leaveRoom).toHaveBeenCalledWith('room-1')
   })
 
   it('should skip leave message and deactivate when STOMP is disconnected on unmount', () => {
