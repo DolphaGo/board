@@ -57,6 +57,8 @@ interface ChatMessage {
   timestamp: Date
 }
 
+const CHAT_MESSAGE_TYPES = ['ENTER', 'TALK', 'LEAVE', 'SIGNAL'] as const
+
 export default defineComponent({
   name: 'ChatRoom',
   props: {
@@ -124,6 +126,11 @@ export default defineComponent({
           return null
         }
 
+        if (!CHAT_MESSAGE_TYPES.includes(message.type)) {
+          console.warn('지원하지 않는 채팅 타입을 무시했습니다:', message.type)
+          return null
+        }
+
         return message
       } catch (error) {
         // WebSocket은 외부 입력 경계이므로 malformed payload가 와도 화면 전체가 깨지면 안 된다.
@@ -140,7 +147,7 @@ export default defineComponent({
 
       const message = value as Partial<ChatMessage>
 
-      // 화면 렌더링과 구분 class 계산에 바로 쓰는 최소 필드만 먼저 검증한다.
+      // 화면 렌더링과 구분 class 계산에 바로 쓰는 최소 필드만 검증한다.
       // timestamp/content는 서버가 생략할 수 있어도 현재 화면은 기본 포맷으로 처리할 수 있다.
       return typeof message.type === 'string'
         && typeof message.roomId === 'string'

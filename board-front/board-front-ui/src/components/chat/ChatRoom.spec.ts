@@ -163,6 +163,25 @@ describe('# Chat room component', () => {
     warn.mockRestore()
   })
 
+  it('should ignore messages with unsupported chat type', async () => {
+    const wrapper = mountChatRoom()
+    const warn = jest.spyOn(console, 'warn').mockImplementation()
+
+    subscribedMessageHandler?.({
+      body: JSON.stringify({
+        type: 'NOTICE',
+        roomId: 'room-1',
+        sender: 'other-user',
+        content: '지원하지 않는 타입',
+      }),
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('.message.received').exists()).toBe(false)
+    expect(warn).toHaveBeenCalledWith('지원하지 않는 채팅 타입을 무시했습니다:', 'NOTICE')
+    warn.mockRestore()
+  })
+
   it('should publish leave message and deactivate STOMP on unmount', () => {
     const wrapper = mountChatRoom()
     mockPublish.mockClear()
