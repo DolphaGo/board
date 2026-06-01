@@ -4,6 +4,7 @@ import ChatRoom from './ChatRoom.vue'
 const mockPublish = jest.fn()
 const mockSubscribe = jest.fn()
 const mockDeactivate = jest.fn()
+let mockConnected = true
 let subscribedMessageHandler: ((message: { body: string }) => void) | undefined
 
 jest.mock('sockjs-client', () => jest.fn())
@@ -17,7 +18,7 @@ jest.mock('@stomp/stompjs', () => ({
     deactivate: jest.Mock
     onConnect?: () => void
   }) {
-    this.connected = true
+    this.connected = mockConnected
     this.publish = mockPublish
     this.subscribe = mockSubscribe.mockImplementation((_destination, callback) => {
       subscribedMessageHandler = callback
@@ -41,6 +42,7 @@ describe('# Chat room component', () => {
     mockPublish.mockClear()
     mockSubscribe.mockClear()
     mockDeactivate.mockClear()
+    mockConnected = true
     subscribedMessageHandler = undefined
   })
 
@@ -113,5 +115,16 @@ describe('# Chat room component', () => {
       content: 'study-user님이 퇴장하셨습니다.',
     })
     expect(mockDeactivate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should skip leave message and deactivate when STOMP is disconnected on unmount', () => {
+    mockConnected = false
+    const wrapper = mountChatRoom()
+    mockPublish.mockClear()
+
+    wrapper.unmount()
+
+    expect(mockPublish).not.toHaveBeenCalled()
+    expect(mockDeactivate).not.toHaveBeenCalled()
   })
 })
