@@ -98,4 +98,27 @@ describe('# Chat room list component', () => {
     expect(mockedChatService.joinRoom).toHaveBeenCalledWith('room-2')
     expect(pushMock).toHaveBeenCalledWith('/chat/rooms/room-2')
   })
+
+  it('should render the enter failure message above the room list', async () => {
+    mockedChatService.getRoomList.mockResolvedValue([
+      {
+        id: 'room-3',
+        name: '오류 확인방',
+        participantCount: 1,
+        createdAt: '2026-06-01T11:00:00.000Z',
+      },
+    ])
+    mockedChatService.joinRoom.mockRejectedValue(new Error('join failed'))
+
+    const wrapper = mount(ChatRoomList)
+    await flushPromises()
+
+    await wrapper.get('.room-item').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('.action-feedback').text()).toBe(
+      '채팅방 입장에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해주세요.'
+    )
+    expect(pushMock).not.toHaveBeenCalled()
+  })
 })
