@@ -27,4 +27,31 @@ describe('# Post editor submit', () => {
     expect(moveToPostDetail).toBeCalledWith(77)
     expect(message).toBe('게시글 #77 저장 완료')
   })
+
+  it('should forward notice flag when admin editor asks to create a notice post', async () => {
+    const createPost = jest.fn().mockResolvedValue({
+      id: 88,
+      title: '공지',
+      content: '관리자 공지',
+      imageUrls: [],
+      viewCount: 0,
+      display: true,
+      notice: true,
+    })
+
+    await submitPostEditorForm({
+      title: '공지',
+      content: '관리자 공지',
+      notice: true,
+      createPost,
+      moveToPostDetail: jest.fn(),
+    })
+
+    expect(createPost).toBeCalledWith({
+      title: '공지',
+      content: '관리자 공지',
+      imageUrls: [],
+      notice: true,
+    })
+  })
 })

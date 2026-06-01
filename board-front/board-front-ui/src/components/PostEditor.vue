@@ -32,6 +32,15 @@
           @paste="handlePaste"
       ></textarea>
     </div>
+    <label v-if="isAdminEditor" class="notice-option">
+      <input
+          :checked="notice"
+          type="checkbox"
+          data-testid="notice-checkbox"
+          @change="toggleNotice"
+      />
+      공지로 등록
+    </label>
     <div class="image-url-panel">
       <label for="image-url-input">이미지 URL</label>
       <div class="image-url-controls">
@@ -83,6 +92,15 @@ import { request } from 'src';  // 'request' 객체를 사용하여 서버에 �
 import { postService } from 'src/api/postService';
 import { submitPostEditorForm } from './postEditorSubmit';
 
+const props = withDefaults(
+    defineProps<{
+      authorRole?: 'user' | 'admin'
+    }>(),
+    {
+      authorRole: 'user',
+    },
+);
+
 const router = useRouter();
 const title = ref('');
 const bodyText = ref('');
@@ -90,9 +108,12 @@ const imageUrls = ref<string[]>([]);
 const imageUrlInput = ref('');
 const imageUploadMessage = ref('');
 const imageUploading = ref(false);
+const notice = ref(false);
 const activeTab = ref('write');
 const submitting = ref(false);
 const submitMessage = ref('');
+
+const isAdminEditor = computed(() => props.authorRole === 'admin');
 
 // Convert markdown to HTML using Marked
 const markdownPreview = computed(() => {
@@ -168,6 +189,10 @@ const addImageUrl = () => {
   imageUrlInput.value = '';
 };
 
+const toggleNotice = (event: Event) => {
+  notice.value = event.target instanceof HTMLInputElement && event.target.checked;
+};
+
 const submit = async () => {
   submitting.value = true;
   submitMessage.value = '';
@@ -177,6 +202,7 @@ const submit = async () => {
       title: title.value,
       content: bodyText.value,
       imageUrls: imageUrls.value,
+      notice: isAdminEditor.value ? notice.value : false,
       createPost: postService.createPost,
       moveToPostDetail: postId => {
         router.push(`/post/${postId}`);
@@ -252,6 +278,16 @@ const submit = async () => {
   border-radius: 6px;
   min-height: 180px;
   font-family: 'Arial', sans-serif;
+}
+
+.notice-option {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  margin: 0 0 16px;
+  color: #333333;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .image-url-panel {

@@ -1,4 +1,4 @@
-import { router } from './router'
+import { buildPostEditorRouteProps, router } from './router'
 
 const getChatRoomRouteProps = () => {
   const chatRoomRoute = router.getRoutes().find(route => route.path === '/chat/rooms/:id')
@@ -32,6 +32,17 @@ describe('# Router chat room props', () => {
       roomId: 'room-1',
       username: 'study-user',
       isVideoEnabled: false,
+    })
+  })
+})
+
+describe('# Router post editor props', () => {
+  it('should enable admin editor mode only when role query is admin', () => {
+    expect(buildPostEditorRouteProps({ query: { role: 'admin' } })).toEqual({
+      authorRole: 'admin',
+    })
+    expect(buildPostEditorRouteProps({ query: { role: 'user' } })).toEqual({
+      authorRole: 'user',
     })
   })
 })

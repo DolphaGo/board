@@ -31,12 +31,24 @@ export const buildChatRoomRouteProps = (route: {
   }
 }
 
+export const buildPostEditorRouteProps = (route: {
+  query: Record<string, unknown>
+}) => {
+  const role = firstRouteValue(route.query.role)
+
+  // 아직 로그인/권한 세션이 없는 학습용 UI이므로 쿼리로 관리자 작성 모드를 켠다.
+  // 백엔드는 memberId의 Authority를 다시 검사하므로 프론트 표시는 편의 기능이고 보안 경계가 아니다.
+  return {
+    authorRole: role === 'admin' ? 'admin' : 'user',
+  }
+}
+
 export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: '/', component: Homepage },
     { path: '/search', component: SearchResults },
-    { path: '/post/edit', component: PostEditor },
+    { path: '/post/edit', component: PostEditor, props: buildPostEditorRouteProps },
     { path: '/post/:id', component: PostDetail },
     {
       path: '/chat/rooms',

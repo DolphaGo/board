@@ -178,4 +178,38 @@ describe('# Post editor component', () => {
       '\n![alt text](/api/images/uploading.png)\n',
     )
   })
+
+  it('should expose notice checkbox only for admin editor and submit notice flag', async () => {
+    mockedPostService.createPost.mockResolvedValue({
+      id: 99,
+      title: '공지 작성',
+      content: '운영 공지',
+      imageUrls: [],
+      viewCount: 0,
+      display: true,
+      notice: true,
+    })
+    const normalWrapper = mount(PostEditor)
+
+    expect(normalWrapper.find('[data-testid="notice-checkbox"]').exists()).toBe(false)
+
+    const adminWrapper = mount(PostEditor, {
+      props: {
+        authorRole: 'admin',
+      },
+    })
+    await adminWrapper.get('#issue-title').setValue('공지 작성')
+    await adminWrapper.get('#issue-body').setValue('운영 공지')
+    await adminWrapper.get('[data-testid="notice-checkbox"]').setValue(true)
+    await adminWrapper.get('[data-testid="post-submit"]').trigger('click')
+    await flushPromises()
+
+    expect(mockedPostService.createPost).toBeCalledWith({
+      title: '공지 작성',
+      content: '운영 공지',
+      imageUrls: [],
+      notice: true,
+    })
+    expect(push).toBeCalledWith('/post/99')
+  })
 })
