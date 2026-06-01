@@ -21,9 +21,47 @@ jest.mock('src/api/postSearchService', () => ({
 
 const mockedPostSearchService = postSearchService as jest.Mocked<typeof postSearchService>
 
+const mountedWrappers: Array<ReturnType<typeof mount>> = []
+
+const mountSearchResults = () => {
+  const wrapper = mount(SearchResults, {
+    global: {
+      stubs: {
+        MainLayout: {
+          template: '<main><slot /></main>',
+        },
+        RouterLink: {
+          props: ['to'],
+          template: '<a><slot /></a>',
+        },
+      },
+    },
+  })
+  mountedWrappers.push(wrapper)
+
+  return wrapper
+}
+
+const createDeferred = <T>() => {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>(createdResolve => {
+    resolve = createdResolve
+  })
+
+  return {
+    promise,
+    resolve,
+  }
+}
+
 describe('# Search results component', () => {
   beforeEach(() => {
     mockRoute.query.keyword = 'kotlin'
+    mockedPostSearchService.search.mockReset()
+  })
+
+  afterEach(() => {
+    mountedWrappers.splice(0).forEach(wrapper => wrapper.unmount())
   })
 
   it('should render Elasticsearch score and highlight count as board search metadata', async () => {
@@ -40,19 +78,7 @@ describe('# Search results component', () => {
       },
     ])
 
-    const wrapper = mount(SearchResults, {
-      global: {
-        stubs: {
-          MainLayout: {
-            template: '<main><slot /></main>',
-          },
-          RouterLink: {
-            props: ['to'],
-            template: '<a><slot /></a>',
-          },
-        },
-      },
-    })
+    const wrapper = mountSearchResults()
     await flushPromises()
 
     expect(mockedPostSearchService.search).toBeCalledWith('kotlin')
@@ -69,19 +95,7 @@ describe('# Search results component', () => {
     try {
       mockedPostSearchService.search.mockRejectedValue(new Error('backend down'))
 
-      const wrapper = mount(SearchResults, {
-        global: {
-          stubs: {
-            MainLayout: {
-              template: '<main><slot /></main>',
-            },
-            RouterLink: {
-              props: ['to'],
-              template: '<a><slot /></a>',
-            },
-          },
-        },
-      })
+      const wrapper = mountSearchResults()
       await flushPromises()
 
       expect(wrapper.text()).toContain('검색 결과를 불러오지 못했습니다.')
@@ -95,5 +109,47 @@ describe('# Search results component', () => {
     } finally {
       consoleErrorSpy.mockRestore()
     }
+  })
+
+  it('should keep the latest keyword results when an older search resolves later', async () => {
+    const kotlinSearch = createDeferred<Awaited<ReturnType<typeof postSearchService.search>>>()
+    const javaSearch = createDeferred<Awaited<ReturnType<typeof postSearchService.search>>>()
+
+    mockedPostSearchService.search.mockImplementation(keyword =>
+      keyword === 'kotlin' ? kotlinSearch.promise : javaSearch.promise
+    )
+
+    const wrapper = mountSearchResults()
+    await nextTick()
+
+    mockRoute.query.keyword = 'java'
+    await nextTick()
+
+    javaSearch.resolve([
+      {
+        postId: 8,
+        title: '자바 검색 결과',
+        contentPreview: '최신 검색어 결과입니다',
+        score: 9.5,
+        highlights: {},
+      },
+    ])
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('자바 검색 결과')
+
+    kotlinSearch.resolve([
+      {
+        postId: 7,
+        title: '코틀린 이전 검색 결과',
+        contentPreview: '늦게 도착한 이전 검색어 결과입니다',
+        score: 11.2,
+        highlights: {},
+      },
+    ])
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('자바 검색 결과')
+    expect(wrapper.text()).not.toContain('코틀린 이전 검색 결과')
   })
 })

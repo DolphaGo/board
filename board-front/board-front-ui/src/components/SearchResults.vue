@@ -44,6 +44,7 @@ const route = useRoute()
 const results = ref<PostSearchResult[]>([])
 const loading = ref(false)
 const error = ref(false)
+let searchRequestId = 0
 
 const searchKeyword = computed(() => {
   const keyword = route.query.keyword
@@ -60,22 +61,39 @@ watch(
   searchKeyword,
   async keyword => {
     if (keyword.length === 0) {
+      searchRequestId += 1
       results.value = []
       error.value = false
       loading.value = false
       return
     }
 
+    // 검색어를 빠르게 바꿀 때 먼저 보낸 요청이 늦게 끝나면 최신 화면을 덮어쓸 수 있다.
+    // 요청마다 번호를 붙이고 현재 번호와 같은 응답만 반영해서 오래된 응답을 무시한다.
+    const requestId = searchRequestId + 1
+    searchRequestId = requestId
+
     try {
       loading.value = true
       error.value = false
-      results.value = await postSearchService.search(keyword)
+      const searchedResults = await postSearchService.search(keyword)
+      if (requestId !== searchRequestId) {
+        return
+      }
+
+      results.value = searchedResults
     } catch (err) {
+      if (requestId !== searchRequestId) {
+        return
+      }
+
       console.error('게시글 검색 실패:', err)
       results.value = []
       error.value = true
     } finally {
-      loading.value = false
+      if (requestId === searchRequestId) {
+        loading.value = false
+      }
     }
   },
   { immediate: true }
