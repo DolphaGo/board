@@ -27,6 +27,12 @@ class ChatRoomController(
     fun createChatRoom(
         @RequestBody request: CreateChatRoomRequest,
     ): ResponseEntity<ChatRoom> {
+        // 채팅방 이름은 목록과 입장 화면에서 방을 식별하는 최소 정보다.
+        // 공백뿐인 이름은 저장해도 사용자가 구분할 수 없으므로 HTTP 입력 단계에서 400으로 거부한다.
+        if (request.name.isBlank()) {
+            return ResponseEntity.badRequest().build()
+        }
+
         val chatRoom =
             chatRoomService.createChatRoom(
                 name = request.name,

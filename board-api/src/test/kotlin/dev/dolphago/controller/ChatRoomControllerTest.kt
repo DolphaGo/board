@@ -12,6 +12,21 @@ class ChatRoomControllerTest {
     private val chatRoomController = ChatRoomController(chatRoomService)
 
     @Test
+    fun `createChatRoom은 이름이 비어 있으면 400을 반환하고 서비스를 호출하지 않는다`() {
+        val response =
+            chatRoomController.createChatRoom(
+                CreateChatRoomRequest(
+                    name = "   ",
+                    description = "이름이 없는 방",
+                    createdBy = 1L,
+                ),
+            )
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        verify(exactly = 0) { chatRoomService.createChatRoom(any(), any(), any(), any()) }
+    }
+
+    @Test
     fun `joinChatRoom은 채팅방 id가 비어 있으면 400을 반환하고 서비스를 호출하지 않는다`() {
         val response = chatRoomController.joinChatRoom("   ", JoinChatRoomRequest(memberId = 1L))
 
