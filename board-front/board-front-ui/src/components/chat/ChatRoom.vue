@@ -131,6 +131,8 @@ export default defineComponent({
           return null
         }
 
+        // 서버는 /topic/chat/{roomId}로 방을 나눠 보내지만, 클라이언트도 payload를 한 번 더 확인한다.
+        // 공부 포인트: 네트워크 경계에서는 라우팅이 맞다는 가정만 믿지 말고 화면에 넣기 전에도 검증한다.
         if (message.roomId !== props.roomId) {
           return null
         }
