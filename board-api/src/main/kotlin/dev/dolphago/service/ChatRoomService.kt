@@ -51,6 +51,12 @@ class ChatRoomService(
         if (chatRoom.participants.contains(memberId)) {
             return chatRoom
         }
+        if (chatRoom.isFull()) {
+            // ChatRoom.maxParticipants는 단순 표시값이 아니라 입장 가능 인원을 제한하는 규칙이다.
+            // 이 검사를 서비스에 두는 이유는 REST API, WebSocket, 배치 등 어떤 진입점으로
+            // 참가 요청이 들어와도 같은 비즈니스 규칙을 재사용하기 위해서다.
+            throw IllegalStateException("채팅방 정원이 가득 찼습니다: $roomId")
+        }
 
         chatRoom.participants.add(memberId)
         return chatRoomRepository.save(chatRoom)
