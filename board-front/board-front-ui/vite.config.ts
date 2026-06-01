@@ -2,6 +2,7 @@ import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import {resolve} from "path";
 import analyzer from "rollup-plugin-analyzer";
+import {createPostSearchFixture} from "./src/api/postSearchFixture";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -13,5 +14,27 @@ export default defineConfig({
   server: {
     port: 3000,
   },
-  plugins: [vue(), analyzer()]
+  plugins: [
+    vue(),
+    {
+      name: 'board-local-search-api-fixture',
+      configureServer(server) {
+        server.middlewares.use('/api/search/posts', (req, res, next) => {
+          if (req.method !== 'GET') {
+            next()
+            return
+          }
+
+          const requestUrl = new URL(req.url ?? '', 'http://localhost')
+          const keyword = requestUrl.searchParams.get('keyword') ?? ''
+
+          // local Vite 단독 실행에서도 ES 검색 성공 화면을 학습/검증할 수 있게
+          // 개발 서버에서만 동작하는 fixture 응답을 내려준다.
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify(createPostSearchFixture(keyword)))
+        })
+      },
+    },
+    analyzer(),
+  ]
 })
