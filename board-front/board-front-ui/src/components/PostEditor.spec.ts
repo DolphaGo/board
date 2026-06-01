@@ -105,4 +105,35 @@ describe('# Post editor component', () => {
     })
     expect(push).toBeCalledWith('/post/88')
   })
+
+  it('should show a user-facing message when pasted image upload fails', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    mockedRequest.postForm.mockRejectedValue(new Error('이미지는 5MB까지만 업로드할 수 있습니다.'))
+    const wrapper = mount(PostEditor)
+    const imageFile = new File(['image-bytes'], 'large.png', { type: 'image/png' })
+
+    await wrapper.get('#issue-body').trigger('paste', {
+      clipboardData: {
+        items: [
+          {
+            type: 'image/png',
+            getAsFile: () => imageFile,
+          },
+        ],
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="image-upload-message"]').text()).toContain(
+      '이미지 업로드에 실패했습니다.',
+    )
+    expect(wrapper.get('[data-testid="image-upload-message"]').text()).toContain(
+      'PNG, JPEG, GIF, WebP 이미지만 업로드할 수 있고 5MB까지 가능합니다.',
+    )
+    expect(wrapper.text()).not.toContain('large.png')
+    expect(mockedPostService.createPost).not.toBeCalled()
+    expect(consoleError).toBeCalledWith('Image upload failed', expect.any(Error))
+
+    consoleError.mockRestore()
+  })
 })

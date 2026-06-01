@@ -57,6 +57,13 @@
           {{ index + 1 }}. {{ imageUrl }}
         </li>
       </ol>
+      <p
+          v-if="imageUploadMessage"
+          class="image-upload-message"
+          data-testid="image-upload-message"
+      >
+        {{ imageUploadMessage }}
+      </p>
     </div>
     <div v-if="activeTab === 'preview'" class="markdown-preview">
       <div v-html="markdownPreview"></div>
@@ -81,6 +88,7 @@ const title = ref('');
 const bodyText = ref('');
 const imageUrls = ref<string[]>([]);
 const imageUrlInput = ref('');
+const imageUploadMessage = ref('');
 const activeTab = ref('write');
 const submitting = ref(false);
 const submitMessage = ref('');
@@ -104,6 +112,8 @@ const handlePaste = async (event: ClipboardEvent) => {
           insertImageMarkdown(url);
         } catch (error) {
           console.error("Image upload failed", error);
+          imageUploadMessage.value =
+              '이미지 업로드에 실패했습니다. PNG, JPEG, GIF, WebP 이미지만 업로드할 수 있고 5MB까지 가능합니다.';
         }
       }
     }
@@ -132,6 +142,7 @@ const insertImageMarkdown = (url: string) => {
   const markdownImage = `![alt text](${url})`;
   bodyText.value += `\n${markdownImage}\n`;
   imageUrls.value = [...imageUrls.value, url];
+  imageUploadMessage.value = '';
 };
 
 const addImageUrl = () => {
@@ -144,6 +155,7 @@ const addImageUrl = () => {
   // 업로드 API가 없어도 이미지 URL을 먼저 배열로 관리하면,
   // 블로그처럼 본문 아래에 여러 이미지를 순서대로 이어붙이는 저장 계약을 연습할 수 있다.
   imageUrls.value = [...imageUrls.value, imageUrl];
+  imageUploadMessage.value = '';
   imageUrlInput.value = '';
 };
 
@@ -270,6 +282,13 @@ const submit = async () => {
   padding-left: 20px;
   color: #555555;
   font-size: 12px;
+}
+
+.image-upload-message {
+  margin: 0;
+  color: #b42318;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .markdown-preview {
