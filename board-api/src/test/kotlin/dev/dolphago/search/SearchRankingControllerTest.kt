@@ -47,4 +47,12 @@ class SearchRankingControllerTest {
         assertEquals(204, response.statusCode.value())
         verify(exactly = 1) { searchRankingService.record("Kotlin Spring") }
     }
+
+    @Test
+    fun `검색어 기록 요청의 검색어가 비어 있으면 400을 반환한다`() {
+        val response = controller.recordKeyword(SearchKeywordRecordRequest(keyword = "   "))
+
+        assertEquals(400, response.statusCode.value())
+        verify(exactly = 0) { searchRankingService.record(any()) }
+    }
 }

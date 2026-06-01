@@ -36,8 +36,13 @@ class SearchRankingController(
     fun recordKeyword(
         @RequestBody request: SearchKeywordRecordRequest,
     ): ResponseEntity<Void> {
+        if (request.keyword.isBlank()) {
+            return ResponseEntity.badRequest().build()
+        }
+
         // 검색어 정규화와 Redis 점수 증가는 서비스 책임으로 둔다.
         // 컨트롤러는 HTTP body에서 넘어온 keyword를 서비스에 전달하는 얇은 어댑터다.
+        // 다만 빈 검색어처럼 HTTP body 자체가 잘못된 값이면 여기서 400으로 막는다.
         searchRankingService.record(request.keyword)
         return ResponseEntity.noContent().build()
     }
