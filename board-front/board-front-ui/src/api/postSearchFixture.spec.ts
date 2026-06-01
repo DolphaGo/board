@@ -1,6 +1,17 @@
+import { normalizeSearchKeyword } from '../search/normalizeSearchKeyword'
 import { createPostSearchFixture } from './postSearchFixture'
 
+jest.mock('../search/normalizeSearchKeyword', () => ({
+  normalizeSearchKeyword: jest.fn((keyword: string) => keyword.trim().replace(/\s+/g, ' ')),
+}))
+
+const mockedNormalizeSearchKeyword = normalizeSearchKeyword as jest.MockedFunction<typeof normalizeSearchKeyword>
+
 describe('# Post search fixture', function () {
+  beforeEach(() => {
+    mockedNormalizeSearchKeyword.mockClear()
+  })
+
   it('should create a scored search result with highlight snippets from keyword', function () {
     const results = createPostSearchFixture('kotlin spring')
 
@@ -16,5 +27,11 @@ describe('# Post search fixture', function () {
         },
       },
     ])
+  })
+
+  it('should normalize fixture keyword with the shared search normalizer', function () {
+    createPostSearchFixture('  kotlin   spring  ')
+
+    expect(mockedNormalizeSearchKeyword).toBeCalledWith('  kotlin   spring  ')
   })
 })

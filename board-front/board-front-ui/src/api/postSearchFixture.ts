@@ -1,7 +1,8 @@
+import { normalizeSearchKeyword } from '../search/normalizeSearchKeyword'
 import type { PostSearchResult } from './postSearchService'
 
 export const createPostSearchFixture = (keyword: string): PostSearchResult[] => {
-  const normalizedKeyword = keyword.trim().replace(/\s+/g, ' ')
+  const normalizedKeyword = normalizeSearchKeyword(keyword)
 
   if (normalizedKeyword.length === 0) {
     return []
