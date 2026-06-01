@@ -99,7 +99,11 @@ export default defineComponent({
 
       stompClient.value.onConnect = () => {
         stompClient.value?.subscribe('/topic/public', (message) => {
-          const chatMessage = JSON.parse(message.body)
+          const chatMessage = parseIncomingMessage(message.body)
+          if (!chatMessage) {
+            return
+          }
+
           messages.value.push(chatMessage)
           scrollToBottom()
         })
@@ -109,6 +113,17 @@ export default defineComponent({
       }
 
       stompClient.value.activate()
+    }
+
+    const parseIncomingMessage = (body: string): ChatMessage | null => {
+      try {
+        return JSON.parse(body)
+      } catch (error) {
+        // WebSocket은 외부 입력 경계이므로 malformed payload가 와도 화면 전체가 깨지면 안 된다.
+        // 공부 포인트: 신뢰할 수 없는 입력은 파싱 지점에서 좁게 막고, 렌더링 상태는 그대로 둔다.
+        console.warn('잘못된 채팅 메시지를 무시했습니다:', error)
+        return null
+      }
     }
 
     const sendMessage = (type: 'ENTER' | 'TALK' | 'LEAVE' = 'TALK') => {

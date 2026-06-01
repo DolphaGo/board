@@ -131,6 +131,20 @@ describe('# Chat room component', () => {
     expect(wrapper.get('.message.received .timestamp').text()).toBe('18:29')
   })
 
+  it('should ignore invalid JSON messages received from the subscription', async () => {
+    const wrapper = mountChatRoom()
+    const warn = jest.spyOn(console, 'warn').mockImplementation()
+
+    expect(() => {
+      subscribedMessageHandler?.({ body: '{invalid-json' })
+    }).not.toThrow()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('.message.received').exists()).toBe(false)
+    expect(warn).toHaveBeenCalledWith('잘못된 채팅 메시지를 무시했습니다:', expect.any(SyntaxError))
+    warn.mockRestore()
+  })
+
   it('should publish leave message and deactivate STOMP on unmount', () => {
     const wrapper = mountChatRoom()
     mockPublish.mockClear()
