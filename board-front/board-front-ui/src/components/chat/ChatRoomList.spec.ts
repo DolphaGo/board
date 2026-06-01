@@ -63,6 +63,19 @@ describe('# Chat room list component', () => {
     )
   })
 
+  it('should render a name required message when submitting a blank room name with Enter', async () => {
+    const wrapper = mount(ChatRoomList)
+    await flushPromises()
+
+    await wrapper.get('.create-btn').trigger('click')
+    await wrapper.get('input[placeholder="채팅방 이름을 입력하세요"]').setValue('   ')
+    await wrapper.get('input[placeholder="채팅방 이름을 입력하세요"]').trigger('keyup.enter')
+    await flushPromises()
+
+    expect(wrapper.get('.dialog-feedback').text()).toBe('채팅방 이름을 입력해주세요.')
+    expect(mockedChatService.createRoom).not.toHaveBeenCalled()
+  })
+
   it('should enter the room with the Enter key from a room item', async () => {
     mockedChatService.getRoomList.mockResolvedValue([
       chatRoomFixture(),

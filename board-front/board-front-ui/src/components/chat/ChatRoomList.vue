@@ -143,7 +143,12 @@ export default defineComponent({
     }
 
     const createRoom = async () => {
-      if (!newRoomName.value.trim()) return
+      if (!newRoomName.value.trim()) {
+        // 버튼은 비활성화되어도 Enter 키로 createRoom이 호출될 수 있다.
+        // 조용히 무시하면 사용자가 왜 생성되지 않는지 알 수 없으므로 다이얼로그 안에 이유를 보여준다.
+        feedbackMessage.value = '채팅방 이름을 입력해주세요.'
+        return
+      }
 
       try {
         feedbackMessage.value = ''
