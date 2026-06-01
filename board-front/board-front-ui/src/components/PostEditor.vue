@@ -32,10 +32,36 @@
           @paste="handlePaste"
       ></textarea>
     </div>
+    <div class="image-url-panel">
+      <label for="image-url-input">이미지 URL</label>
+      <div class="image-url-controls">
+        <input
+            id="image-url-input"
+            v-model="imageUrlInput"
+            type="url"
+            class="form-control image-url-input"
+            data-testid="image-url-input"
+            placeholder="https://cdn.example.com/image.png"
+        />
+        <button
+            type="button"
+            class="btn-image-add"
+            data-testid="add-image-url"
+            @click="addImageUrl"
+        >
+          추가
+        </button>
+      </div>
+      <ol v-if="imageUrls.length > 0" class="image-url-list" aria-label="본문 이미지 URL">
+        <li v-for="(imageUrl, index) in imageUrls" :key="`${imageUrl}:${index}`" class="image-url-item">
+          {{ index + 1 }}. {{ imageUrl }}
+        </li>
+      </ol>
+    </div>
     <div v-if="activeTab === 'preview'" class="markdown-preview">
       <div v-html="markdownPreview"></div>
     </div>
-    <button @click="submit" class="btn-submit" :disabled="submitting">
+    <button data-testid="post-submit" @click="submit" class="btn-submit" :disabled="submitting">
       {{ submitting ? '저장 중...' : '작성하기' }}
     </button>
     <p v-if="submitMessage" class="submit-message">{{ submitMessage }}</p>
@@ -54,6 +80,7 @@ const router = useRouter();
 const title = ref('');
 const bodyText = ref('');
 const imageUrls = ref<string[]>([]);
+const imageUrlInput = ref('');
 const activeTab = ref('write');
 const submitting = ref(false);
 const submitMessage = ref('');
@@ -97,6 +124,19 @@ const insertImageMarkdown = (url: string) => {
   const markdownImage = `![alt text](${url})`;
   bodyText.value += `\n${markdownImage}\n`;
   imageUrls.value = [...imageUrls.value, url];
+};
+
+const addImageUrl = () => {
+  const imageUrl = imageUrlInput.value.trim();
+
+  if (imageUrl.length === 0) {
+    return;
+  }
+
+  // 업로드 API가 없어도 이미지 URL을 먼저 배열로 관리하면,
+  // 블로그처럼 본문 아래에 여러 이미지를 순서대로 이어붙이는 저장 계약을 연습할 수 있다.
+  imageUrls.value = [...imageUrls.value, imageUrl];
+  imageUrlInput.value = '';
 };
 
 const submit = async () => {
@@ -183,6 +223,45 @@ const submit = async () => {
   border-radius: 6px;
   min-height: 180px;
   font-family: 'Arial', sans-serif;
+}
+
+.image-url-panel {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.image-url-panel label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.image-url-controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.image-url-input {
+  margin: 0;
+}
+
+.btn-image-add {
+  background: #057dbc;
+  border: 1px solid #04699d;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.image-url-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #555555;
+  font-size: 12px;
 }
 
 .markdown-preview {
