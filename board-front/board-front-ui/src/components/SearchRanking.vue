@@ -25,9 +25,11 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted } from 'vue'
 import { createSearchRanking } from './useSearchRanking'
+import { onSearchRankingChanged } from './searchRankingRefreshEvent'
 
 const { rankings, loading, error, lastUpdatedAt, fetchRankings } = createSearchRanking()
 let refreshTimer: number | undefined
+let unsubscribeSearchRankingChanged: (() => void) | undefined
 
 const lastUpdatedLabel = computed(() => {
   if (lastUpdatedAt.value === null) {
@@ -46,12 +48,16 @@ onMounted(() => {
   // "실시간"을 처음부터 WebSocket으로 만들면 채팅 학습 코드와 관심사가 섞인다.
   // 검색어 랭킹은 Redis 집계 값을 주기적으로 다시 읽는 polling부터 시작한다.
   refreshTimer = window.setInterval(fetchRankings, 30_000)
+  // 검색창에서 새 검색어 기록이 성공하면 polling 주기를 기다리지 않고 즉시 다시 읽는다.
+  unsubscribeSearchRankingChanged = onSearchRankingChanged(fetchRankings)
 })
 
 onUnmounted(() => {
   if (refreshTimer !== undefined) {
     window.clearInterval(refreshTimer)
   }
+
+  unsubscribeSearchRankingChanged?.()
 })
 </script>
 

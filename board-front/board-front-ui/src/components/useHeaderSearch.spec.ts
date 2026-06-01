@@ -11,6 +11,20 @@ describe('# Header search behavior', function () {
     expect(recordKeyword).toBeCalledWith('kotlin spring')
   })
 
+  it('should notify ranking refresh after keyword recording succeeds', async function () {
+    const recordKeyword = jest.fn().mockResolvedValue(undefined)
+    const notifyRankingChanged = jest.fn()
+    const { keyword, submitSearch } = createHeaderSearch({
+      recorder: { recordKeyword },
+      notifyRankingChanged,
+    })
+
+    keyword.value = 'kotlin'
+    await submitSearch()
+
+    expect(notifyRankingChanged).toBeCalledTimes(1)
+  })
+
   it('should ignore a blank keyword', async function () {
     const recordKeyword = jest.fn().mockResolvedValue(undefined)
     const onSearch = jest.fn()
@@ -26,13 +40,18 @@ describe('# Header search behavior', function () {
   it('should not throw when keyword recording fails', async function () {
     const consoleError = jest.spyOn(console, 'error').mockImplementation()
     const recordKeyword = jest.fn().mockRejectedValue(new Error('redis unavailable'))
-    const { keyword, submitSearch } = createHeaderSearch({ recorder: { recordKeyword } })
+    const notifyRankingChanged = jest.fn()
+    const { keyword, submitSearch } = createHeaderSearch({
+      recorder: { recordKeyword },
+      notifyRankingChanged,
+    })
 
     keyword.value = 'kotlin'
 
     try {
       await expect(submitSearch()).resolves.toBeUndefined()
       expect(consoleError).toBeCalled()
+      expect(notifyRankingChanged).not.toBeCalled()
     } finally {
       consoleError.mockRestore()
     }
