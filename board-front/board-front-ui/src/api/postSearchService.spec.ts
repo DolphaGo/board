@@ -17,6 +17,15 @@ describe('# Post search service', function () {
           highlights: {
             title: ['<em>kotlin</em> spring'],
           },
+          scoringSignals: [
+            {
+              field: 'title',
+              boost: 3,
+              keyword: 'kotlin spring',
+              description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+              applied: true,
+            },
+          ],
         },
       ],
     })
@@ -30,6 +39,15 @@ describe('# Post search service', function () {
       },
     })
     expect(results).toHaveLength(1)
+    expect(results[0].scoringSignals).toEqual([
+      {
+        field: 'title',
+        boost: 3,
+        keyword: 'kotlin spring',
+        description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+        applied: true,
+      },
+    ])
   })
 
   it('should reject malformed post search responses', async function () {
@@ -51,6 +69,32 @@ describe('# Post search service', function () {
           highlights: {
             title: '<em>kotlin</em> spring',
           },
+          scoringSignals: [],
+        },
+      ],
+    })
+
+    await expect(postSearchService.search('kotlin')).rejects.toThrow('Invalid post search response')
+  })
+
+  it('should reject post search arrays without valid scoring signals', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          postId: 1,
+          title: 'kotlin spring',
+          contentPreview: 'Elasticsearch scoring example',
+          score: 10.5,
+          highlights: {},
+          scoringSignals: [
+            {
+              field: 'title',
+              boost: '3',
+              keyword: 'kotlin spring',
+              description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+              applied: true,
+            },
+          ],
         },
       ],
     })

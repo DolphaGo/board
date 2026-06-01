@@ -25,6 +25,22 @@ describe('# Post search fixture', function () {
           title: ['<em>kotlin spring</em> 검색 스코어링 예제'],
           content: ['Elasticsearch nori analyzer와 <em>kotlin spring</em> 점수 계산'],
         },
+        scoringSignals: [
+          {
+            field: 'title',
+            boost: 3,
+            keyword: 'kotlin spring',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+          {
+            field: 'content',
+            boost: 1,
+            keyword: 'kotlin spring',
+            description: '본문 원문 match는 제목보다 넓은 recall을 담당한다.',
+            applied: true,
+          },
+        ],
       },
     ])
   })

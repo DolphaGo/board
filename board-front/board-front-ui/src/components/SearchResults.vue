@@ -19,6 +19,13 @@
             <span>점수 {{ result.score.toFixed(2) }}</span>
             <span v-if="highlightCount(result) > 0">하이라이트 {{ highlightCount(result) }}개</span>
           </div>
+          <ul v-if="result.scoringSignals.length > 0" class="scoring-signal-list">
+            <li v-for="signal in result.scoringSignals" :key="`${result.postId}:${signal.field}`">
+              <span class="signal-field">{{ signal.field }} x{{ signal.boost.toFixed(2) }}</span>
+              <span class="signal-state">{{ signal.applied ? '적용' : '대기' }}</span>
+              <span class="signal-description">{{ signal.description }}</span>
+            </li>
+          </ul>
           <ul v-if="highlightCount(result) > 0" class="highlight-list">
             <li v-for="snippet in highlightSnippets(result)" :key="`${snippet.field}:${snippet.text}`">
               <span class="highlight-field">{{ snippet.field }}</span>
@@ -57,6 +64,9 @@ const highlightCount = (result: PostSearchResult): number =>
   Object.values(result.highlights).reduce((count, values) => count + values.length, 0)
 
 const highlightSnippets = (result: PostSearchResult) => collectSearchResultHighlights(result.highlights)
+
+// scoringSignals는 Elasticsearch explain API의 원문이 아니라, 우리가 구성한 query plan을 학습용으로 풀어낸 값이다.
+// 실제 점수는 BM25, field length, term frequency, function_score가 합쳐져 계산되므로 화면에는 "어떤 신호가 쓰였는지"만 보여준다.
 
 watch(
   searchKeyword,
@@ -161,6 +171,35 @@ watch(
   gap: 10px;
   color: #757575;
   font-size: 12px;
+}
+
+.scoring-signal-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scoring-signal-list li {
+  display: grid;
+  grid-template-columns: minmax(92px, auto) 40px 1fr;
+  gap: 8px;
+  margin-top: 4px;
+  color: #444444;
+  font-size: 12px;
+}
+
+.signal-field {
+  color: #333333;
+  font-weight: 700;
+}
+
+.signal-state {
+  color: #777777;
+}
+
+.signal-description {
+  min-width: 0;
+  word-break: keep-all;
 }
 
 .highlight-list {

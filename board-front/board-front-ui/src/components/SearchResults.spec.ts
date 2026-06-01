@@ -75,6 +75,22 @@ describe('# Search results component', () => {
           title: ['<em>코프링</em> 검색 구현'],
           content: ['게시판 <em>검색</em> 스코어링'],
         },
+        scoringSignals: [
+          {
+            field: 'title',
+            boost: 3,
+            keyword: 'kotlin',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+          {
+            field: 'notice',
+            boost: 2,
+            keyword: 'notice=true',
+            description: '공지글은 function_score sum 모드로 관련도 점수에 작은 운영 가산점을 더한다.',
+            applied: false,
+          },
+        ],
       },
     ])
 
@@ -87,6 +103,11 @@ describe('# Search results component', () => {
     expect(wrapper.get('.result-meta').text()).toContain('하이라이트 2개')
     expect(wrapper.findAll('.highlight-list li')).toHaveLength(2)
     expect(wrapper.text()).toContain('<em>코프링</em> 검색 구현')
+    expect(wrapper.findAll('.scoring-signal-list li')).toHaveLength(2)
+    expect(wrapper.text()).toContain('title x3.00')
+    expect(wrapper.text()).toContain('적용')
+    expect(wrapper.text()).toContain('notice x2.00')
+    expect(wrapper.text()).toContain('대기')
   })
 
   it('should clear failed search state when keyword becomes empty', async () => {
@@ -152,6 +173,7 @@ describe('# Search results component', () => {
         contentPreview: '최신 검색어 결과입니다',
         score: 9.5,
         highlights: {},
+        scoringSignals: [],
       },
     ])
     await flushPromises()
@@ -165,6 +187,7 @@ describe('# Search results component', () => {
         contentPreview: '늦게 도착한 이전 검색어 결과입니다',
         score: 11.2,
         highlights: {},
+        scoringSignals: [],
       },
     ])
     await flushPromises()

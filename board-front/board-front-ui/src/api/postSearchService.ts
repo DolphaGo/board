@@ -6,6 +6,15 @@ export interface PostSearchResult {
   contentPreview: string
   score: number
   highlights: Record<string, string[]>
+  scoringSignals: PostSearchScoreSignal[]
+}
+
+export interface PostSearchScoreSignal {
+  field: string
+  boost: number
+  keyword: string
+  description: string
+  applied: boolean
 }
 
 const isHighlightMap = (data: unknown): data is Record<string, string[]> => {
@@ -28,7 +37,25 @@ const isPostSearchResult = (data: unknown): data is PostSearchResult => {
     typeof result.title === 'string' &&
     typeof result.contentPreview === 'string' &&
     typeof result.score === 'number' &&
-    isHighlightMap(result.highlights)
+    isHighlightMap(result.highlights) &&
+    Array.isArray(result.scoringSignals) &&
+    result.scoringSignals.every(isPostSearchScoreSignal)
+}
+
+const isPostSearchScoreSignal = (data: unknown): data is PostSearchScoreSignal => {
+  if (typeof data !== 'object' || data === null) {
+    return false
+  }
+
+  const signal = data as Partial<PostSearchScoreSignal>
+  return typeof signal.field === 'string' &&
+    signal.field.trim().length > 0 &&
+    typeof signal.boost === 'number' &&
+    Number.isFinite(signal.boost) &&
+    typeof signal.keyword === 'string' &&
+    typeof signal.description === 'string' &&
+    signal.description.trim().length > 0 &&
+    typeof signal.applied === 'boolean'
 }
 
 export const postSearchService = {

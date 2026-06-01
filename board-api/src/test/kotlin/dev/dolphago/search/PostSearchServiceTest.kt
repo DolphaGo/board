@@ -49,6 +49,7 @@ class PostSearchServiceTest {
                             content = "Elasticsearch scoring example content",
                             viewCount = 3,
                             display = true,
+                            notice = true,
                         ),
                     ),
                 ),
@@ -62,17 +63,65 @@ class PostSearchServiceTest {
 
         val results = postSearchService.search("  Kotlin   Spring  ", 3)
 
+        assertEquals(1, results.size)
+        assertEquals(1L, results.single().postId)
+        assertEquals("kotlin spring", results.single().title)
+        assertEquals("Elasticsearch scoring example content", results.single().contentPreview)
+        assertEquals(10.5f, results.single().score)
+        assertEquals(mapOf("title" to listOf("<em>kotlin</em> spring")), results.single().highlights)
         assertEquals(
             listOf(
-                PostSearchResult(
-                    postId = 1L,
-                    title = "kotlin spring",
-                    contentPreview = "Elasticsearch scoring example content",
-                    score = 10.5f,
-                    highlights = mapOf("title" to listOf("<em>kotlin</em> spring")),
+                PostSearchScoreSignal(
+                    field = "title",
+                    boost = 3.0f,
+                    keyword = "kotlin spring",
+                    description = "제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.",
+                    applied = true,
+                ),
+                PostSearchScoreSignal(
+                    field = "content",
+                    boost = 1.0f,
+                    keyword = "kotlin spring",
+                    description = "본문 원문 match는 제목보다 넓은 recall을 담당한다.",
+                    applied = false,
+                ),
+                PostSearchScoreSignal(
+                    field = "titleSyllables",
+                    boost = 1.5f,
+                    keyword = "kotlin spring",
+                    description = "음절 분해 제목 필드는 한글 부분 기억과 오타성 검색을 보조한다.",
+                    applied = false,
+                ),
+                PostSearchScoreSignal(
+                    field = "contentSyllables",
+                    boost = 0.5f,
+                    keyword = "kotlin spring",
+                    description = "음절 분해 본문 필드는 넓게 찾되 원문 점수를 넘지 않게 낮게 둔다.",
+                    applied = false,
+                ),
+                PostSearchScoreSignal(
+                    field = "titleInitials",
+                    boost = 1.0f,
+                    keyword = "kotlin spring",
+                    description = "제목 초성 필드는 ㅋㅌㄹ 같은 초성 입력을 위한 보조 신호다.",
+                    applied = false,
+                ),
+                PostSearchScoreSignal(
+                    field = "contentInitials",
+                    boost = 0.25f,
+                    keyword = "kotlin spring",
+                    description = "본문 초성 필드는 충돌이 많아 가장 낮은 boost로 둔다.",
+                    applied = false,
+                ),
+                PostSearchScoreSignal(
+                    field = "notice",
+                    boost = 2.0f,
+                    keyword = "notice=true",
+                    description = "공지글은 function_score sum 모드로 관련도 점수에 작은 운영 가산점을 더한다.",
+                    applied = true,
                 ),
             ),
-            results,
+            results.single().scoringSignals,
         )
         assertEquals(3, querySlot.captured.pageable.pageSize)
         verify(exactly = 1) { elasticsearchOperations.search(any<NativeQuery>(), PostSearchDocument::class.java) }
