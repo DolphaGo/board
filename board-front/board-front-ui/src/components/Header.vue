@@ -5,6 +5,7 @@
       <a href="#">Home</a>
       <a href="#">Posts</a>
       <a href="#">About</a>
+      <router-link to="/chat/rooms">Chat</router-link>
     </nav>
   </header>
 </template>
