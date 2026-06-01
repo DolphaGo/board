@@ -7,6 +7,11 @@ const mockDeactivate = jest.fn()
 let mockConnected = true
 let subscribedMessageHandler: ((message: { body: string }) => void) | undefined
 
+type MockMediaTrack = {
+  enabled: boolean
+  stop: jest.Mock
+}
+
 jest.mock('sockjs-client', () => jest.fn())
 
 jest.mock('@stomp/stompjs', () => ({
@@ -36,6 +41,35 @@ const mountChatRoom = (isVideoEnabled = false) =>
       isVideoEnabled,
     },
   })
+
+const createMockMediaStream = () => {
+  const videoTrack: MockMediaTrack = { enabled: true, stop: jest.fn() }
+  const audioTrack: MockMediaTrack = { enabled: true, stop: jest.fn() }
+  const stream = {
+    getTracks: () => [videoTrack, audioTrack],
+    getVideoTracks: () => [videoTrack],
+    getAudioTracks: () => [audioTrack],
+  } as unknown as MediaStream
+
+  return { stream, videoTrack, audioTrack }
+}
+
+const mockWebRtcApis = (getUserMedia: jest.Mock, closePeerConnection = jest.fn()) => {
+  // jsdom에는 mediaDevices/RTCPeerConnection이 없으므로, 브라우저 API 경계만 테스트용으로 대체한다.
+  Object.defineProperty(navigator, 'mediaDevices', {
+    configurable: true,
+    value: { getUserMedia },
+  })
+  Object.defineProperty(globalThis, 'RTCPeerConnection', {
+    configurable: true,
+    value: jest.fn(() => ({
+      addTrack: jest.fn(),
+      close: closePeerConnection,
+    })),
+  })
+
+  return { closePeerConnection }
+}
 
 describe('# Chat room component', () => {
   beforeEach(() => {
@@ -130,34 +164,15 @@ describe('# Chat room component', () => {
 
   it('should stop media tracks when WebRTC setup finishes after unmount', async () => {
     let resolveMedia: (stream: MediaStream) => void = () => undefined
-    const videoTrack = { stop: jest.fn() }
-    const audioTrack = { stop: jest.fn() }
-    const mediaStream = {
-      getTracks: () => [videoTrack, audioTrack],
-      getVideoTracks: () => [videoTrack],
-      getAudioTracks: () => [audioTrack],
-    } as unknown as MediaStream
-
-    Object.defineProperty(navigator, 'mediaDevices', {
-      configurable: true,
-      value: {
-        getUserMedia: jest.fn(() => new Promise<MediaStream>((resolve) => {
-          resolveMedia = resolve
-        })),
-      },
-    })
-    Object.defineProperty(globalThis, 'RTCPeerConnection', {
-      configurable: true,
-      value: jest.fn(() => ({
-        addTrack: jest.fn(),
-        close: jest.fn(),
-      })),
-    })
+    const { stream, videoTrack, audioTrack } = createMockMediaStream()
+    mockWebRtcApis(jest.fn(() => new Promise<MediaStream>((resolve) => {
+      resolveMedia = resolve
+    })))
 
     const wrapper = mountChatRoom(true)
     wrapper.unmount()
 
-    resolveMedia(mediaStream)
+    resolveMedia(stream)
     await Promise.resolve()
 
     expect(videoTrack.stop).toHaveBeenCalledTimes(1)
@@ -166,28 +181,8 @@ describe('# Chat room component', () => {
   })
 
   it('should stop media tracks and close peer connection after WebRTC setup on unmount', async () => {
-    const videoTrack = { stop: jest.fn() }
-    const audioTrack = { stop: jest.fn() }
-    const mediaStream = {
-      getTracks: () => [videoTrack, audioTrack],
-      getVideoTracks: () => [videoTrack],
-      getAudioTracks: () => [audioTrack],
-    } as unknown as MediaStream
-    const closePeerConnection = jest.fn()
-
-    Object.defineProperty(navigator, 'mediaDevices', {
-      configurable: true,
-      value: {
-        getUserMedia: jest.fn(() => Promise.resolve(mediaStream)),
-      },
-    })
-    Object.defineProperty(globalThis, 'RTCPeerConnection', {
-      configurable: true,
-      value: jest.fn(() => ({
-        addTrack: jest.fn(),
-        close: closePeerConnection,
-      })),
-    })
+    const { stream, videoTrack, audioTrack } = createMockMediaStream()
+    const { closePeerConnection } = mockWebRtcApis(jest.fn(() => Promise.resolve(stream)))
 
     const wrapper = mountChatRoom(true)
     await Promise.resolve()
@@ -200,27 +195,8 @@ describe('# Chat room component', () => {
   })
 
   it('should toggle local video track enabled state', async () => {
-    const videoTrack = { enabled: true, stop: jest.fn() }
-    const audioTrack = { enabled: true, stop: jest.fn() }
-    const mediaStream = {
-      getTracks: () => [videoTrack, audioTrack],
-      getVideoTracks: () => [videoTrack],
-      getAudioTracks: () => [audioTrack],
-    } as unknown as MediaStream
-
-    Object.defineProperty(navigator, 'mediaDevices', {
-      configurable: true,
-      value: {
-        getUserMedia: jest.fn(() => Promise.resolve(mediaStream)),
-      },
-    })
-    Object.defineProperty(globalThis, 'RTCPeerConnection', {
-      configurable: true,
-      value: jest.fn(() => ({
-        addTrack: jest.fn(),
-        close: jest.fn(),
-      })),
-    })
+    const { stream, videoTrack } = createMockMediaStream()
+    mockWebRtcApis(jest.fn(() => Promise.resolve(stream)))
 
     const wrapper = mountChatRoom(true)
     await Promise.resolve()
@@ -232,27 +208,8 @@ describe('# Chat room component', () => {
   })
 
   it('should toggle local audio track enabled state', async () => {
-    const videoTrack = { enabled: true, stop: jest.fn() }
-    const audioTrack = { enabled: true, stop: jest.fn() }
-    const mediaStream = {
-      getTracks: () => [videoTrack, audioTrack],
-      getVideoTracks: () => [videoTrack],
-      getAudioTracks: () => [audioTrack],
-    } as unknown as MediaStream
-
-    Object.defineProperty(navigator, 'mediaDevices', {
-      configurable: true,
-      value: {
-        getUserMedia: jest.fn(() => Promise.resolve(mediaStream)),
-      },
-    })
-    Object.defineProperty(globalThis, 'RTCPeerConnection', {
-      configurable: true,
-      value: jest.fn(() => ({
-        addTrack: jest.fn(),
-        close: jest.fn(),
-      })),
-    })
+    const { stream, audioTrack } = createMockMediaStream()
+    mockWebRtcApis(jest.fn(() => Promise.resolve(stream)))
 
     const wrapper = mountChatRoom(true)
     await Promise.resolve()
