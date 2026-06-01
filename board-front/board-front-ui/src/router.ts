@@ -6,6 +6,32 @@ import SearchResults from './components/SearchResults.vue'
 
 export type AppRouteNames = ''
 
+const DEFAULT_STUDY_CHAT_USERNAME = 'study-user'
+
+const firstRouteValue = (value: unknown): string | undefined => {
+  if (Array.isArray(value)) {
+    return firstRouteValue(value[0])
+  }
+
+  return typeof value === 'string' ? value : undefined
+}
+
+export const buildChatRoomRouteProps = (route: {
+  params: Record<string, unknown>
+  query: Record<string, unknown>
+}) => {
+  const roomId = firstRouteValue(route.params.id) ?? ''
+  const username = firstRouteValue(route.query.username) || DEFAULT_STUDY_CHAT_USERNAME
+
+  // Vue Router의 params/query는 같은 key가 여러 번 들어오면 배열이 될 수 있다.
+  // ChatRoom은 문자열 prop만 받으므로 라우터 경계에서 화면이 쓰기 쉬운 값으로 좁힌다.
+  return {
+    roomId,
+    username,
+    isVideoEnabled: false,
+  }
+}
+
 export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -22,11 +48,7 @@ export const router = createRouter({
     {
       path: '/chat/rooms/:id',
       component: () => import('./components/chat/ChatRoom.vue'),
-      props: route => ({
-        roomId: route.params.id,
-        username: route.query.username ?? 'study-user',
-        isVideoEnabled: false,
-      }),
+      props: buildChatRoomRouteProps,
     },
   ],
 })
