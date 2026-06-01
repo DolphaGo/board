@@ -30,6 +30,7 @@
         tabindex="0"
         @click="enterRoom(room.id)"
         @keyup.enter="enterRoom(room.id)"
+        @keyup.space="enterRoom(room.id)"
       >
         <div class="room-info">
           <h3>{{ room.name }}</h3>

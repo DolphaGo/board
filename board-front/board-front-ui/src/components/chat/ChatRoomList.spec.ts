@@ -78,4 +78,24 @@ describe('# Chat room list component', () => {
     expect(mockedChatService.joinRoom).toHaveBeenCalledWith('room-1')
     expect(pushMock).toHaveBeenCalledWith('/chat/rooms/room-1')
   })
+
+  it('should enter the room with the Space key from a room item', async () => {
+    mockedChatService.getRoomList.mockResolvedValue([
+      {
+        id: 'room-2',
+        name: '질문 채팅방',
+        participantCount: 5,
+        createdAt: '2026-06-01T10:00:00.000Z',
+      },
+    ])
+
+    const wrapper = mount(ChatRoomList)
+    await flushPromises()
+
+    await wrapper.get('.room-item').trigger('keyup.space')
+    await flushPromises()
+
+    expect(mockedChatService.joinRoom).toHaveBeenCalledWith('room-2')
+    expect(pushMock).toHaveBeenCalledWith('/chat/rooms/room-2')
+  })
 })
