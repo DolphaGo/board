@@ -73,6 +73,51 @@ describe('# Post service', function () {
     expect(post.id).toBe(10)
   })
 
+  it('should create a comment with the study member id', async function () {
+    mockedAxios.post.mockResolvedValue({
+      data: {
+        id: 20,
+        postId: 10,
+        memberId: 1,
+        authorNickname: 'writer',
+        content: '검색 스코어링 설명이 좋아요',
+        display: true,
+        createdAt: '2026-06-02T04:10:00',
+      },
+    })
+
+    const comment = await postService.createComment(10, {
+      content: '검색 스코어링 설명이 좋아요',
+    })
+
+    expect(mockedAxios.post).toBeCalledWith('/api/posts/10/comments', {
+      memberId: 1,
+      content: '검색 스코어링 설명이 좋아요',
+    })
+    expect(comment.id).toBe(20)
+    expect(comment.authorNickname).toBe('writer')
+  })
+
+  it('should create a recommendation with the study member id', async function () {
+    mockedAxios.post.mockResolvedValue({
+      data: {
+        id: 30,
+        postId: 10,
+        memberId: 1,
+        display: true,
+        createdAt: '2026-06-02T04:12:00',
+      },
+    })
+
+    const recommend = await postService.createRecommend(10)
+
+    expect(mockedAxios.post).toBeCalledWith('/api/posts/10/recommends', {
+      memberId: 1,
+    })
+    expect(recommend.id).toBe(30)
+    expect(recommend.display).toBe(true)
+  })
+
   it('should reject malformed create post responses', async function () {
     mockedAxios.post.mockResolvedValue({
       data: '<html>vite fallback</html>',
@@ -103,5 +148,23 @@ describe('# Post service', function () {
     })
 
     await expect(postService.listPosts()).rejects.toThrow('Invalid post list response')
+  })
+
+  it('should reject malformed create comment responses', async function () {
+    mockedAxios.post.mockResolvedValue({
+      data: '<html>vite fallback</html>',
+    })
+
+    await expect(postService.createComment(10, {
+      content: '검색 스코어링 설명이 좋아요',
+    })).rejects.toThrow('Invalid comment response')
+  })
+
+  it('should reject malformed create recommend responses', async function () {
+    mockedAxios.post.mockResolvedValue({
+      data: '<html>vite fallback</html>',
+    })
+
+    await expect(postService.createRecommend(10)).rejects.toThrow('Invalid recommend response')
   })
 })

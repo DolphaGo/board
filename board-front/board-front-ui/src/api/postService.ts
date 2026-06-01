@@ -7,6 +7,10 @@ export interface CreatePostPayload {
   content: string
 }
 
+export interface CreateCommentPayload {
+  content: string
+}
+
 export interface PostResponse {
   id: number
   title: string
@@ -20,6 +24,24 @@ export interface PostListItemResponse extends PostResponse {
   createdAt: string
   commentCount: number
   recommendCount: number
+}
+
+export interface CommentResponse {
+  id: number
+  postId: number
+  memberId: number
+  authorNickname: string
+  content: string
+  display: boolean
+  createdAt: string
+}
+
+export interface PostRecommendResponse {
+  id: number
+  postId: number
+  memberId: number
+  display: boolean
+  createdAt: string
 }
 
 const isPostResponse = (data: unknown): data is PostResponse => {
@@ -45,6 +67,34 @@ const isPostListItemResponse = (data: unknown): data is PostListItemResponse => 
     typeof post.createdAt === 'string' &&
     typeof post.commentCount === 'number' &&
     typeof post.recommendCount === 'number'
+}
+
+const isCommentResponse = (data: unknown): data is CommentResponse => {
+  if (typeof data !== 'object' || data === null) {
+    return false
+  }
+
+  const comment = data as Partial<CommentResponse>
+  return typeof comment.id === 'number' &&
+    typeof comment.postId === 'number' &&
+    typeof comment.memberId === 'number' &&
+    typeof comment.authorNickname === 'string' &&
+    typeof comment.content === 'string' &&
+    typeof comment.display === 'boolean' &&
+    typeof comment.createdAt === 'string'
+}
+
+const isPostRecommendResponse = (data: unknown): data is PostRecommendResponse => {
+  if (typeof data !== 'object' || data === null) {
+    return false
+  }
+
+  const recommend = data as Partial<PostRecommendResponse>
+  return typeof recommend.id === 'number' &&
+    typeof recommend.postId === 'number' &&
+    typeof recommend.memberId === 'number' &&
+    typeof recommend.display === 'boolean' &&
+    typeof recommend.createdAt === 'string'
 }
 
 export const postService = {
@@ -81,6 +131,34 @@ export const postService = {
 
     if (!isPostResponse(response.data)) {
       throw new Error('Invalid post response')
+    }
+
+    return response.data
+  },
+
+  createComment: async (postId: number, payload: CreateCommentPayload): Promise<CommentResponse> => {
+    const response = await axios.post<CommentResponse>(`/api/posts/${postId}/comments`, {
+      // 댓글 작성도 로그인 연동 전까지는 학습 계정으로 요청한다.
+      // 백엔드는 memberId로 작성자를 찾으므로 UI에서 같은 고정 계정을 사용한다.
+      memberId: STUDY_MEMBER_ID,
+      content: payload.content,
+    })
+
+    if (!isCommentResponse(response.data)) {
+      throw new Error('Invalid comment response')
+    }
+
+    return response.data
+  },
+
+  createRecommend: async (postId: number): Promise<PostRecommendResponse> => {
+    const response = await axios.post<PostRecommendResponse>(`/api/posts/${postId}/recommends`, {
+      // 추천 역시 아직 로그인 세션이 없으므로 학습 계정 id를 함께 보낸다.
+      memberId: STUDY_MEMBER_ID,
+    })
+
+    if (!isPostRecommendResponse(response.data)) {
+      throw new Error('Invalid recommend response')
     }
 
     return response.data
