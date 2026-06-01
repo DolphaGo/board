@@ -1,6 +1,7 @@
 package dev.dolphago.controller
 
 import dev.dolphago.mysql.Authority
+import dev.dolphago.mysql.Comment
 import dev.dolphago.mysql.Member
 import dev.dolphago.mysql.Post
 import dev.dolphago.service.PostListItem
@@ -102,6 +103,71 @@ class PostControllerTest {
             response.body,
         )
         verify(exactly = 1) { postService.getPost(10L) }
+    }
+
+    @Test
+    fun `게시글 댓글 생성 요청은 서비스를 호출하고 응답 DTO를 반환한다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "코프링 게시판 검색",
+                content = "상세 화면에서 보여줄 본문",
+                viewCount = 3,
+                display = true,
+            )
+        val comment =
+            Comment(
+                id = 20L,
+                post = post,
+                member = author,
+                content = "검색 스코어링 설명이 좋아요",
+                display = true,
+            )
+        every {
+            postService.createComment(
+                postId = 10L,
+                memberId = 1L,
+                content = "검색 스코어링 설명이 좋아요",
+            )
+        } returns comment
+
+        val response =
+            controller.createComment(
+                id = 10L,
+                request =
+                    CreateCommentRequest(
+                        memberId = 1L,
+                        content = "검색 스코어링 설명이 좋아요",
+                    ),
+            )
+
+        assertEquals(
+            CommentResponse(
+                id = 20L,
+                postId = 10L,
+                memberId = 1L,
+                authorNickname = "writer",
+                content = "검색 스코어링 설명이 좋아요",
+                display = true,
+                createdAt = comment.createDate,
+            ),
+            response.body,
+        )
+        verify(exactly = 1) {
+            postService.createComment(
+                postId = 10L,
+                memberId = 1L,
+                content = "검색 스코어링 설명이 좋아요",
+            )
+        }
     }
 
     @Test

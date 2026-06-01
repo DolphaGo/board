@@ -2,6 +2,7 @@ package dev.dolphago.service
 
 import dev.dolphago.comment.repository.CommentRepository
 import dev.dolphago.member.repository.MemberRepository
+import dev.dolphago.mysql.Comment
 import dev.dolphago.mysql.Post
 import dev.dolphago.post.repository.PostRepository
 import dev.dolphago.recommend.repository.PostRecommendRepository
@@ -72,6 +73,32 @@ class PostService(
         postSearchIndexService.index(savedPost)
 
         return savedPost
+    }
+
+    fun createComment(
+        postId: Long,
+        memberId: Long,
+        content: String,
+    ): Comment {
+        val post =
+            postRepository.findById(postId).orElseThrow {
+                IllegalArgumentException("게시글을 찾을 수 없습니다: $postId")
+            }
+        val member =
+            memberRepository.findById(memberId).orElseThrow {
+                IllegalArgumentException("사용자를 찾을 수 없습니다: $memberId")
+            }
+
+        // 댓글은 게시글 원본 DB에 달리는 사용자 액션이다.
+        // 목록의 commentCount는 CommentRepository 집계를 읽으므로 저장 직후 다음 목록 조회부터 반영된다.
+        return commentRepository.save(
+            Comment(
+                post = post,
+                member = member,
+                content = content,
+                display = true,
+            ),
+        )
     }
 }
 

@@ -3,6 +3,7 @@ package dev.dolphago.service
 import dev.dolphago.member.repository.MemberRepository
 import dev.dolphago.comment.repository.CommentRepository
 import dev.dolphago.mysql.Authority
+import dev.dolphago.mysql.Comment
 import dev.dolphago.mysql.Member
 import dev.dolphago.mysql.Post
 import dev.dolphago.post.repository.PostRepository
@@ -67,6 +68,47 @@ class PostServiceTest {
         assertEquals(0L, postSlot.captured.viewCount)
         assertEquals(true, postSlot.captured.display)
         verify(exactly = 1) { postSearchIndexService.index(post) }
+    }
+
+    @Test
+    fun `게시글 댓글을 저장한다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "코프링 검색 게시글",
+                content = "상세 화면에서 보여줄 본문",
+                viewCount = 3,
+                display = true,
+            )
+        val commentSlot = slot<Comment>()
+
+        every { postRepository.findById(10L) } returns Optional.of(post)
+        every { memberRepository.findById(1L) } returns Optional.of(author)
+        every { commentRepository.save(capture(commentSlot)) } answers {
+            firstArg<Comment>().apply { id = 20L }
+        }
+
+        val comment =
+            postService.createComment(
+                postId = 10L,
+                memberId = 1L,
+                content = "검색 스코어링 설명이 좋아요",
+            )
+
+        assertEquals(20L, comment.id)
+        assertEquals(post, commentSlot.captured.post)
+        assertEquals(author, commentSlot.captured.member)
+        assertEquals("검색 스코어링 설명이 좋아요", commentSlot.captured.content)
+        assertEquals(true, commentSlot.captured.display)
+        verify(exactly = 1) { commentRepository.save(any()) }
     }
 
     @Test
