@@ -137,6 +137,21 @@ describe('# Chat room component', () => {
     expect(mockSubscribe).toHaveBeenCalledWith('/topic/chat/room-1', expect.any(Function))
   })
 
+  it('should publish enter messages to the add-user endpoint', () => {
+    mountChatRoom()
+
+    expect(mockPublish).toHaveBeenCalledWith({
+      destination: '/app/chat.addUser',
+      body: expect.any(String),
+    })
+    expect(JSON.parse(mockPublish.mock.calls[0][0].body)).toMatchObject({
+      type: 'ENTER',
+      roomId: 'room-1',
+      sender: 'study-user',
+      content: 'study-user님이 입장하셨습니다.',
+    })
+  })
+
   it('should ignore messages from another room', async () => {
     const wrapper = mountChatRoom()
 

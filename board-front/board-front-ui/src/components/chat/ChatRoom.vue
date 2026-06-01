@@ -170,9 +170,12 @@ export default defineComponent({
         content: type === 'TALK' ? newMessage.value : `${props.username}님이 ${type === 'ENTER' ? '입장' : '퇴장'}하셨습니다.`,
         timestamp: new Date()
       }
+      // ENTER는 백엔드가 WebSocket 세션에 username을 저장해야 하므로 addUser 매핑으로 보낸다.
+      // TALK/LEAVE는 세션 저장 없이 방 topic으로 발행하면 충분해서 sendMessage 매핑을 사용한다.
+      const destination = type === 'ENTER' ? '/app/chat.addUser' : '/app/chat.sendMessage'
 
       stompClient.value.publish({
-        destination: '/app/chat.sendMessage',
+        destination,
         body: JSON.stringify(chatMessage)
       })
 
