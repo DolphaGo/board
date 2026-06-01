@@ -49,4 +49,26 @@ describe('# Chat room component', () => {
 
     expect(mockPublish).not.toHaveBeenCalled()
   })
+
+  it('should publish talk messages and clear the input', async () => {
+    const wrapper = mountChatRoom()
+    mockPublish.mockClear()
+
+    const input = wrapper.get('input[placeholder="메시지를 입력하세요..."]')
+    await input.setValue('테스트 메시지')
+    await wrapper.get('.message-input button').trigger('click')
+
+    expect(mockPublish).toHaveBeenCalledTimes(1)
+    expect(mockPublish).toHaveBeenCalledWith({
+      destination: '/app/chat.sendMessage',
+      body: expect.any(String),
+    })
+    expect(JSON.parse(mockPublish.mock.calls[0][0].body)).toMatchObject({
+      type: 'TALK',
+      roomId: 'room-1',
+      sender: 'study-user',
+      content: '테스트 메시지',
+    })
+    expect((input.element as HTMLInputElement).value).toBe('')
+  })
 })
