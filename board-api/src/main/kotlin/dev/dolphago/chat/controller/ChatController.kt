@@ -31,6 +31,10 @@ class ChatController(
     }
 
     private fun publishToRoom(message: ChatMessage) {
+        if (message.roomId.isBlank()) {
+            return
+        }
+
         // 방 단위 topic으로 발행해야 같은 public topic을 쓰는 다른 방 메시지가 섞이지 않는다.
         messagingTemplate.convertAndSend("/topic/chat/${message.roomId}", message)
     }
