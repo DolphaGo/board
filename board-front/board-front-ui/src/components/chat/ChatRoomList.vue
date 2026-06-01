@@ -44,6 +44,19 @@
           placeholder="채팅방 이름을 입력하세요"
           @keyup.enter="createRoom"
         />
+        <textarea
+          v-model="newRoomDescription"
+          placeholder="채팅방 설명을 입력하세요"
+        />
+        <label class="field-label" for="new-room-max-participants">최대 참여자 수</label>
+        <input
+          id="new-room-max-participants"
+          v-model.number="newRoomMaxParticipants"
+          aria-label="최대 참여자 수"
+          type="number"
+          min="2"
+          max="100"
+        />
         <div class="dialog-actions">
           <button @click="closeCreateRoomDialog" class="cancel-btn">취소</button>
           <button @click="createRoom" :disabled="!newRoomName.trim()" class="confirm-btn">
@@ -59,6 +72,7 @@
 import { defineComponent, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { chatService, type ChatRoom } from 'src/api/chatService'
+import { buildCreateRoomRequest } from './createRoomDialogForm'
 
 export default defineComponent({
   name: 'ChatRoomList',
@@ -69,6 +83,8 @@ export default defineComponent({
     const error = ref(false)
     const showCreateDialog = ref(false)
     const newRoomName = ref('')
+    const newRoomDescription = ref('')
+    const newRoomMaxParticipants = ref(100)
 
     const fetchRooms = async () => {
       try {
@@ -96,6 +112,8 @@ export default defineComponent({
     const openCreateRoomDialog = () => {
       showCreateDialog.value = true
       newRoomName.value = ''
+      newRoomDescription.value = ''
+      newRoomMaxParticipants.value = 100
     }
 
     const closeCreateRoomDialog = () => {
@@ -106,7 +124,12 @@ export default defineComponent({
       if (!newRoomName.value.trim()) return
 
       try {
-        const newRoom = await chatService.createRoom(newRoomName.value)
+        const request = buildCreateRoomRequest({
+          name: newRoomName.value,
+          description: newRoomDescription.value,
+          maxParticipants: newRoomMaxParticipants.value,
+        })
+        const newRoom = await chatService.createRoom(request.name, request.options)
         await enterRoom(newRoom.id)
       } catch (err) {
         console.error('채팅방 생성 실패:', err)
@@ -135,6 +158,8 @@ export default defineComponent({
       error,
       showCreateDialog,
       newRoomName,
+      newRoomDescription,
+      newRoomMaxParticipants,
       fetchRooms,
       enterRoom,
       openCreateRoomDialog,
@@ -249,12 +274,27 @@ export default defineComponent({
   margin: 0 0 16px 0;
 }
 
-.dialog input {
+.dialog input,
+.dialog textarea {
   width: 100%;
   padding: 8px;
   margin-bottom: 16px;
   border: 1px solid #ddd;
   border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.dialog textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #333;
+  font-size: 0.9em;
+  font-weight: bold;
 }
 
 .dialog-actions {
