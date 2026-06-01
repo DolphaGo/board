@@ -5,6 +5,10 @@
       <button @click="openCreateRoomDialog" class="create-btn">새 채팅방</button>
     </div>
 
+    <p v-if="feedbackMessage && !showCreateDialog" class="action-feedback" role="status">
+      {{ feedbackMessage }}
+    </p>
+
     <div v-if="loading" class="loading">
       로딩 중...
     </div>
@@ -57,6 +61,9 @@
           min="2"
           max="100"
         />
+        <p v-if="feedbackMessage" class="dialog-feedback" role="status">
+          {{ feedbackMessage }}
+        </p>
         <div class="dialog-actions">
           <button @click="closeCreateRoomDialog" class="cancel-btn">취소</button>
           <button @click="createRoom" :disabled="!newRoomName.trim()" class="confirm-btn">
@@ -73,6 +80,7 @@ import { defineComponent, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { chatService, type ChatRoom } from 'src/api/chatService'
 import { buildCreateRoomRequest } from './createRoomDialogForm'
+import { buildChatRoomActionErrorMessage } from './chatRoomListFeedback'
 
 export default defineComponent({
   name: 'ChatRoomList',
@@ -85,11 +93,13 @@ export default defineComponent({
     const newRoomName = ref('')
     const newRoomDescription = ref('')
     const newRoomMaxParticipants = ref(100)
+    const feedbackMessage = ref('')
 
     const fetchRooms = async () => {
       try {
         loading.value = true
         error.value = false
+        feedbackMessage.value = ''
         rooms.value = await chatService.getRoomList()
       } catch (err) {
         console.error('채팅방 목록 조회 실패:', err)
@@ -101,11 +111,12 @@ export default defineComponent({
 
     const enterRoom = async (roomId: string) => {
       try {
+        feedbackMessage.value = ''
         await chatService.joinRoom(roomId)
         router.push(`/chat/rooms/${roomId}`)
       } catch (err) {
         console.error('채팅방 입장 실패:', err)
-        alert('채팅방 입장에 실패했습니다.')
+        feedbackMessage.value = buildChatRoomActionErrorMessage('enter')
       }
     }
 
@@ -114,6 +125,7 @@ export default defineComponent({
       newRoomName.value = ''
       newRoomDescription.value = ''
       newRoomMaxParticipants.value = 100
+      feedbackMessage.value = ''
     }
 
     const closeCreateRoomDialog = () => {
@@ -124,6 +136,7 @@ export default defineComponent({
       if (!newRoomName.value.trim()) return
 
       try {
+        feedbackMessage.value = ''
         const request = buildCreateRoomRequest({
           name: newRoomName.value,
           description: newRoomDescription.value,
@@ -133,7 +146,7 @@ export default defineComponent({
         await enterRoom(newRoom.id)
       } catch (err) {
         console.error('채팅방 생성 실패:', err)
-        alert('채팅방 생성에 실패했습니다.')
+        feedbackMessage.value = buildChatRoomActionErrorMessage('create')
       }
     }
 
@@ -160,6 +173,7 @@ export default defineComponent({
       newRoomName,
       newRoomDescription,
       newRoomMaxParticipants,
+      feedbackMessage,
       fetchRooms,
       enterRoom,
       openCreateRoomDialog,
@@ -203,6 +217,24 @@ export default defineComponent({
   text-align: center;
   padding: 40px;
   color: #666;
+}
+
+.action-feedback,
+.dialog-feedback {
+  padding: 10px 12px;
+  border: 1px solid #f2b8b5;
+  border-radius: 4px;
+  background: #fff4f3;
+  color: #9f2f28;
+  font-size: 0.9em;
+}
+
+.action-feedback {
+  margin: 0 0 16px 0;
+}
+
+.dialog-feedback {
+  margin: 0 0 16px 0;
 }
 
 .room-list {
