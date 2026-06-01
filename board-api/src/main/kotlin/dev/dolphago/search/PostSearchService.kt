@@ -1,5 +1,7 @@
 package dev.dolphago.search
 
+import co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode
+import co.elastic.clients.elasticsearch._types.query_dsl.FunctionScoreMode
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.elasticsearch.client.elc.NativeQuery
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations
@@ -27,30 +29,50 @@ class PostSearchService(
             NativeQuery
                 .builder()
                 .withQuery { q ->
-                    q.bool { b ->
-                        b
-                            // 제목 일치는 게시판 검색에서 의도가 강하므로 본문보다 높은 boost를 둔다.
-                            .should { s ->
-                                s.match { m ->
-                                    m
-                                        .field("title")
-                                        .query(keyword.value)
-                                        .boost(3.0f)
+                    q.functionScore { fs ->
+                        fs
+                            // function_score는 BM25 같은 텍스트 관련도 점수 위에 운영 점수를 더할 때 쓴다.
+                            .query { base ->
+                                base.bool { b ->
+                                    b
+                                        // 제목 일치는 게시판 검색에서 의도가 강하므로 본문보다 높은 boost를 둔다.
+                                        .should { s ->
+                                            s.match { m ->
+                                                m
+                                                    .field("title")
+                                                    .query(keyword.value)
+                                                    .boost(3.0f)
+                                            }
+                                        }
+                                        // 본문 일치는 recall을 넓히는 용도다. 제목보다 낮은 기본 점수를 준다.
+                                        .should { s ->
+                                            s.match { m ->
+                                                m
+                                                    .field("content")
+                                                    .query(keyword.value)
+                                                    .boost(1.0f)
+                                            }
+                                        }.filter { f ->
+                                            f.term { t ->
+                                                t.field("display").value(true)
+                                            }
+                                        }
+                                        .minimumShouldMatch("1")
                                 }
                             }
-                            // 본문 일치는 recall을 넓히는 용도다. 제목보다 낮은 기본 점수를 준다.
-                            .should { s ->
-                                s.match { m ->
-                                    m
-                                        .field("content")
-                                        .query(keyword.value)
-                                        .boost(1.0f)
-                                }
-                            }.filter { f ->
-                                f.term { t ->
-                                    t.field("display").value(true)
-                                }
-                            }.minimumShouldMatch("1")
+                            // 공지는 목록 상단 고정과 별개로 검색 결과에서도 조금 더 잘 보이게 한다.
+                            .functions { fn ->
+                                fn
+                                    .filter { f ->
+                                        f.term { t ->
+                                            t.field("notice").value(true)
+                                        }
+                                    }
+                                    .weight(NOTICE_SCORE_WEIGHT)
+                            }
+                            // Sum 모드는 관련도 점수를 대체하지 않고 작은 운영 가산점만 더한다.
+                            .scoreMode(FunctionScoreMode.Sum)
+                            .boostMode(FunctionBoostMode.Sum)
                     }
                 }.withPageable(PageRequest.of(0, safeSize))
                 .build()
@@ -74,5 +96,6 @@ class PostSearchService(
     companion object {
         private const val MAX_SEARCH_SIZE = 50
         private const val CONTENT_PREVIEW_LENGTH = 120
+        private const val NOTICE_SCORE_WEIGHT = 2.0
     }
 }
