@@ -4,6 +4,7 @@ name: DolphaGo Board - Wired Forum
 source:
   repository: https://github.com/VoltAgent/awesome-design-md
   baseDesign: design-md/wired/DESIGN.md
+  checkedAt: "2026-06-02"
   note: "VoltAgent awesome-design-md의 WIRED 스타일을 게시판 학습용 UI로 변형한다."
 colors:
   primary: "#000000"
@@ -108,6 +109,16 @@ components:
 필요하면 이 파일을 먼저 읽는다. 출처는 사용자가 지정한
 [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md)이고,
 그중 `design-md/wired/DESIGN.md`를 게시판에 맞게 변형했다.
+
+## 출처 확인
+
+- 2026-06-02 확인 기준, `awesome-design-md`는 실제 웹사이트에서 추출한 DESIGN.md
+  컬렉션이고, 프로젝트 루트에 DESIGN.md를 두어 AI agent가 UI 일관성을 읽도록 하는
+  사용 방식을 안내한다.
+- 컬렉션의 WIRED 항목은 흰 종이 같은 고밀도 편집면, serif 중심 제목, ink-blue 링크를
+  특징으로 설명된다.
+- 이 프로젝트는 루트 파일명을 사용자의 요청에 맞춰 `design.md`로 유지하되, 역할은
+  DESIGN.md와 동일한 UI 기준 문서로 본다.
 
 ## 왜 WIRED 기반인가
 
