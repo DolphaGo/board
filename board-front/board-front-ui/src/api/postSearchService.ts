@@ -8,6 +8,29 @@ export interface PostSearchResult {
   highlights: Record<string, string[]>
 }
 
+const isHighlightMap = (data: unknown): data is Record<string, string[]> => {
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    return false
+  }
+
+  return Object.values(data).every(value =>
+    Array.isArray(value) && value.every(item => typeof item === 'string')
+  )
+}
+
+const isPostSearchResult = (data: unknown): data is PostSearchResult => {
+  if (typeof data !== 'object' || data === null) {
+    return false
+  }
+
+  const result = data as Partial<PostSearchResult>
+  return typeof result.postId === 'number' &&
+    typeof result.title === 'string' &&
+    typeof result.contentPreview === 'string' &&
+    typeof result.score === 'number' &&
+    isHighlightMap(result.highlights)
+}
+
 export const postSearchService = {
   search: async (keyword: string, size = 20): Promise<PostSearchResult[]> => {
     const response = await axios.get<PostSearchResult[]>('/api/search/posts', {
@@ -18,8 +41,8 @@ export const postSearchService = {
     })
 
     // 백엔드가 꺼진 Vite 단독 실행에서는 HTML fallback이 올 수 있다.
-    // 검색 결과 화면이 깨진 데이터를 렌더링하지 않도록 API 배열 계약을 확인한다.
-    if (!Array.isArray(response.data)) {
+    // ES 검색 결과는 score와 highlight 구조가 화면 렌더링에 직접 쓰이므로 항목 단위까지 확인한다.
+    if (!Array.isArray(response.data) || !response.data.every(isPostSearchResult)) {
       throw new Error('Invalid post search response')
     }
 

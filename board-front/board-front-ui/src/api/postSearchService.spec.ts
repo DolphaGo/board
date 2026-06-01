@@ -39,4 +39,22 @@ describe('# Post search service', function () {
 
     await expect(postSearchService.search('kotlin')).rejects.toThrow('Invalid post search response')
   })
+
+  it('should reject post search arrays with malformed result items', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          postId: 1,
+          title: 'kotlin spring',
+          contentPreview: 'Elasticsearch scoring example',
+          score: '10.5',
+          highlights: {
+            title: '<em>kotlin</em> spring',
+          },
+        },
+      ],
+    })
+
+    await expect(postSearchService.search('kotlin')).rejects.toThrow('Invalid post search response')
+  })
 })
