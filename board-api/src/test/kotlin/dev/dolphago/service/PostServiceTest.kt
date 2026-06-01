@@ -141,6 +141,77 @@ class PostServiceTest {
     }
 
     @Test
+    fun `관리자는 게시글을 숨기고 검색 문서를 다시 색인한다`() {
+        val admin =
+            Member(
+                id = 1L,
+                email = "admin@example.com",
+                nickname = "admin",
+                role = Authority.ROLE_ADMIN,
+            )
+        val author =
+            Member(
+                id = 2L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "숨길 게시글",
+                content = "관리자가 목록과 검색에서 숨긴다",
+                viewCount = 3,
+                display = true,
+            )
+
+        every { memberRepository.findById(1L) } returns Optional.of(admin)
+        every { postRepository.findById(10L) } returns Optional.of(post)
+        every { postSearchIndexService.index(post) } returns
+            PostSearchDocument(
+                id = 10L,
+                title = "숨길 게시글",
+                content = "관리자가 목록과 검색에서 숨긴다",
+                display = false,
+            )
+
+        val hiddenPost =
+            postService.hidePost(
+                postId = 10L,
+                actorMemberId = 1L,
+            )
+
+        assertEquals(false, hiddenPost.display)
+        verify(exactly = 1) { postSearchIndexService.index(post) }
+    }
+
+    @Test
+    fun `일반 사용자는 게시글을 숨길 수 없다`() {
+        val user =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+
+        every { memberRepository.findById(1L) } returns Optional.of(user)
+
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                postService.hidePost(
+                    postId = 10L,
+                    actorMemberId = 1L,
+                )
+            }
+
+        assertEquals("게시글 숨김은 관리자만 할 수 있습니다.", exception.message)
+        verify(exactly = 0) { postRepository.findById(any()) }
+        verify(exactly = 0) { postSearchIndexService.index(any()) }
+    }
+
+    @Test
     fun `게시글 댓글을 저장한다`() {
         val author =
             Member(

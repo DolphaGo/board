@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -87,6 +88,22 @@ class PostController(
 
         return ResponseEntity.ok(recommend.toResponse())
     }
+
+    @PatchMapping("/{id}/hide")
+    fun hidePost(
+        @PathVariable id: Long,
+        @RequestBody request: HidePostRequest,
+    ): ResponseEntity<PostResponse> {
+        // 화면에서 "삭제"처럼 보이는 관리자 액션도 샘플에서는 display=false 숨김으로 처리한다.
+        // 실제 삭제보다 목록/검색 제외 규칙과 감사 가능성을 함께 공부하기 좋다.
+        val post =
+            postService.hidePost(
+                postId = id,
+                actorMemberId = request.actorMemberId,
+            )
+
+        return ResponseEntity.ok(post.toResponse())
+    }
 }
 
 data class CreatePostRequest(
@@ -104,6 +121,10 @@ data class CreateCommentRequest(
 
 data class CreateRecommendRequest(
     val memberId: Long,
+)
+
+data class HidePostRequest(
+    val actorMemberId: Long,
 )
 
 data class PostResponse(

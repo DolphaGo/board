@@ -363,6 +363,57 @@ class PostControllerTest {
     }
 
     @Test
+    fun `게시글 숨김 요청은 서비스를 호출하고 숨김 응답 DTO를 반환한다`() {
+        val author =
+            Member(
+                id = 2L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val hiddenPost =
+            Post(
+                id = 10L,
+                member = author,
+                title = "숨김 게시글",
+                content = "관리자가 목록과 검색에서 숨긴다",
+                viewCount = 3,
+                display = false,
+            )
+        every {
+            postService.hidePost(
+                postId = 10L,
+                actorMemberId = 1L,
+            )
+        } returns hiddenPost
+
+        val response =
+            controller.hidePost(
+                id = 10L,
+                request = HidePostRequest(actorMemberId = 1L),
+            )
+
+        assertEquals(
+            PostResponse(
+                id = 10L,
+                title = "숨김 게시글",
+                content = "관리자가 목록과 검색에서 숨긴다",
+                imageUrls = emptyList(),
+                viewCount = 3,
+                display = false,
+                notice = false,
+            ),
+            response.body,
+        )
+        verify(exactly = 1) {
+            postService.hidePost(
+                postId = 10L,
+                actorMemberId = 1L,
+            )
+        }
+    }
+
+    @Test
     fun `게시글 목록 조회는 게시판 메타를 포함한 응답 DTO를 반환한다`() {
         val author =
             Member(

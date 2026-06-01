@@ -122,6 +122,34 @@ class PostService(
         )
     }
 
+    fun hidePost(
+        postId: Long,
+        actorMemberId: Long,
+    ): Post {
+        val actor =
+            memberRepository.findById(actorMemberId).orElseThrow {
+                IllegalArgumentException("사용자를 찾을 수 없습니다: $actorMemberId")
+            }
+
+        if (actor.role != Authority.ROLE_ADMIN) {
+            // 숨김 처리는 게시판 운영 액션이다.
+            // 작성자 본인의 삭제 기능과 달리 목록/검색 노출 정책을 바꾸므로 관리자 권한으로 제한한다.
+            throw IllegalArgumentException("게시글 숨김은 관리자만 할 수 있습니다.")
+        }
+
+        val post =
+            postRepository.findById(postId).orElseThrow {
+                IllegalArgumentException("게시글을 찾을 수 없습니다: $postId")
+            }
+
+        post.hide()
+
+        // 검색은 display=true만 노출하므로, 숨김 직후 ES 문서도 다시 색인해 검색 결과에서 제외한다.
+        postSearchIndexService.index(post)
+
+        return post
+    }
+
     fun createRecommend(
         postId: Long,
         memberId: Long,
