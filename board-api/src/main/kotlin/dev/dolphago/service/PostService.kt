@@ -63,6 +63,7 @@ class PostService(
         memberId: Long,
         title: String,
         content: String,
+        imageUrls: List<String> = emptyList(),
         notice: Boolean = false,
     ): Post {
         val member =
@@ -79,6 +80,9 @@ class PostService(
                 member = member,
                 title = title,
                 content = content,
+                // 샘플에서는 이미지 파일 자체가 아니라 본문에 이어붙일 이미지 URL 목록을 먼저 저장한다.
+                // 실제 서비스라면 이 지점에서 업로드 파일 소유권, 확장자, CDN URL 같은 검증이 추가된다.
+                imageUrls = imageUrls.map(String::trim).filter(String::isNotBlank),
                 viewCount = 0,
                 display = true,
                 notice = notice,

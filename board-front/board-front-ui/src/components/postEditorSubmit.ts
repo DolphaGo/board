@@ -3,6 +3,7 @@ import type { CreatePostPayload, PostResponse } from 'src/api/postService'
 interface SubmitPostEditorFormOptions {
   title: string
   content: string
+  imageUrls?: string[]
   createPost: (payload: CreatePostPayload) => Promise<PostResponse>
   moveToPostDetail: (postId: number) => void
 }
@@ -10,12 +11,14 @@ interface SubmitPostEditorFormOptions {
 export const submitPostEditorForm = async ({
   title,
   content,
+  imageUrls = [],
   createPost,
   moveToPostDetail,
 }: SubmitPostEditorFormOptions): Promise<string> => {
   const post = await createPost({
     title,
     content,
+    imageUrls,
   })
 
   // 저장 성공 후 상세 화면으로 이동해야 사용자가 방금 쓴 글을 바로 확인할 수 있다.

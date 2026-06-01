@@ -62,11 +62,16 @@ class PostServiceTest {
                 memberId = 1L,
                 title = "코프링 검색 게시글",
                 content = "Elasticsearch 색인까지 연결한다",
+                imageUrls = listOf(" https://cdn.example.com/first.png ", "", "https://cdn.example.com/second.png"),
             )
 
         assertEquals(10L, post.id)
         assertEquals("코프링 검색 게시글", postSlot.captured.title)
         assertEquals("Elasticsearch 색인까지 연결한다", postSlot.captured.content)
+        assertEquals(
+            listOf("https://cdn.example.com/first.png", "https://cdn.example.com/second.png"),
+            postSlot.captured.imageUrls,
+        )
         assertEquals(0L, postSlot.captured.viewCount)
         assertEquals(true, postSlot.captured.display)
         verify(exactly = 1) { postSearchIndexService.index(post) }

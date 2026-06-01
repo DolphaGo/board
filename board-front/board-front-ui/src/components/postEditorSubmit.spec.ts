@@ -14,6 +14,7 @@ describe('# Post editor submit', () => {
     const message = await submitPostEditorForm({
       title: '코프링 게시글',
       content: '작성 후 상세 화면으로 이동한다',
+      imageUrls: ['https://cdn.example.com/first.png'],
       createPost,
       moveToPostDetail,
     })
@@ -21,6 +22,7 @@ describe('# Post editor submit', () => {
     expect(createPost).toBeCalledWith({
       title: '코프링 게시글',
       content: '작성 후 상세 화면으로 이동한다',
+      imageUrls: ['https://cdn.example.com/first.png'],
     })
     expect(moveToPostDetail).toBeCalledWith(77)
     expect(message).toBe('게시글 #77 저장 완료')

@@ -48,6 +48,7 @@ class PostController(
                 memberId = request.memberId,
                 title = request.title,
                 content = request.content,
+                imageUrls = request.imageUrls,
                 notice = request.notice,
             )
 
@@ -92,6 +93,7 @@ data class CreatePostRequest(
     val memberId: Long,
     val title: String,
     val content: String,
+    val imageUrls: List<String> = emptyList(),
     val notice: Boolean = false,
 )
 
@@ -108,6 +110,7 @@ data class PostResponse(
     val id: Long?,
     val title: String,
     val content: String,
+    val imageUrls: List<String>,
     val viewCount: Long,
     val display: Boolean,
     val notice: Boolean,
@@ -117,6 +120,7 @@ data class PostListItemResponse(
     val id: Long?,
     val title: String,
     val content: String,
+    val imageUrls: List<String>,
     val viewCount: Long,
     val display: Boolean,
     val notice: Boolean,
@@ -149,6 +153,7 @@ private fun Post.toResponse(): PostResponse =
         id = id,
         title = title,
         content = content,
+        imageUrls = imageUrls,
         viewCount = viewCount,
         display = display,
         notice = notice,
@@ -159,6 +164,7 @@ private fun PostListItem.toListItemResponse(): PostListItemResponse =
         id = post.id,
         title = post.title,
         content = post.content,
+        imageUrls = post.imageUrls,
         viewCount = post.viewCount,
         display = post.display,
         notice = post.notice,

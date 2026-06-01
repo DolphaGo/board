@@ -5,6 +5,7 @@ const STUDY_MEMBER_ID = 1
 export interface CreatePostPayload {
   title: string
   content: string
+  imageUrls?: string[]
   notice?: boolean
 }
 
@@ -16,6 +17,7 @@ export interface PostResponse {
   id: number
   title: string
   content: string
+  imageUrls: string[]
   viewCount: number
   display: boolean
   notice: boolean
@@ -55,6 +57,8 @@ const isPostResponse = (data: unknown): data is PostResponse => {
   return typeof post.id === 'number' &&
     typeof post.title === 'string' &&
     typeof post.content === 'string' &&
+    Array.isArray(post.imageUrls) &&
+    post.imageUrls.every(imageUrl => typeof imageUrl === 'string' && imageUrl.trim().length > 0) &&
     typeof post.viewCount === 'number' &&
     typeof post.display === 'boolean' &&
     typeof post.notice === 'boolean'
@@ -142,6 +146,9 @@ export const postService = {
       memberId: STUDY_MEMBER_ID,
       title: payload.title,
       content: payload.content,
+      // 글쓰기 화면은 이미지 파일 업로드가 붙기 전에도 URL 배열을 보낼 수 있다.
+      // 저장 전 trim/filter를 해두면 백엔드와 프론트가 같은 깨끗한 계약을 공유한다.
+      imageUrls: payload.imageUrls?.map(imageUrl => imageUrl.trim()).filter(imageUrl => imageUrl.length > 0) ?? [],
       // 공지 작성 UI가 붙기 전까지 일반 글은 false로 보낸다.
       // 관리자가 notice=true를 보낼 때만 백엔드가 권한을 검사한 뒤 공지로 저장한다.
       notice: payload.notice ?? false,

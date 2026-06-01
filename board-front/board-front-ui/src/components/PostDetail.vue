@@ -8,6 +8,15 @@
         <span>{{ post.title }}</span>
       </h1>
       <p>{{ post.content }}</p>
+      <div v-if="post.imageUrls.length > 0" class="post-image-list" aria-label="본문 이미지">
+        <img
+          v-for="(imageUrl, index) in post.imageUrls"
+          :key="`${post.id}:image:${imageUrl}`"
+          :src="imageUrl"
+          :alt="`${post.title} 이미지 ${index + 1}`"
+          loading="lazy"
+        />
+      </div>
       <p class="post-meta">조회수 {{ post.viewCount }}</p>
 
       <div class="post-actions" aria-label="게시글 액션">
@@ -172,6 +181,17 @@ const submitRecommend = async () => {
 .post-meta {
   color: #777777;
   font-size: 13px;
+}
+
+.post-image-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.post-image-list img {
+  border: 1px solid #d8d8d8;
+  max-width: 100%;
 }
 
 .post-actions {

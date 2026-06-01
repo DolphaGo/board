@@ -1,6 +1,7 @@
 package dev.dolphago.mysql
 
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
@@ -24,6 +25,9 @@ data class Post(
     val title: String,
     @Column(name = "content", nullable = false)
     val content: String,
+    @Column(name = "image_urls", nullable = false, columnDefinition = "TEXT")
+    @Convert(converter = PostImageUrlsConverter::class)
+    val imageUrls: List<String> = emptyList(),
     var viewCount: Long,
     val display: Boolean,
     @Column(name = "notice", nullable = false)

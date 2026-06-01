@@ -32,6 +32,7 @@ class PostControllerTest {
                 member = author,
                 title = "코프링 게시판 검색",
                 content = "저장 후 Elasticsearch 색인을 연결한다",
+                imageUrls = listOf("https://cdn.example.com/first.png", "https://cdn.example.com/second.png"),
                 viewCount = 0,
                 display = true,
             )
@@ -40,6 +41,7 @@ class PostControllerTest {
                 memberId = 1L,
                 title = "코프링 게시판 검색",
                 content = "저장 후 Elasticsearch 색인을 연결한다",
+                imageUrls = listOf("https://cdn.example.com/first.png", "https://cdn.example.com/second.png"),
                 notice = false,
             )
         } returns savedPost
@@ -50,6 +52,7 @@ class PostControllerTest {
                     memberId = 1L,
                     title = "코프링 게시판 검색",
                     content = "저장 후 Elasticsearch 색인을 연결한다",
+                    imageUrls = listOf("https://cdn.example.com/first.png", "https://cdn.example.com/second.png"),
                 ),
             )
 
@@ -58,6 +61,7 @@ class PostControllerTest {
                 id = 10L,
                 title = "코프링 게시판 검색",
                 content = "저장 후 Elasticsearch 색인을 연결한다",
+                imageUrls = listOf("https://cdn.example.com/first.png", "https://cdn.example.com/second.png"),
                 viewCount = 0,
                 display = true,
                 notice = false,
@@ -69,6 +73,7 @@ class PostControllerTest {
                 memberId = 1L,
                 title = "코프링 게시판 검색",
                 content = "저장 후 Elasticsearch 색인을 연결한다",
+                imageUrls = listOf("https://cdn.example.com/first.png", "https://cdn.example.com/second.png"),
                 notice = false,
             )
         }
@@ -117,6 +122,7 @@ class PostControllerTest {
                 id = 11L,
                 title = "점검 공지",
                 content = "검색 색인 점검 시간을 안내한다",
+                imageUrls = emptyList(),
                 viewCount = 0,
                 display = true,
                 notice = true,
@@ -160,6 +166,7 @@ class PostControllerTest {
                 id = 10L,
                 title = "코프링 게시판 검색",
                 content = "상세 화면에서 보여줄 본문",
+                imageUrls = emptyList(),
                 viewCount = 3,
                 display = true,
                 notice = false,
@@ -390,6 +397,7 @@ class PostControllerTest {
                     id = 10L,
                     title = "코프링 게시판 검색",
                     content = "목록에서 보여줄 본문",
+                    imageUrls = emptyList(),
                     viewCount = 3,
                     display = true,
                     notice = false,

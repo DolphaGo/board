@@ -53,6 +53,7 @@ import { submitPostEditorForm } from './postEditorSubmit';
 const router = useRouter();
 const title = ref('');
 const bodyText = ref('');
+const imageUrls = ref<string[]>([]);
 const activeTab = ref('write');
 const submitting = ref(false);
 const submitMessage = ref('');
@@ -95,6 +96,7 @@ const uploadImage = async (file: File): Promise<string> => {
 const insertImageMarkdown = (url: string) => {
   const markdownImage = `![alt text](${url})`;
   bodyText.value += `\n${markdownImage}\n`;
+  imageUrls.value = [...imageUrls.value, url];
 };
 
 const submit = async () => {
@@ -105,6 +107,7 @@ const submit = async () => {
     submitMessage.value = await submitPostEditorForm({
       title: title.value,
       content: bodyText.value,
+      imageUrls: imageUrls.value,
       createPost: postService.createPost,
       moveToPostDetail: postId => {
         router.push(`/post/${postId}`);

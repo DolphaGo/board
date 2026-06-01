@@ -12,6 +12,7 @@ describe('# Post service', function () {
         id: 10,
         title: '코프링 게시글',
         content: 'Elasticsearch 색인까지 연결한다',
+        imageUrls: ['https://cdn.example.com/first.png'],
         viewCount: 3,
         display: true,
         notice: false,
@@ -31,6 +32,7 @@ describe('# Post service', function () {
           id: 10,
           title: '코프링 게시글',
           content: 'Elasticsearch 색인까지 연결한다',
+          imageUrls: [],
           viewCount: 3,
           display: true,
           notice: true,
@@ -58,6 +60,7 @@ describe('# Post service', function () {
         id: 10,
         title: '코프링 게시글',
         content: 'Elasticsearch 색인까지 연결한다',
+        imageUrls: ['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'],
         viewCount: 0,
         display: true,
         notice: false,
@@ -67,15 +70,18 @@ describe('# Post service', function () {
     const post = await postService.createPost({
       title: '코프링 게시글',
       content: 'Elasticsearch 색인까지 연결한다',
+      imageUrls: ['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'],
     })
 
     expect(mockedAxios.post).toBeCalledWith('/api/posts', {
       memberId: 1,
       title: '코프링 게시글',
       content: 'Elasticsearch 색인까지 연결한다',
+      imageUrls: ['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'],
       notice: false,
     })
     expect(post.id).toBe(10)
+    expect(post.imageUrls).toEqual(['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'])
   })
 
   it('should create a comment with the study member id', async function () {

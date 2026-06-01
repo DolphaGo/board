@@ -29,6 +29,7 @@ describe('# Post detail component', () => {
       id: 10,
       title: '코프링 게시글',
       content: 'Elasticsearch 색인까지 연결한다',
+      imageUrls: ['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'],
       viewCount: 3,
       display: true,
       notice: true,
@@ -76,6 +77,9 @@ describe('# Post detail component', () => {
     })
     expect(mockedPostService.createRecommend).toBeCalledWith(10)
     expect(wrapper.get('.notice-badge').text()).toBe('공지')
+    expect(wrapper.findAll('.post-image-list img')).toHaveLength(2)
+    expect(wrapper.findAll('.post-image-list img')[0].attributes('src')).toBe('https://cdn.example.com/first.png')
+    expect(wrapper.findAll('.post-image-list img')[1].attributes('src')).toBe('https://cdn.example.com/second.png')
     expect(wrapper.get('[data-testid="comment-content"]').element).toHaveProperty('value', '')
     expect(wrapper.text()).toContain('이미 저장된 댓글')
     expect(wrapper.text()).toContain('검색 스코어링 설명이 좋아요')
