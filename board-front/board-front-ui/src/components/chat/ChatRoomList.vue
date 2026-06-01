@@ -83,10 +83,9 @@
 import { defineComponent, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { chatService, type ChatRoom } from 'src/api/chatService'
+import { STUDY_CHAT_USERNAME } from 'src/chat/chatStudyConfig'
 import { buildCreateRoomRequest } from './createRoomDialogForm'
 import { buildChatRoomActionErrorMessage } from './chatRoomListFeedback'
-
-const STUDY_CHAT_USERNAME = 'study-user'
 
 export default defineComponent({
   name: 'ChatRoomList',

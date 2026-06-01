@@ -3,10 +3,9 @@ import Homepage from './components/Homepage.vue'
 import PostDetail from './components/PostDetail.vue'
 import PostEditor from "./components/PostEditor.vue";
 import SearchResults from './components/SearchResults.vue'
+import { STUDY_CHAT_USERNAME } from './chat/chatStudyConfig'
 
 export type AppRouteNames = ''
-
-const DEFAULT_STUDY_CHAT_USERNAME = 'study-user'
 
 const firstRouteValue = (value: unknown): string | undefined => {
   if (Array.isArray(value)) {
@@ -21,7 +20,7 @@ export const buildChatRoomRouteProps = (route: {
   query: Record<string, unknown>
 }) => {
   const roomId = firstRouteValue(route.params.id) ?? ''
-  const username = firstRouteValue(route.query.username) || DEFAULT_STUDY_CHAT_USERNAME
+  const username = firstRouteValue(route.query.username) || STUDY_CHAT_USERNAME
 
   // Vue Router의 params/query는 같은 key가 여러 번 들어오면 배열이 될 수 있다.
   // ChatRoom은 문자열 prop만 받으므로 라우터 경계에서 화면이 쓰기 쉬운 값으로 좁힌다.
