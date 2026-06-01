@@ -198,4 +198,68 @@ describe('# Chat room component', () => {
     expect(audioTrack.stop).toHaveBeenCalledTimes(1)
     expect(closePeerConnection).toHaveBeenCalledTimes(1)
   })
+
+  it('should toggle local video track enabled state', async () => {
+    const videoTrack = { enabled: true, stop: jest.fn() }
+    const audioTrack = { enabled: true, stop: jest.fn() }
+    const mediaStream = {
+      getTracks: () => [videoTrack, audioTrack],
+      getVideoTracks: () => [videoTrack],
+      getAudioTracks: () => [audioTrack],
+    } as unknown as MediaStream
+
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: jest.fn(() => Promise.resolve(mediaStream)),
+      },
+    })
+    Object.defineProperty(globalThis, 'RTCPeerConnection', {
+      configurable: true,
+      value: jest.fn(() => ({
+        addTrack: jest.fn(),
+        close: jest.fn(),
+      })),
+    })
+
+    const wrapper = mountChatRoom(true)
+    await Promise.resolve()
+
+    await wrapper.findAll('.media-controls button')[0].trigger('click')
+
+    expect(videoTrack.enabled).toBe(false)
+    expect(wrapper.findAll('.media-controls button')[0].classes()).not.toContain('active')
+  })
+
+  it('should toggle local audio track enabled state', async () => {
+    const videoTrack = { enabled: true, stop: jest.fn() }
+    const audioTrack = { enabled: true, stop: jest.fn() }
+    const mediaStream = {
+      getTracks: () => [videoTrack, audioTrack],
+      getVideoTracks: () => [videoTrack],
+      getAudioTracks: () => [audioTrack],
+    } as unknown as MediaStream
+
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: jest.fn(() => Promise.resolve(mediaStream)),
+      },
+    })
+    Object.defineProperty(globalThis, 'RTCPeerConnection', {
+      configurable: true,
+      value: jest.fn(() => ({
+        addTrack: jest.fn(),
+        close: jest.fn(),
+      })),
+    })
+
+    const wrapper = mountChatRoom(true)
+    await Promise.resolve()
+
+    await wrapper.findAll('.media-controls button')[1].trigger('click')
+
+    expect(audioTrack.enabled).toBe(false)
+    expect(wrapper.findAll('.media-controls button')[1].classes()).not.toContain('active')
+  })
 })
