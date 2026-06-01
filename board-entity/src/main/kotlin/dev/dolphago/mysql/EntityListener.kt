@@ -14,10 +14,10 @@ abstract class EntityListener {
     @CreatedDate
     @Column(name = "create_date", nullable = false, updatable = false)
     var createDate: LocalDateTime = LocalDateTime.now()
-        private set
+        protected set
 
     @LastModifiedDate
     @Column(name = "update_date", nullable = false)
     var updateDate: LocalDateTime = LocalDateTime.now()
-        private set
+        protected set
 }

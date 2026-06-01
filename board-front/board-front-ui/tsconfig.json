@@ -9,8 +9,11 @@
         "jsx": "preserve",
         "noEmit": true,
         "strict": true,
-        "moduleResolution": "node",
-        "baseUrl": "./",
+        "moduleResolution": "bundler",
+        "paths": {
+            "src": ["./src/index.ts"],
+            "src/*": ["./src/*"]
+        },
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
         "skipLibCheck": true,

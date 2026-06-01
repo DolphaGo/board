@@ -39,7 +39,7 @@ class PostSearchServiceTest {
                         emptyMap(),
                         null,
                         null,
-                        emptyList(),
+                        emptyMap(),
                         PostSearchDocument(
                             id = 1L,
                             title = "kotlin spring",
