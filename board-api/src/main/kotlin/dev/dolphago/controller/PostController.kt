@@ -48,6 +48,7 @@ class PostController(
                 memberId = request.memberId,
                 title = request.title,
                 content = request.content,
+                notice = request.notice,
             )
 
         return ResponseEntity.ok(post.toResponse())
@@ -91,6 +92,7 @@ data class CreatePostRequest(
     val memberId: Long,
     val title: String,
     val content: String,
+    val notice: Boolean = false,
 )
 
 data class CreateCommentRequest(
@@ -108,6 +110,7 @@ data class PostResponse(
     val content: String,
     val viewCount: Long,
     val display: Boolean,
+    val notice: Boolean,
 )
 
 data class PostListItemResponse(
@@ -116,6 +119,7 @@ data class PostListItemResponse(
     val content: String,
     val viewCount: Long,
     val display: Boolean,
+    val notice: Boolean,
     val authorNickname: String,
     val createdAt: LocalDateTime,
     val commentCount: Long,
@@ -147,6 +151,7 @@ private fun Post.toResponse(): PostResponse =
         content = content,
         viewCount = viewCount,
         display = display,
+        notice = notice,
     )
 
 private fun PostListItem.toListItemResponse(): PostListItemResponse =
@@ -156,6 +161,7 @@ private fun PostListItem.toListItemResponse(): PostListItemResponse =
         content = post.content,
         viewCount = post.viewCount,
         display = post.display,
+        notice = post.notice,
         authorNickname = post.member.nickname,
         createdAt = post.createDate,
         commentCount = commentCount,

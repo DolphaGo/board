@@ -19,4 +19,6 @@ data class PostSearchDocument(
     val viewCount: Long = 0,
     @Field(type = FieldType.Boolean)
     val display: Boolean = true,
+    @Field(type = FieldType.Boolean)
+    val notice: Boolean = false,
 )

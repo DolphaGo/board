@@ -3,7 +3,10 @@
     <p v-if="loading">게시글을 불러오는 중...</p>
     <p v-else-if="error">게시글을 불러오지 못했습니다.</p>
     <article v-else-if="post" class="post-detail">
-      <h1>{{ post.title }}</h1>
+      <h1>
+        <span v-if="post.notice" class="notice-badge">공지</span>
+        <span>{{ post.title }}</span>
+      </h1>
       <p>{{ post.content }}</p>
       <p class="post-meta">조회수 {{ post.viewCount }}</p>
 
@@ -149,6 +152,21 @@ const submitRecommend = async () => {
   border-top: 2px solid #000000;
   color: #000000;
   padding: 12px;
+}
+
+.post-detail h1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notice-badge {
+  border: 1px solid #c40000;
+  padding: 1px 5px;
+  color: #c40000;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .post-meta {

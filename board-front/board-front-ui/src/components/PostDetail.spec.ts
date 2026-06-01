@@ -31,6 +31,7 @@ describe('# Post detail component', () => {
       content: 'Elasticsearch 색인까지 연결한다',
       viewCount: 3,
       display: true,
+      notice: true,
     })
     mockedPostService.listComments.mockResolvedValue([
       {
@@ -74,6 +75,7 @@ describe('# Post detail component', () => {
       content: '검색 스코어링 설명이 좋아요',
     })
     expect(mockedPostService.createRecommend).toBeCalledWith(10)
+    expect(wrapper.get('.notice-badge').text()).toBe('공지')
     expect(wrapper.get('[data-testid="comment-content"]').element).toHaveProperty('value', '')
     expect(wrapper.text()).toContain('이미 저장된 댓글')
     expect(wrapper.text()).toContain('검색 스코어링 설명이 좋아요')

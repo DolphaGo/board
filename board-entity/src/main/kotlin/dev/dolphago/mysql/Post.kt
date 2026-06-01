@@ -26,6 +26,8 @@ data class Post(
     val content: String,
     var viewCount: Long,
     val display: Boolean,
+    @Column(name = "notice", nullable = false)
+    val notice: Boolean = false,
 ) : EntityListener() {
     fun increaseViewCount() {
         // 상세 조회처럼 "게시글을 실제로 읽은 행위"가 있을 때만 조회수를 올린다.

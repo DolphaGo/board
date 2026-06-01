@@ -12,7 +12,8 @@
     <div v-else class="board-rows">
       <article v-for="post in posts" :key="post.id" class="board-row">
         <router-link class="board-title-link" :to="`/post/${post.id}`">
-          {{ post.title }}
+          <span v-if="post.notice" class="notice-badge">공지</span>
+          <span class="board-title-text">{{ post.title }}</span>
         </router-link>
         <p class="post-preview">{{ post.content }}</p>
         <div class="meta-row">
@@ -104,6 +105,9 @@ onMounted(fetchPosts)
 }
 
 .board-title-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #000;
   font-size: 17px;
   font-weight: 700;
@@ -113,6 +117,16 @@ onMounted(fetchPosts)
 
 .board-title-link:hover {
   color: #057dbc;
+}
+
+.notice-badge {
+  display: inline-block;
+  border: 1px solid #c40000;
+  padding: 1px 4px;
+  color: #c40000;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .post-preview {

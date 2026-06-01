@@ -40,6 +40,7 @@ class PostControllerTest {
                 memberId = 1L,
                 title = "코프링 게시판 검색",
                 content = "저장 후 Elasticsearch 색인을 연결한다",
+                notice = false,
             )
         } returns savedPost
 
@@ -59,6 +60,7 @@ class PostControllerTest {
                 content = "저장 후 Elasticsearch 색인을 연결한다",
                 viewCount = 0,
                 display = true,
+                notice = false,
             ),
             response.body,
         )
@@ -67,6 +69,66 @@ class PostControllerTest {
                 memberId = 1L,
                 title = "코프링 게시판 검색",
                 content = "저장 후 Elasticsearch 색인을 연결한다",
+                notice = false,
+            )
+        }
+    }
+
+    @Test
+    fun `공지 게시글 생성 요청은 notice 플래그를 서비스에 전달한다`() {
+        val admin =
+            Member(
+                id = 1L,
+                email = "admin@example.com",
+                nickname = "admin",
+                role = Authority.ROLE_ADMIN,
+            )
+        val savedPost =
+            Post(
+                id = 11L,
+                member = admin,
+                title = "점검 공지",
+                content = "검색 색인 점검 시간을 안내한다",
+                viewCount = 0,
+                display = true,
+                notice = true,
+            )
+        every {
+            postService.createPost(
+                memberId = 1L,
+                title = "점검 공지",
+                content = "검색 색인 점검 시간을 안내한다",
+                notice = true,
+            )
+        } returns savedPost
+
+        val response =
+            controller.createPost(
+                CreatePostRequest(
+                    memberId = 1L,
+                    title = "점검 공지",
+                    content = "검색 색인 점검 시간을 안내한다",
+                    notice = true,
+                ),
+            )
+
+        assertEquals(
+            PostResponse(
+                id = 11L,
+                title = "점검 공지",
+                content = "검색 색인 점검 시간을 안내한다",
+                viewCount = 0,
+                display = true,
+                notice = true,
+            ),
+            response.body,
+        )
+        verify(exactly = 1) {
+            postService.createPost(
+                memberId = 1L,
+                title = "점검 공지",
+                content = "검색 색인 점검 시간을 안내한다",
+                notice = true,
             )
         }
     }
@@ -100,6 +162,7 @@ class PostControllerTest {
                 content = "상세 화면에서 보여줄 본문",
                 viewCount = 3,
                 display = true,
+                notice = false,
             ),
             response.body,
         )
@@ -329,6 +392,7 @@ class PostControllerTest {
                     content = "목록에서 보여줄 본문",
                     viewCount = 3,
                     display = true,
+                    notice = false,
                     authorNickname = "writer",
                     createdAt = post.createDate,
                     commentCount = 2,

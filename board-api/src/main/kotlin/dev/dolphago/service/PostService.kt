@@ -2,6 +2,7 @@ package dev.dolphago.service
 
 import dev.dolphago.comment.repository.CommentRepository
 import dev.dolphago.member.repository.MemberRepository
+import dev.dolphago.mysql.Authority
 import dev.dolphago.mysql.Comment
 import dev.dolphago.mysql.Post
 import dev.dolphago.mysql.PostRecommend
@@ -60,11 +61,17 @@ class PostService(
         memberId: Long,
         title: String,
         content: String,
+        notice: Boolean = false,
     ): Post {
         val member =
             memberRepository.findById(memberId).orElseThrow {
                 IllegalArgumentException("사용자를 찾을 수 없습니다: $memberId")
             }
+        if (notice && member.role != Authority.ROLE_ADMIN) {
+            // 공지글은 일반 글보다 강한 노출 권한을 갖는 게시판 운영 데이터다.
+            // 그래서 요청자가 notice=true를 보냈더라도 관리자 권한이 아니면 저장/색인 전에 차단한다.
+            throw IllegalArgumentException("공지 게시글은 관리자만 작성할 수 있습니다.")
+        }
         val post =
             Post(
                 member = member,
@@ -72,6 +79,7 @@ class PostService(
                 content = content,
                 viewCount = 0,
                 display = true,
+                notice = notice,
             )
         val savedPost = postRepository.save(post)
 

@@ -5,6 +5,7 @@ const STUDY_MEMBER_ID = 1
 export interface CreatePostPayload {
   title: string
   content: string
+  notice?: boolean
 }
 
 export interface CreateCommentPayload {
@@ -17,6 +18,7 @@ export interface PostResponse {
   content: string
   viewCount: number
   display: boolean
+  notice: boolean
 }
 
 export interface PostListItemResponse extends PostResponse {
@@ -54,7 +56,8 @@ const isPostResponse = (data: unknown): data is PostResponse => {
     typeof post.title === 'string' &&
     typeof post.content === 'string' &&
     typeof post.viewCount === 'number' &&
-    typeof post.display === 'boolean'
+    typeof post.display === 'boolean' &&
+    typeof post.notice === 'boolean'
 }
 
 const isPostListItemResponse = (data: unknown): data is PostListItemResponse => {
@@ -139,6 +142,9 @@ export const postService = {
       memberId: STUDY_MEMBER_ID,
       title: payload.title,
       content: payload.content,
+      // 공지 작성 UI가 붙기 전까지 일반 글은 false로 보낸다.
+      // 관리자가 notice=true를 보낼 때만 백엔드가 권한을 검사한 뒤 공지로 저장한다.
+      notice: payload.notice ?? false,
     })
 
     if (!isPostResponse(response.data)) {

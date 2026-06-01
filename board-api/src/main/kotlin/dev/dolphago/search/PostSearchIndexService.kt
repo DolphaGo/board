@@ -16,6 +16,7 @@ class PostSearchIndexService(
                 content = post.content,
                 viewCount = post.viewCount,
                 display = post.display,
+                notice = post.notice,
             )
 
         // RDB의 Post와 ES 문서는 저장소 목적이 다르다.

@@ -18,6 +18,7 @@ import io.mockk.verify
 import java.util.Optional
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class PostServiceTest {
     private val postRepository = mockk<PostRepository>()
@@ -69,6 +70,69 @@ class PostServiceTest {
         assertEquals(0L, postSlot.captured.viewCount)
         assertEquals(true, postSlot.captured.display)
         verify(exactly = 1) { postSearchIndexService.index(post) }
+    }
+
+    @Test
+    fun `관리자는 공지 게시글을 생성할 수 있다`() {
+        val admin =
+            Member(
+                id = 1L,
+                email = "admin@example.com",
+                nickname = "admin",
+                role = Authority.ROLE_ADMIN,
+            )
+        val postSlot = slot<Post>()
+
+        every { memberRepository.findById(1L) } returns Optional.of(admin)
+        every { postRepository.save(capture(postSlot)) } answers {
+            firstArg<Post>().apply { id = 11L }
+        }
+        every { postSearchIndexService.index(any()) } returns
+            PostSearchDocument(
+                id = 11L,
+                title = "점검 공지",
+                content = "검색 색인 점검 시간을 안내한다",
+            )
+
+        val post =
+            postService.createPost(
+                memberId = 1L,
+                title = "점검 공지",
+                content = "검색 색인 점검 시간을 안내한다",
+                notice = true,
+            )
+
+        assertEquals(11L, post.id)
+        assertEquals(true, postSlot.captured.notice)
+        verify(exactly = 1) { postRepository.save(any()) }
+        verify(exactly = 1) { postSearchIndexService.index(post) }
+    }
+
+    @Test
+    fun `일반 사용자는 공지 게시글을 생성할 수 없다`() {
+        val user =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+
+        every { memberRepository.findById(1L) } returns Optional.of(user)
+
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                postService.createPost(
+                    memberId = 1L,
+                    title = "공지인 척하는 글",
+                    content = "일반 사용자는 notice 플래그를 세울 수 없다",
+                    notice = true,
+                )
+            }
+
+        assertEquals("공지 게시글은 관리자만 작성할 수 있습니다.", exception.message)
+        verify(exactly = 0) { postRepository.save(any()) }
+        verify(exactly = 0) { postSearchIndexService.index(any()) }
     }
 
     @Test

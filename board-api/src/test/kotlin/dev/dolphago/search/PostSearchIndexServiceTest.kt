@@ -34,6 +34,7 @@ class PostSearchIndexServiceTest {
                 content = "Elasticsearch 점수 계산을 연습한다",
                 viewCount = 7,
                 display = true,
+                notice = true,
             )
 
         postSearchIndexService.index(post)
@@ -45,6 +46,7 @@ class PostSearchIndexServiceTest {
                 content = "Elasticsearch 점수 계산을 연습한다",
                 viewCount = 7,
                 display = true,
+                notice = true,
             ),
             documentSlot.captured,
         )

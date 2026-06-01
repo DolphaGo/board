@@ -14,6 +14,7 @@ describe('# Post service', function () {
         content: 'Elasticsearch 색인까지 연결한다',
         viewCount: 3,
         display: true,
+        notice: false,
       },
     })
 
@@ -32,6 +33,7 @@ describe('# Post service', function () {
           content: 'Elasticsearch 색인까지 연결한다',
           viewCount: 3,
           display: true,
+          notice: true,
           authorNickname: 'writer',
           createdAt: '2026-06-02T04:00:00',
           commentCount: 2,
@@ -45,6 +47,7 @@ describe('# Post service', function () {
     expect(mockedAxios.get).toBeCalledWith('/api/posts')
     expect(posts).toHaveLength(1)
     expect(posts[0].title).toBe('코프링 게시글')
+    expect(posts[0].notice).toBe(true)
     expect(posts[0].authorNickname).toBe('writer')
     expect(posts[0].commentCount).toBe(2)
   })
@@ -57,6 +60,7 @@ describe('# Post service', function () {
         content: 'Elasticsearch 색인까지 연결한다',
         viewCount: 0,
         display: true,
+        notice: false,
       },
     })
 
@@ -69,6 +73,7 @@ describe('# Post service', function () {
       memberId: 1,
       title: '코프링 게시글',
       content: 'Elasticsearch 색인까지 연결한다',
+      notice: false,
     })
     expect(post.id).toBe(10)
   })
