@@ -329,7 +329,7 @@ class PostServiceTest {
     }
 
     @Test
-    fun `목록 조회는 노출 게시글만 최신순으로 읽고 댓글 수를 함께 반환한다`() {
+    fun `목록 조회는 공지를 먼저 읽고 같은 그룹에서는 최신순으로 읽는다`() {
         val author =
             Member(
                 id = 1L,
@@ -346,18 +346,33 @@ class PostServiceTest {
                 viewCount = 3,
                 display = true,
             )
-        every { postRepository.findByDisplayTrueOrderByIdDesc() } returns listOf(post)
+        val notice =
+            Post(
+                id = 9L,
+                member = author,
+                title = "점검 공지",
+                content = "공지글은 id가 더 작아도 일반 글보다 먼저 보여야 한다",
+                viewCount = 1,
+                display = true,
+                notice = true,
+            )
+        every { postRepository.findByDisplayTrueOrderByNoticeDescIdDesc() } returns listOf(notice, post)
+        every { commentRepository.countByPostIdAndDisplayTrue(9L) } returns 0L
         every { commentRepository.countByPostIdAndDisplayTrue(10L) } returns 2L
+        every { postRecommendRepository.countByPostIdAndDisplayTrue(9L) } returns 0L
         every { postRecommendRepository.countByPostIdAndDisplayTrue(10L) } returns 5L
 
         val posts = postService.listPosts()
 
-        assertEquals(post, posts.single().post)
-        assertEquals(2L, posts.single().commentCount)
-        assertEquals(5L, posts.single().recommendCount)
+        assertEquals(listOf(notice, post), posts.map { it.post })
+        assertEquals(0L, posts[0].commentCount)
+        assertEquals(2L, posts[1].commentCount)
+        assertEquals(5L, posts[1].recommendCount)
         assertEquals(3L, post.viewCount)
-        verify(exactly = 1) { postRepository.findByDisplayTrueOrderByIdDesc() }
+        verify(exactly = 1) { postRepository.findByDisplayTrueOrderByNoticeDescIdDesc() }
+        verify(exactly = 1) { commentRepository.countByPostIdAndDisplayTrue(9L) }
         verify(exactly = 1) { commentRepository.countByPostIdAndDisplayTrue(10L) }
+        verify(exactly = 1) { postRecommendRepository.countByPostIdAndDisplayTrue(9L) }
         verify(exactly = 1) { postRecommendRepository.countByPostIdAndDisplayTrue(10L) }
     }
 }

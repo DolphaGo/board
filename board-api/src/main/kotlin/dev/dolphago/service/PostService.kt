@@ -39,7 +39,9 @@ class PostService(
     fun listPosts(): List<PostListItem> {
         // 목록은 게시판 첫 화면을 빠르게 그리는 용도다.
         // 상세 조회와 달리 "읽었다"는 사용자 행위가 아니므로 조회수를 올리지 않는다.
-        return postRepository.findByDisplayTrueOrderByIdDesc().map { post ->
+        // 공지글은 일반 글보다 운영상 우선 노출되어야 하므로 notice desc로 먼저 묶고,
+        // 같은 그룹 안에서는 id desc를 써서 최신 글이 위로 오게 한다.
+        return postRepository.findByDisplayTrueOrderByNoticeDescIdDesc().map { post ->
             PostListItem(
                 post = post,
                 // 댓글은 display=true인 것만 사용자에게 노출된다.
