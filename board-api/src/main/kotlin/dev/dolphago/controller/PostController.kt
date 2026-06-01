@@ -28,6 +28,15 @@ class PostController(
         @PathVariable id: Long,
     ): ResponseEntity<PostResponse> = ResponseEntity.ok(postService.getPost(id).toResponse())
 
+    @GetMapping("/{id}/comments")
+    fun listComments(
+        @PathVariable id: Long,
+    ): ResponseEntity<List<CommentResponse>> {
+        // 댓글 목록은 상세 화면에서 본문 아래에 붙는 읽기 전용 데이터다.
+        // 컨트롤러에서는 서비스가 고른 노출 댓글을 화면 DTO로만 변환한다.
+        return ResponseEntity.ok(postService.listComments(postId = id).map { it.toResponse() })
+    }
+
     @PostMapping
     fun createPost(
         @RequestBody request: CreatePostRequest,

@@ -172,6 +172,71 @@ class PostControllerTest {
     }
 
     @Test
+    fun `게시글 댓글 목록 조회는 응답 DTO 목록을 반환한다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "코프링 게시판 검색",
+                content = "상세 화면에서 보여줄 본문",
+                viewCount = 3,
+                display = true,
+            )
+        val comments =
+            listOf(
+                Comment(
+                    id = 20L,
+                    post = post,
+                    member = author,
+                    content = "첫 댓글",
+                    display = true,
+                ),
+                Comment(
+                    id = 21L,
+                    post = post,
+                    member = author,
+                    content = "두 번째 댓글",
+                    display = true,
+                ),
+            )
+        every { postService.listComments(postId = 10L) } returns comments
+
+        val response = controller.listComments(id = 10L)
+
+        assertEquals(
+            listOf(
+                CommentResponse(
+                    id = 20L,
+                    postId = 10L,
+                    memberId = 1L,
+                    authorNickname = "writer",
+                    content = "첫 댓글",
+                    display = true,
+                    createdAt = comments[0].createDate,
+                ),
+                CommentResponse(
+                    id = 21L,
+                    postId = 10L,
+                    memberId = 1L,
+                    authorNickname = "writer",
+                    content = "두 번째 댓글",
+                    display = true,
+                    createdAt = comments[1].createDate,
+                ),
+            ),
+            response.body,
+        )
+        verify(exactly = 1) { postService.listComments(postId = 10L) }
+    }
+
+    @Test
     fun `게시글 추천 생성 요청은 서비스를 호출하고 응답 DTO를 반환한다`() {
         val author =
             Member(

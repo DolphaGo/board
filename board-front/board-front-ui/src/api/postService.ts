@@ -120,6 +120,18 @@ export const postService = {
     return response.data
   },
 
+  listComments: async (postId: number): Promise<CommentResponse[]> => {
+    const response = await axios.get<CommentResponse[]>(`/api/posts/${postId}/comments`)
+
+    // 댓글 목록도 Vite fallback 문자열이나 깨진 DTO가 들어오면 화면에 렌더링하지 않는다.
+    // API 경계에서 배열과 댓글 DTO 형태를 함께 확인해 상세 화면을 단순하게 유지한다.
+    if (!Array.isArray(response.data) || !response.data.every(isCommentResponse)) {
+      throw new Error('Invalid comment list response')
+    }
+
+    return response.data
+  },
+
   createPost: async (payload: CreatePostPayload): Promise<PostResponse> => {
     const response = await axios.post<PostResponse>('/api/posts', {
       // 공부용 MVP라 로그인 기능과 연결하기 전까지는 고정 학습 계정으로 요청한다.

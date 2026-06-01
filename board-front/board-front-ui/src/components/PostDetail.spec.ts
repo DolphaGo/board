@@ -15,6 +15,7 @@ jest.mock('vue-router', () => ({
 jest.mock('src/api/postService', () => ({
   postService: {
     getPost: jest.fn(),
+    listComments: jest.fn(),
     createComment: jest.fn(),
     createRecommend: jest.fn(),
   },
@@ -31,6 +32,17 @@ describe('# Post detail component', () => {
       viewCount: 3,
       display: true,
     })
+    mockedPostService.listComments.mockResolvedValue([
+      {
+        id: 19,
+        postId: 10,
+        memberId: 1,
+        authorNickname: 'reader',
+        content: '이미 저장된 댓글',
+        display: true,
+        createdAt: '2026-06-02T04:00:00',
+      },
+    ])
     mockedPostService.createComment.mockResolvedValue({
       id: 20,
       postId: 10,
@@ -57,11 +69,14 @@ describe('# Post detail component', () => {
     await flushPromises()
 
     expect(mockedPostService.getPost).toBeCalledWith(10)
+    expect(mockedPostService.listComments).toBeCalledWith(10)
     expect(mockedPostService.createComment).toBeCalledWith(10, {
       content: '검색 스코어링 설명이 좋아요',
     })
     expect(mockedPostService.createRecommend).toBeCalledWith(10)
     expect(wrapper.get('[data-testid="comment-content"]').element).toHaveProperty('value', '')
+    expect(wrapper.text()).toContain('이미 저장된 댓글')
+    expect(wrapper.text()).toContain('검색 스코어링 설명이 좋아요')
     expect(wrapper.text()).toContain('댓글이 저장되었습니다.')
     expect(wrapper.text()).toContain('추천을 반영했습니다.')
   })

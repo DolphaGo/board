@@ -113,6 +113,50 @@ class PostServiceTest {
     }
 
     @Test
+    fun `게시글 댓글 목록은 노출 댓글만 오래된 순으로 읽는다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "코프링 검색 게시글",
+                content = "상세 화면에서 보여줄 본문",
+                viewCount = 3,
+                display = true,
+            )
+        val comments =
+            listOf(
+                Comment(
+                    id = 20L,
+                    post = post,
+                    member = author,
+                    content = "첫 댓글",
+                    display = true,
+                ),
+                Comment(
+                    id = 21L,
+                    post = post,
+                    member = author,
+                    content = "두 번째 댓글",
+                    display = true,
+                ),
+            )
+
+        every { commentRepository.findByPostIdAndDisplayTrueOrderByIdAsc(10L) } returns comments
+
+        val result = postService.listComments(postId = 10L)
+
+        assertEquals(comments, result)
+        verify(exactly = 1) { commentRepository.findByPostIdAndDisplayTrueOrderByIdAsc(10L) }
+    }
+
+    @Test
     fun `게시글 추천을 저장한다`() {
         val author =
             Member(

@@ -33,6 +33,15 @@
       <p v-if="commentMessage" class="action-message">{{ commentMessage }}</p>
       <p v-if="recommendMessage" class="action-message">{{ recommendMessage }}</p>
       <p v-if="actionError" class="action-error">요청을 처리하지 못했습니다.</p>
+
+      <section class="comment-list" aria-label="댓글 목록">
+        <p v-if="comments.length === 0" class="comment-empty">댓글이 없습니다.</p>
+        <article v-for="comment in comments" :key="comment.id" class="comment-row">
+          <strong>{{ comment.authorNickname }}</strong>
+          <span>{{ formatCreatedAt(comment.createdAt) }}</span>
+          <p>{{ comment.content }}</p>
+        </article>
+      </section>
     </article>
   </div>
 </template>
@@ -40,7 +49,7 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { postService, type PostResponse } from 'src/api/postService';
+import { postService, type CommentResponse, type PostResponse } from 'src/api/postService';
 
 const route = useRoute();
 const post = ref<PostResponse | null>(null);
@@ -50,6 +59,7 @@ const commentContent = ref('');
 const commentMessage = ref('');
 const recommendMessage = ref('');
 const actionError = ref(false);
+const comments = ref<CommentResponse[]>([]);
 
 const postId = computed(() => {
   const id = Number(route.params.id);
@@ -69,10 +79,18 @@ watch(
     try {
       loading.value = true;
       error.value = false;
-      post.value = await postService.getPost(id);
+      // 상세 진입 시 본문과 댓글을 같은 postId 기준으로 읽는다.
+      // 댓글 API가 실패하면 화면 전체 계약이 깨진 것이므로 상세 오류 상태로 처리한다.
+      const [postResponse, commentResponses] = await Promise.all([
+        postService.getPost(id),
+        postService.listComments(id),
+      ]);
+      post.value = postResponse;
+      comments.value = commentResponses;
     } catch (err) {
       console.error('게시글 조회 실패:', err);
       post.value = null;
+      comments.value = [];
       error.value = true;
     } finally {
       loading.value = false;
@@ -80,6 +98,8 @@ watch(
   },
   { immediate: true }
 );
+
+const formatCreatedAt = (createdAt: string) => createdAt.slice(0, 10).replaceAll('-', '.');
 
 const submitComment = async () => {
   const id = postId.value;
@@ -91,9 +111,10 @@ const submitComment = async () => {
 
   try {
     actionError.value = false;
-    // 상세 화면은 댓글 목록 API가 생기기 전까지 작성 성공만 즉시 피드백한다.
-    // 새로고침이나 목록 재진입 시 백엔드의 commentCount 집계에 반영된다.
-    await postService.createComment(id, { content });
+    // 작성 API가 반환한 댓글을 현재 목록 끝에 붙여 즉시 피드백한다.
+    // 서버 목록은 id 오름차순으로 내려오므로 새 댓글을 뒤에 추가하면 같은 읽기 순서를 유지할 수 있다.
+    const comment = await postService.createComment(id, { content });
+    comments.value = [...comments.value, comment];
     commentContent.value = '';
     commentMessage.value = '댓글이 저장되었습니다.';
   } catch (err) {
@@ -185,5 +206,38 @@ const submitRecommend = async () => {
 
 .action-error {
   color: #c62828;
+}
+
+.comment-list {
+  border-top: 1px solid #e0e0e0;
+  margin-top: 16px;
+  padding-top: 12px;
+}
+
+.comment-empty {
+  color: #777777;
+  font-size: 13px;
+  margin: 0;
+}
+
+.comment-row {
+  border-bottom: 1px solid #eeeeee;
+  padding: 8px 0;
+}
+
+.comment-row strong {
+  font-size: 13px;
+}
+
+.comment-row span {
+  color: #777777;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.comment-row p {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 4px 0 0;
 }
 </style>

@@ -98,6 +98,28 @@ describe('# Post service', function () {
     expect(comment.authorNickname).toBe('writer')
   })
 
+  it('should fetch visible comments for a post', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          id: 20,
+          postId: 10,
+          memberId: 1,
+          authorNickname: 'writer',
+          content: '첫 댓글',
+          display: true,
+          createdAt: '2026-06-02T04:10:00',
+        },
+      ],
+    })
+
+    const comments = await postService.listComments(10)
+
+    expect(mockedAxios.get).toBeCalledWith('/api/posts/10/comments')
+    expect(comments).toHaveLength(1)
+    expect(comments[0].content).toBe('첫 댓글')
+  })
+
   it('should create a recommendation with the study member id', async function () {
     mockedAxios.post.mockResolvedValue({
       data: {
@@ -148,6 +170,19 @@ describe('# Post service', function () {
     })
 
     await expect(postService.listPosts()).rejects.toThrow('Invalid post list response')
+  })
+
+  it('should reject malformed list comment responses', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          id: 20,
+          content: '작성자와 날짜가 없는 댓글',
+        },
+      ],
+    })
+
+    await expect(postService.listComments(10)).rejects.toThrow('Invalid comment list response')
   })
 
   it('should reject malformed create comment responses', async function () {

@@ -50,6 +50,12 @@ class PostService(
         }
     }
 
+    fun listComments(postId: Long): List<Comment> {
+        // 댓글 목록은 상세 화면의 보조 데이터이므로 게시글 조회수에 영향을 주지 않는다.
+        // 삭제/숨김 처리된 댓글은 display=false로 남기고, 사용자 화면에는 노출 댓글만 오래된 순으로 보여준다.
+        return commentRepository.findByPostIdAndDisplayTrueOrderByIdAsc(postId)
+    }
+
     fun createPost(
         memberId: Long,
         title: String,
