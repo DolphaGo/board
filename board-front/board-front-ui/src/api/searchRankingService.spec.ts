@@ -63,6 +63,16 @@ describe('# Search ranking service', function () {
     await expect(searchRankingService.getRankings()).rejects.toThrow('Invalid search ranking response')
   })
 
+  it.each([-1, 1.5])('should reject ranking arrays with invalid score contract: %s', async function (score) {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        { keyword: 'kotlin', score },
+      ],
+    })
+
+    await expect(searchRankingService.getRankings()).rejects.toThrow('Invalid search ranking response')
+  })
+
   it('should record a searched keyword', async function () {
     mockedAxios.post.mockResolvedValue({})
 
