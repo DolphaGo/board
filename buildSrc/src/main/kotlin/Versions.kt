@@ -7,7 +7,7 @@ object Versions {
     const val kotlinVersion = "2.1.10"
     const val coroutineVersion = "1.10.1"
     const val sonarqubeVersion = "5.0.0.4638"
-    const val ktlintVersion = "11.6.1"
+    const val ktlintVersion = "14.2.0"
     const val springCloudAwsVersion = "3.0.0"
     const val koverVersion = "0.7.6"
 }
