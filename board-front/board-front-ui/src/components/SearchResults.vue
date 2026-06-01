@@ -38,6 +38,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import MainLayout from './MainLayout.vue'
 import { postSearchService, type PostSearchResult } from 'src/api/postSearchService'
+import { normalizeSearchKeyword } from 'src/search/normalizeSearchKeyword'
 import { collectSearchResultHighlights } from './searchResultHighlights'
 
 const route = useRoute()
@@ -49,7 +50,7 @@ let searchRequestId = 0
 const searchKeyword = computed(() => {
   const keyword = route.query.keyword
 
-  return typeof keyword === 'string' ? keyword.trim().replace(/\s+/g, ' ') : ''
+  return typeof keyword === 'string' ? normalizeSearchKeyword(keyword) : ''
 })
 
 const highlightCount = (result: PostSearchResult): number =>

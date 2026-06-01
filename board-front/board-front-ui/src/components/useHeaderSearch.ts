@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { searchRankingService } from 'src/api/searchRankingService'
+import { normalizeSearchKeyword } from 'src/search/normalizeSearchKeyword'
 import { notifySearchRankingChanged } from './searchRankingRefreshEvent'
 
 interface HeaderSearchRecorder {
@@ -12,15 +13,13 @@ interface HeaderSearchOptions {
   onSearch?: (keyword: string) => Promise<unknown> | unknown
 }
 
-const normalizeKeyword = (keyword: string): string => keyword.trim().replace(/\s+/g, ' ')
-
 export const createHeaderSearch = (options: HeaderSearchOptions = {}) => {
   const recorder = options.recorder ?? searchRankingService
   const notifyRankingChanged = options.notifyRankingChanged ?? notifySearchRankingChanged
   const keyword = ref('')
 
   const submitSearch = async () => {
-    const normalizedKeyword = normalizeKeyword(keyword.value)
+    const normalizedKeyword = normalizeSearchKeyword(keyword.value)
 
     if (normalizedKeyword.length === 0) {
       return
