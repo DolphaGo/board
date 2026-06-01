@@ -27,6 +27,24 @@ class ChatRoomControllerTest {
     }
 
     @Test
+    fun `createChatRoom은 최대 참여자 수가 범위를 벗어나면 400을 반환하고 서비스를 호출하지 않는다`() {
+        listOf(1, 101).forEach { maxParticipants ->
+            val response =
+                chatRoomController.createChatRoom(
+                    CreateChatRoomRequest(
+                        name = "코프링 스터디",
+                        description = "범위를 벗어난 정원",
+                        createdBy = 1L,
+                        maxParticipants = maxParticipants,
+                    ),
+                )
+
+            assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        }
+        verify(exactly = 0) { chatRoomService.createChatRoom(any(), any(), any(), any()) }
+    }
+
+    @Test
     fun `joinChatRoom은 채팅방 id가 비어 있으면 400을 반환하고 서비스를 호출하지 않는다`() {
         val response = chatRoomController.joinChatRoom("   ", JoinChatRoomRequest(memberId = 1L))
 

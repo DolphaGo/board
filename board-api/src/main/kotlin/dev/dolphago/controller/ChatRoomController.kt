@@ -32,6 +32,11 @@ class ChatRoomController(
         if (request.name.isBlank()) {
             return ResponseEntity.badRequest().build()
         }
+        // 현재 UI는 2명부터 100명까지의 공개 채팅방을 만든다.
+        // 1명 이하이면 채팅방 의미가 약하고, 100명을 넘기면 학습용 MVP의 목록/참여자 표시가 불필요하게 커진다.
+        if (request.maxParticipants !in 2..100) {
+            return ResponseEntity.badRequest().build()
+        }
 
         val chatRoom =
             chatRoomService.createChatRoom(
