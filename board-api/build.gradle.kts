@@ -32,6 +32,7 @@ dependencies {
     implementation(Dependencies.FEIGN)
     implementation(Dependencies.MONGO)
     implementation(Dependencies.REDIS)
+    implementation(Dependencies.ELASTICSEARCH)
     implementation(Dependencies.WEBSOCKET)
     implementation(Dependencies.COROUTINE)
     kapt(Dependencies.JPA_KAPT)

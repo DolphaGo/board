@@ -32,6 +32,10 @@ object Dependencies {
         "org.springframework.boot:spring-boot-starter-data-redis"
     )
 
+    val ELASTICSEARCH = listOf(
+        "org.springframework.boot:spring-boot-starter-data-elasticsearch"
+    )
+
     val WEBSOCKET = listOf(
         "org.springframework.boot:spring-boot-starter-websocket"
     )
