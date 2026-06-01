@@ -26,7 +26,10 @@
         v-for="room in rooms"
         :key="room.id"
         class="room-item"
+        role="button"
+        tabindex="0"
         @click="enterRoom(room.id)"
+        @keyup.enter="enterRoom(room.id)"
       >
         <div class="room-info">
           <h3>{{ room.name }}</h3>
