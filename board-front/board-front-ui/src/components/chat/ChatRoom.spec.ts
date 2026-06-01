@@ -4,6 +4,7 @@ import ChatRoom from './ChatRoom.vue'
 const mockPublish = jest.fn()
 const mockSubscribe = jest.fn()
 const mockDeactivate = jest.fn()
+let subscribedMessageHandler: ((message: { body: string }) => void) | undefined
 
 jest.mock('sockjs-client', () => jest.fn())
 
@@ -18,7 +19,9 @@ jest.mock('@stomp/stompjs', () => ({
   }) {
     this.connected = true
     this.publish = mockPublish
-    this.subscribe = mockSubscribe
+    this.subscribe = mockSubscribe.mockImplementation((_destination, callback) => {
+      subscribedMessageHandler = callback
+    })
     this.deactivate = mockDeactivate
     this.activate = jest.fn(() => this.onConnect?.())
   }),
@@ -38,6 +41,7 @@ describe('# Chat room component', () => {
     mockPublish.mockClear()
     mockSubscribe.mockClear()
     mockDeactivate.mockClear()
+    subscribedMessageHandler = undefined
   })
 
   it('should not publish blank talk messages', async () => {
@@ -70,5 +74,24 @@ describe('# Chat room component', () => {
       content: '테스트 메시지',
     })
     expect((input.element as HTMLInputElement).value).toBe('')
+  })
+
+  it('should render messages received from the subscription', async () => {
+    const wrapper = mountChatRoom()
+
+    subscribedMessageHandler?.({
+      body: JSON.stringify({
+        type: 'TALK',
+        roomId: 'room-1',
+        sender: 'other-user',
+        content: '수신 메시지',
+        timestamp: '2026-06-01T18:29:00',
+      }),
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.get('.message.received .sender').text()).toBe('other-user')
+    expect(wrapper.get('.message.received p').text()).toBe('수신 메시지')
+    expect(wrapper.get('.message.received .timestamp').text()).toBe('18:29')
   })
 })
