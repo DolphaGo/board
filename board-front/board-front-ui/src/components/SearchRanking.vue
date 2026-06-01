@@ -18,15 +18,27 @@
         <span class="rank-score">{{ item.score }}</span>
       </li>
     </ol>
+    <p v-if="lastUpdatedLabel" class="ranking-updated-at">마지막 갱신 {{ lastUpdatedLabel }}</p>
   </section>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { createSearchRanking } from './useSearchRanking'
 
-const { rankings, loading, error, fetchRankings } = createSearchRanking()
+const { rankings, loading, error, lastUpdatedAt, fetchRankings } = createSearchRanking()
 let refreshTimer: number | undefined
+
+const lastUpdatedLabel = computed(() => {
+  if (lastUpdatedAt.value === null) {
+    return ''
+  }
+
+  return lastUpdatedAt.value.toLocaleTimeString('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+})
 
 onMounted(() => {
   fetchRankings()
@@ -115,5 +127,12 @@ onUnmounted(() => {
 
 .rank-score {
   color: #757575;
+}
+
+.ranking-updated-at {
+  margin: 8px 0 0;
+  color: #757575;
+  font-size: 11px;
+  text-align: right;
 }
 </style>

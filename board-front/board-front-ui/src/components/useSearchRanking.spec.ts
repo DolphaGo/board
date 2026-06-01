@@ -20,4 +20,17 @@ describe('# Search ranking behavior', function () {
     expect(loading.value).toBe(false)
     expect(rankings.value).toEqual([{ keyword: 'kotlin spring', score: 12 }])
   })
+
+  it('should record when rankings were refreshed successfully', async function () {
+    const getRankings = jest.fn().mockResolvedValue([
+      { keyword: 'kotlin spring', score: 12 },
+    ])
+    const { fetchRankings, lastUpdatedAt } = createSearchRanking({ getRankings })
+
+    expect(lastUpdatedAt.value).toBeNull()
+
+    await fetchRankings()
+
+    expect(lastUpdatedAt.value).toBeInstanceOf(Date)
+  })
 })

@@ -10,6 +10,7 @@ export const createSearchRanking = (options: SearchRankingOptions = {}) => {
   const rankings = ref<SearchRankingItem[]>([])
   const loading = ref(false)
   const error = ref(false)
+  const lastUpdatedAt = ref<Date | null>(null)
 
   const fetchRankings = async () => {
     // 이미 조회 중이면 같은 API를 한 번 더 호출하지 않는다.
@@ -22,6 +23,7 @@ export const createSearchRanking = (options: SearchRankingOptions = {}) => {
       loading.value = true
       error.value = false
       rankings.value = await getRankings()
+      lastUpdatedAt.value = new Date()
     } catch (err) {
       console.error('검색어 순위 조회 실패:', err)
       error.value = true
@@ -34,6 +36,7 @@ export const createSearchRanking = (options: SearchRankingOptions = {}) => {
     rankings,
     loading,
     error,
+    lastUpdatedAt,
     fetchRankings,
   }
 }
