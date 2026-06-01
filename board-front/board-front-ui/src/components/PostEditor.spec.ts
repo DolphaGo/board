@@ -1,4 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
+import { request } from 'src'
 import { postService } from 'src/api/postService'
 import PostEditor from './PostEditor.vue'
 
@@ -16,11 +17,19 @@ jest.mock('src/api/postService', () => ({
   },
 }))
 
+jest.mock('src', () => ({
+  request: {
+    postForm: jest.fn(),
+  },
+}))
+
 const mockedPostService = postService as jest.Mocked<typeof postService>
+const mockedRequest = request as jest.Mocked<typeof request>
 
 describe('# Post editor component', () => {
   beforeEach(() => {
     push.mockClear()
+    mockedRequest.postForm.mockReset()
     mockedPostService.createPost.mockReset()
   })
 
@@ -52,5 +61,48 @@ describe('# Post editor component', () => {
       imageUrls: ['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'],
     })
     expect(push).toBeCalledWith('/post/77')
+  })
+
+  it('should upload pasted images and submit the returned image URL', async () => {
+    mockedRequest.postForm.mockResolvedValue({
+      data: {
+        url: '/api/images/stored.png',
+      },
+    })
+    mockedPostService.createPost.mockResolvedValue({
+      id: 88,
+      title: '붙여넣기 이미지',
+      content: '본문',
+      imageUrls: ['/api/images/stored.png'],
+      viewCount: 0,
+      display: true,
+      notice: false,
+    })
+    const wrapper = mount(PostEditor)
+    const imageFile = new File(['image-bytes'], 'stored.png', { type: 'image/png' })
+
+    await wrapper.get('#issue-title').setValue('붙여넣기 이미지')
+    await wrapper.get('#issue-body').setValue('본문')
+    await wrapper.get('#issue-body').trigger('paste', {
+      clipboardData: {
+        items: [
+          {
+            type: 'image/png',
+            getAsFile: () => imageFile,
+          },
+        ],
+      },
+    })
+    await flushPromises()
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    await flushPromises()
+
+    expect(mockedRequest.postForm).toBeCalledWith('/images', expect.any(FormData))
+    expect(mockedPostService.createPost).toBeCalledWith({
+      title: '붙여넣기 이미지',
+      content: '본문\n![alt text](/api/images/stored.png)\n',
+      imageUrls: ['/api/images/stored.png'],
+    })
+    expect(push).toBeCalledWith('/post/88')
   })
 })

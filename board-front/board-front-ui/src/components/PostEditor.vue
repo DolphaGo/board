@@ -115,8 +115,16 @@ const uploadImage = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await request.postForm('/v1/images/upload', formData);
-  return response.data; // Assume server returns { url: "uploaded-image-url" }
+  // request 인스턴스의 baseURL이 이미 /api 이므로 여기서는 컨트롤러 하위 경로만 적는다.
+  // 이렇게 두면 로컬 개발과 배포 환경의 API 호스트 변경은 src/index.ts 한 곳에서만 다루면 된다.
+  const response = await request.postForm('/images', formData);
+  const uploaded = response.data as { url?: string };
+
+  if (!uploaded.url) {
+    throw new Error('Invalid image upload response');
+  }
+
+  return uploaded.url;
 };
 
 // Insert image URL as Markdown
