@@ -100,7 +100,7 @@ export default defineComponent({
       })
 
       stompClient.value.onConnect = () => {
-        stompClient.value?.subscribe('/topic/public', (message) => {
+        stompClient.value?.subscribe(`/topic/chat/${props.roomId}`, (message) => {
           const chatMessage = parseIncomingMessage(message.body)
           if (!chatMessage) {
             return

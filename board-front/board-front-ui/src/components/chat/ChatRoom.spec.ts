@@ -131,6 +131,12 @@ describe('# Chat room component', () => {
     expect(wrapper.get('.message.received .timestamp').text()).toBe('18:29')
   })
 
+  it('should subscribe to the current room topic', () => {
+    mountChatRoom()
+
+    expect(mockSubscribe).toHaveBeenCalledWith('/topic/chat/room-1', expect.any(Function))
+  })
+
   it('should ignore messages from another room', async () => {
     const wrapper = mountChatRoom()
 
