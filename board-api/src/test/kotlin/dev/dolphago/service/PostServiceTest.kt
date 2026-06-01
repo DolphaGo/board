@@ -54,4 +54,28 @@ class PostServiceTest {
         assertEquals(true, postSlot.captured.display)
         verify(exactly = 1) { postSearchIndexService.index(post) }
     }
+
+    @Test
+    fun `게시글 단건을 조회한다`() {
+        val author = Member(
+            id = 1L,
+            email = "writer@example.com",
+            nickname = "writer",
+            role = Authority.ROLE_USER
+        )
+        val post = Post(
+            id = 10L,
+            member = author,
+            title = "코프링 검색 게시글",
+            content = "상세 화면에서 보여줄 본문",
+            viewCount = 3,
+            display = true
+        )
+        every { postRepository.findById(10L) } returns Optional.of(post)
+
+        val result = postService.getPost(10L)
+
+        assertEquals(post, result)
+        verify(exactly = 1) { postRepository.findById(10L) }
+    }
 }

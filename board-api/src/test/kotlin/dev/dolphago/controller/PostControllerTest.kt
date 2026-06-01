@@ -64,4 +64,37 @@ class PostControllerTest {
             )
         }
     }
+
+    @Test
+    fun `게시글 단건 조회는 응답 DTO를 반환한다`() {
+        val author = Member(
+            id = 1L,
+            email = "writer@example.com",
+            nickname = "writer",
+            role = Authority.ROLE_USER
+        )
+        val post = Post(
+            id = 10L,
+            member = author,
+            title = "코프링 게시판 검색",
+            content = "상세 화면에서 보여줄 본문",
+            viewCount = 3,
+            display = true
+        )
+        every { postService.getPost(10L) } returns post
+
+        val response = controller.getPost(10L)
+
+        assertEquals(
+            PostResponse(
+                id = 10L,
+                title = "코프링 게시판 검색",
+                content = "상세 화면에서 보여줄 본문",
+                viewCount = 3,
+                display = true
+            ),
+            response.body
+        )
+        verify(exactly = 1) { postService.getPost(10L) }
+    }
 }

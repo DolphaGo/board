@@ -2,6 +2,8 @@ package dev.dolphago.controller
 
 import dev.dolphago.mysql.Post
 import dev.dolphago.service.PostService
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -13,6 +15,10 @@ import org.springframework.web.bind.annotation.RestController
 class PostController(
     private val postService: PostService
 ) {
+    @GetMapping("/{id}")
+    fun getPost(@PathVariable id: Long): ResponseEntity<PostResponse> =
+        ResponseEntity.ok(postService.getPost(id).toResponse())
+
     @PostMapping
     fun createPost(@RequestBody request: CreatePostRequest): ResponseEntity<PostResponse> {
         // 컨트롤러는 HTTP 요청을 서비스 호출로 옮기는 얇은 진입점이다.
