@@ -131,6 +131,23 @@ describe('# Chat room component', () => {
     expect(wrapper.get('.message.received .timestamp').text()).toBe('18:29')
   })
 
+  it('should ignore messages from another room', async () => {
+    const wrapper = mountChatRoom()
+
+    subscribedMessageHandler?.({
+      body: JSON.stringify({
+        type: 'TALK',
+        roomId: 'other-room',
+        sender: 'other-user',
+        content: '다른 방 메시지',
+        timestamp: '2026-06-01T19:05:00',
+      }),
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('.message.received').exists()).toBe(false)
+  })
+
   it('should ignore invalid JSON messages received from the subscription', async () => {
     const wrapper = mountChatRoom()
     const warn = jest.spyOn(console, 'warn').mockImplementation()

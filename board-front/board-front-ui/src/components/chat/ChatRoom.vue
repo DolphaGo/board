@@ -131,6 +131,10 @@ export default defineComponent({
           return null
         }
 
+        if (message.roomId !== props.roomId) {
+          return null
+        }
+
         return message
       } catch (error) {
         // WebSocket은 외부 입력 경계이므로 malformed payload가 와도 화면 전체가 깨지면 안 된다.
