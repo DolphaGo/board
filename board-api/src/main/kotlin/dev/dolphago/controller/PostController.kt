@@ -1,6 +1,7 @@
 package dev.dolphago.controller
 
 import dev.dolphago.mysql.Post
+import dev.dolphago.service.PostListItem
 import dev.dolphago.service.PostService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -77,17 +78,15 @@ private fun Post.toResponse(): PostResponse =
         display = display,
     )
 
-private fun Post.toListItemResponse(): PostListItemResponse =
+private fun PostListItem.toListItemResponse(): PostListItemResponse =
     PostListItemResponse(
-        id = id,
-        title = title,
-        content = content,
-        viewCount = viewCount,
-        display = display,
-        authorNickname = member.nickname,
-        createdAt = createDate,
-        // 댓글/추천 엔티티가 아직 없으므로 목록 계약만 먼저 열어 둔다.
-        // 이후 Comment/Recommend 테이블이 생기면 이 0은 서비스 집계값으로 교체한다.
-        commentCount = 0,
-        recommendCount = 0,
+        id = post.id,
+        title = post.title,
+        content = post.content,
+        viewCount = post.viewCount,
+        display = post.display,
+        authorNickname = post.member.nickname,
+        createdAt = post.createDate,
+        commentCount = commentCount,
+        recommendCount = recommendCount,
     )

@@ -3,6 +3,7 @@ package dev.dolphago.controller
 import dev.dolphago.mysql.Authority
 import dev.dolphago.mysql.Member
 import dev.dolphago.mysql.Post
+import dev.dolphago.service.PostListItem
 import dev.dolphago.service.PostService
 import io.mockk.every
 import io.mockk.mockk
@@ -121,7 +122,14 @@ class PostControllerTest {
                 viewCount = 3,
                 display = true,
             )
-        every { postService.listPosts() } returns listOf(post)
+        every { postService.listPosts() } returns
+            listOf(
+                PostListItem(
+                    post = post,
+                    commentCount = 2,
+                    recommendCount = 0,
+                ),
+            )
 
         val response = controller.listPosts()
 
@@ -135,7 +143,7 @@ class PostControllerTest {
                     display = true,
                     authorNickname = "writer",
                     createdAt = post.createDate,
-                    commentCount = 0,
+                    commentCount = 2,
                     recommendCount = 0,
                 ),
             ),

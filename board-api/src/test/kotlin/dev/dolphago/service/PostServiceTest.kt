@@ -1,6 +1,7 @@
 package dev.dolphago.service
 
 import dev.dolphago.member.repository.MemberRepository
+import dev.dolphago.comment.repository.CommentRepository
 import dev.dolphago.mysql.Authority
 import dev.dolphago.mysql.Member
 import dev.dolphago.mysql.Post
@@ -18,8 +19,9 @@ import kotlin.test.assertEquals
 class PostServiceTest {
     private val postRepository = mockk<PostRepository>()
     private val memberRepository = mockk<MemberRepository>()
+    private val commentRepository = mockk<CommentRepository>()
     private val postSearchIndexService = mockk<PostSearchIndexService>()
-    private val postService = PostService(postRepository, memberRepository, postSearchIndexService)
+    private val postService = PostService(postRepository, memberRepository, commentRepository, postSearchIndexService)
 
     @Test
     fun `게시글 생성 후 ES 검색 문서로 색인한다`() {
@@ -85,7 +87,7 @@ class PostServiceTest {
     }
 
     @Test
-    fun `목록 조회는 노출 게시글만 최신순으로 읽고 조회수를 올리지 않는다`() {
+    fun `목록 조회는 노출 게시글만 최신순으로 읽고 댓글 수를 함께 반환한다`() {
         val author =
             Member(
                 id = 1L,
@@ -103,11 +105,15 @@ class PostServiceTest {
                 display = true,
             )
         every { postRepository.findByDisplayTrueOrderByIdDesc() } returns listOf(post)
+        every { commentRepository.countByPostIdAndDisplayTrue(10L) } returns 2L
 
         val posts = postService.listPosts()
 
-        assertEquals(listOf(post), posts)
+        assertEquals(post, posts.single().post)
+        assertEquals(2L, posts.single().commentCount)
+        assertEquals(0L, posts.single().recommendCount)
         assertEquals(3L, post.viewCount)
         verify(exactly = 1) { postRepository.findByDisplayTrueOrderByIdDesc() }
+        verify(exactly = 1) { commentRepository.countByPostIdAndDisplayTrue(10L) }
     }
 }
