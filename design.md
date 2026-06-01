@@ -253,6 +253,37 @@ Elasticsearch 문서는 원본 데이터가 아니라 검색을 위한 복사본
 학습용 프로젝트에서는 컴포넌트를 너무 작게 쪼개도 따라가기 어렵다. 화면에서 역할이
 명확한 단위로만 나누고, API 파일도 게시글, 검색, 채팅 정도의 기능 단위로 나눈다.
 
+## 테스트 전략
+
+### Controller 테스트
+
+- 기본은 controller를 직접 생성하고 mock service를 주입하는 단위 테스트로 시작한다.
+- 요청 파라미터 검증, service 호출 여부, 응답 status처럼 메서드 경계에서 판단 가능한
+  계약은 직접 controller 테스트로 확인한다.
+- 예: 검색어 랭킹의 `limit < 1` 요청은 service를 호출하지 않고 400을 반환해야 한다.
+- 예: 검색어 기록의 빈 `keyword` 요청은 Redis 기록 service를 호출하지 않고 400을
+  반환해야 한다.
+
+왜 이렇게 하는가:
+공부용 프로젝트에서 모든 controller 변경마다 Spring MVC context를 띄우면 테스트가
+느려지고, 실패 원인이 HTTP 바인딩인지 비즈니스 분기인지 구분하기 어렵다. 먼저 얇은
+controller 단위 테스트로 계약을 고정하면 Redis, Elasticsearch, WebSocket 같은
+외부 기술 학습에 집중할 수 있다.
+
+### MockMvc가 필요한 경우
+
+- JSON body 역직렬화, query parameter 타입 변환, HTTP status mapping처럼 Spring MVC
+  바인딩 자체를 검증해야 할 때 추가한다.
+- `@RequestBody` 구조가 복잡해지거나 `@ControllerAdvice`로 전역 예외 응답을 만들면
+  MockMvc 테스트를 추가한다.
+- 단순히 service가 호출되는지 확인하기 위해 MockMvc를 쓰지는 않는다.
+
+왜 이렇게 하는가:
+MockMvc는 실제 HTTP 계층에 가까운 테스트라 유용하지만 설정 비용이 있다. 현재
+랭킹 controller의 핵심 계약은 "잘못된 값이면 service를 호출하지 않는다"이므로 직접
+controller 테스트가 더 작고 빠르다. HTTP 바인딩 규칙이 학습 목표가 되는 순간에
+MockMvc를 도입한다.
+
 ## 주석 기준
 
 - 복잡한 분기, 외부 시스템 연동, 모듈 경계에는 "왜"를 설명한다.
