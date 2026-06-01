@@ -19,6 +19,11 @@ const isSearchRankingItem = (data: unknown): data is SearchRankingItem => {
     item.score >= 0
 }
 
+// 서버의 SearchRankingService는 limit이 1 이상이어야 한다고 검증한다.
+// 프론트 service도 같은 계약으로 정리해 두면 잘못된 값 때문에 500 응답을 만드는 일을 줄일 수 있다.
+const normalizeSearchRankingLimit = (limit: number): number =>
+  Number.isInteger(limit) && limit > 0 ? limit : 10
+
 export const searchRankingService = {
   recordKeyword: async (keyword: string): Promise<void> => {
     // 랭킹 기록은 서버가 정규화한다. 프론트는 사용자가 입력한 원문을 보내고,
@@ -29,8 +34,10 @@ export const searchRankingService = {
   },
 
   getRankings: async (limit = 10): Promise<SearchRankingItem[]> => {
+    const normalizedLimit = normalizeSearchRankingLimit(limit)
+
     const response = await axios.get<SearchRankingItem[]>('/api/search/rankings', {
-      params: { limit },
+      params: { limit: normalizedLimit },
     })
 
     // 프론트 개발 서버만 켜진 상태에서는 /api 요청이 Vite fallback HTML을 받을 수 있다.

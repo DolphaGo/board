@@ -25,6 +25,18 @@ describe('# Search ranking service', function () {
     ])
   })
 
+  it.each([0, -1, 1.5, Number.NaN])('should use default ranking limit for invalid limit: %s', async function (limit) {
+    mockedAxios.get.mockResolvedValue({
+      data: [],
+    })
+
+    await searchRankingService.getRankings(limit)
+
+    expect(mockedAxios.get).toBeCalledWith('/api/search/rankings', {
+      params: { limit: 10 },
+    })
+  })
+
   it('should reject malformed ranking responses', async function () {
     mockedAxios.get.mockResolvedValue({
       data: '<html>vite fallback</html>',
