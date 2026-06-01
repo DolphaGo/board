@@ -33,7 +33,7 @@ class ImageController(
     ): ResponseEntity<Resource> =
         ResponseEntity
             .ok()
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .contentType(imageStorageService.contentType(fileName))
             .body(imageStorageService.load(fileName))
 }
 

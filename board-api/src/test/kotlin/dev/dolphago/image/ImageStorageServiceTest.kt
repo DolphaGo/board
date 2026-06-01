@@ -31,7 +31,10 @@ class ImageStorageServiceTest {
 
     @Test
     fun `이미지가 아닌 파일은 저장하지 않는다`() {
-        val service = ImageStorageService(kotlin.io.path.createTempDirectory("board-image-test").toString())
+        val service =
+            ImageStorageService(
+                kotlin.io.path.createTempDirectory("board-image-test").toString(),
+            )
         val file =
             MockMultipartFile(
                 "file",
@@ -46,8 +49,49 @@ class ImageStorageServiceTest {
     }
 
     @Test
+    fun `브라우저에서 스크립트가 실행될 수 있는 SVG 이미지는 저장하지 않는다`() {
+        val service =
+            ImageStorageService(
+                kotlin.io.path.createTempDirectory("board-image-test").toString(),
+            )
+        val file =
+            MockMultipartFile(
+                "file",
+                "vector.svg",
+                "image/svg+xml",
+                "<svg><script>alert(1)</script></svg>".toByteArray(),
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            service.store(file)
+        }
+    }
+
+    @Test
+    fun `기본 제한보다 큰 이미지는 저장하지 않는다`() {
+        val service =
+            ImageStorageService(
+                kotlin.io.path.createTempDirectory("board-image-test").toString(),
+            )
+        val file =
+            MockMultipartFile(
+                "file",
+                "large.png",
+                "image/png",
+                ByteArray(ImageStorageService.DEFAULT_MAX_FILE_BYTES + 1),
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            service.store(file)
+        }
+    }
+
+    @Test
     fun `상위 디렉터리 접근 파일명은 읽지 않는다`() {
-        val service = ImageStorageService(kotlin.io.path.createTempDirectory("board-image-test").toString())
+        val service =
+            ImageStorageService(
+                kotlin.io.path.createTempDirectory("board-image-test").toString(),
+            )
 
         assertFailsWith<IllegalArgumentException> {
             service.load(Path.of("..", "secret.png").toString())

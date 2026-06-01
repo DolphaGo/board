@@ -1,5 +1,6 @@
 package dev.dolphago.image
 
+import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import java.nio.file.Path
 import kotlin.test.Test
@@ -24,5 +25,28 @@ class ImageControllerTest {
         assertEquals(200, response.statusCode.value())
         assertNotNull(response.body)
         assert(response.body!!.url.startsWith("/api/images/"))
+    }
+
+    @Test
+    fun `저장된 이미지를 읽을 때 이미지 Content Type을 응답한다`() {
+        val service =
+            ImageStorageService(
+                Path.of("build", "test-image-controller-content-type").toString(),
+            )
+        val controller = ImageController(service)
+        val file =
+            MockMultipartFile(
+                "file",
+                "sample.png",
+                "image/png",
+                "image-bytes".toByteArray(),
+            )
+        val uploadResponse = controller.upload(file).body!!
+        val fileName = uploadResponse.url.substringAfterLast("/")
+
+        val response = controller.read(fileName)
+
+        assertEquals(200, response.statusCode.value())
+        assertEquals(MediaType.IMAGE_PNG, response.headers.contentType)
     }
 }
