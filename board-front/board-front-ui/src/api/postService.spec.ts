@@ -23,6 +23,26 @@ describe('# Post service', function () {
     expect(post.title).toBe('코프링 게시글')
   })
 
+  it('should fetch visible posts as a list', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          id: 10,
+          title: '코프링 게시글',
+          content: 'Elasticsearch 색인까지 연결한다',
+          viewCount: 3,
+          display: true,
+        },
+      ],
+    })
+
+    const posts = await postService.listPosts()
+
+    expect(mockedAxios.get).toBeCalledWith('/api/posts')
+    expect(posts).toHaveLength(1)
+    expect(posts[0].title).toBe('코프링 게시글')
+  })
+
   it('should create a post with the study member id', async function () {
     mockedAxios.post.mockResolvedValue({
       data: {
@@ -64,5 +84,18 @@ describe('# Post service', function () {
     })
 
     await expect(postService.getPost(10)).rejects.toThrow('Invalid post response')
+  })
+
+  it('should reject malformed list post responses', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          id: 10,
+          title: '코프링 게시글',
+        },
+      ],
+    })
+
+    await expect(postService.listPosts()).rejects.toThrow('Invalid post list response')
   })
 })

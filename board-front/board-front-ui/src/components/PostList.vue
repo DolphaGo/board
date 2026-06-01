@@ -2,21 +2,21 @@
   <section class="post-list" aria-labelledby="post-list-title">
     <header class="board-header">
       <h2 id="post-list-title">게시글</h2>
-      <span class="board-summary">최신순 3건</span>
+      <span class="board-summary">최신순 {{ posts.length }}건</span>
     </header>
 
-    <div class="board-rows">
+    <p v-if="loading" class="board-message">게시글을 불러오는 중...</p>
+    <p v-else-if="error" class="board-message">게시글 목록을 불러오지 못했습니다.</p>
+    <p v-else-if="posts.length === 0" class="board-message">게시글이 없습니다.</p>
+
+    <div v-else class="board-rows">
       <article v-for="post in posts" :key="post.id" class="board-row">
-        <a class="board-title-link" :href="`#/post/${post.id}`">
+        <router-link class="board-title-link" :to="`/post/${post.id}`">
           {{ post.title }}
-        </a>
-        <p class="post-preview">{{ post.preview }}</p>
+        </router-link>
+        <p class="post-preview">{{ post.content }}</p>
         <div class="meta-row">
-          <span>{{ post.author }}</span>
-          <span>{{ post.createdAt }}</span>
           <span>조회 {{ post.viewCount }}</span>
-          <span>댓글 {{ post.commentCount }}</span>
-          <span>추천 {{ post.recommendCount }}</span>
         </div>
       </article>
     </div>
@@ -24,38 +24,30 @@
 </template>
 
 <script lang="ts" setup>
-const posts = [
-  {
-    id: 1,
-    title: 'Elasticsearch 검색 스코어링 정리',
-    preview: '제목 boost, 본문 match, 최신성 가중치를 게시판 검색에 적용하는 기준을 정리합니다.',
-    author: 'study-user',
-    createdAt: '2026.06.02',
-    viewCount: 128,
-    commentCount: 12,
-    recommendCount: 7,
-  },
-  {
-    id: 2,
-    title: '실시간 검색 순위 기록 흐름',
-    preview: '검색 요청과 랭킹 집계를 분리하고 polling UI로 시작하는 이유를 남깁니다.',
-    author: 'search-lab',
-    createdAt: '2026.06.01',
-    viewCount: 86,
-    commentCount: 4,
-    recommendCount: 5,
-  },
-  {
-    id: 3,
-    title: '채팅방 WebSocket topic 분리',
-    preview: '방 단위 topic으로 메시지를 발행해야 다른 채팅방 메시지가 섞이지 않습니다.',
-    author: 'chat-lab',
-    createdAt: '2026.06.01',
-    viewCount: 64,
-    commentCount: 8,
-    recommendCount: 3,
-  },
-]
+import { onMounted, ref } from 'vue'
+import { postService, type PostResponse } from 'src/api/postService'
+
+const posts = ref<PostResponse[]>([])
+const loading = ref(false)
+const error = ref(false)
+
+const fetchPosts = async () => {
+  try {
+    loading.value = true
+    error.value = false
+    // 홈 목록은 게시글 작성/검색 학습 흐름의 출발점이다.
+    // 지금은 단순 조회만 연결하고, 정렬/페이지네이션은 백엔드 계약이 생긴 뒤 붙인다.
+    posts.value = await postService.listPosts()
+  } catch (err) {
+    console.error('게시글 목록 조회 실패:', err)
+    posts.value = []
+    error.value = true
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchPosts)
 </script>
 
 <style scoped>
@@ -84,6 +76,12 @@ const posts = [
 .board-summary {
   color: #757575;
   font-size: 12px;
+}
+
+.board-message {
+  margin: 14px 12px 0;
+  color: #757575;
+  font-size: 13px;
 }
 
 .board-row {
