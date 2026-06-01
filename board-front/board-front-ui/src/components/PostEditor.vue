@@ -89,6 +89,7 @@ const bodyText = ref('');
 const imageUrls = ref<string[]>([]);
 const imageUrlInput = ref('');
 const imageUploadMessage = ref('');
+const imageUploading = ref(false);
 const activeTab = ref('write');
 const submitting = ref(false);
 const submitMessage = ref('');
@@ -105,8 +106,14 @@ const handlePaste = async (event: ClipboardEvent) => {
 
   for (const item of items) {
     if (item.type.startsWith('image/')) {
+      if (imageUploading.value) {
+        imageUploadMessage.value = '이미지 업로드 중입니다. 완료된 뒤 다시 붙여넣어 주세요.';
+        return;
+      }
       const file = item.getAsFile();
       if (file) {
+        imageUploading.value = true;
+        imageUploadMessage.value = '이미지 업로드 중입니다.';
         try {
           const url = await uploadImage(file);
           insertImageMarkdown(url);
@@ -114,6 +121,8 @@ const handlePaste = async (event: ClipboardEvent) => {
           console.error("Image upload failed", error);
           imageUploadMessage.value =
               '이미지 업로드에 실패했습니다. PNG, JPEG, GIF, WebP 이미지만 업로드할 수 있고 5MB까지 가능합니다.';
+        } finally {
+          imageUploading.value = false;
         }
       }
     }

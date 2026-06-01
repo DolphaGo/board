@@ -136,4 +136,46 @@ describe('# Post editor component', () => {
 
     consoleError.mockRestore()
   })
+
+  it('should show uploading state and ignore duplicate paste while an image upload is running', async () => {
+    let finishUpload: (value: { data: { url: string } }) => void = () => undefined
+    mockedRequest.postForm.mockReturnValue(
+      new Promise(resolve => {
+        finishUpload = resolve
+      }),
+    )
+    const wrapper = mount(PostEditor)
+    const imageFile = new File(['image-bytes'], 'uploading.png', { type: 'image/png' })
+    const pasteImage = () =>
+      wrapper.get('#issue-body').trigger('paste', {
+        clipboardData: {
+          items: [
+            {
+              type: 'image/png',
+              getAsFile: () => imageFile,
+            },
+          ],
+        },
+      })
+
+    await pasteImage()
+    await pasteImage()
+
+    expect(wrapper.get('[data-testid="image-upload-message"]').text()).toContain('이미지 업로드 중입니다.')
+    expect(mockedRequest.postForm).toBeCalledTimes(1)
+
+    finishUpload({
+      data: {
+        url: '/api/images/uploading.png',
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.findAll('.image-url-item')).toHaveLength(1)
+    expect(wrapper.text()).not.toContain('이미지 업로드 중입니다.')
+    expect(wrapper.get('#issue-body').element).toHaveProperty(
+      'value',
+      '\n![alt text](/api/images/uploading.png)\n',
+    )
+  })
 })
