@@ -121,6 +121,16 @@ describe('# Search results component', () => {
     expect(wrapper.text()).toContain('검색어를 입력해 주세요.')
   })
 
+  it('should normalize repeated whitespace before searching from route keyword', async () => {
+    mockRoute.query.keyword = '  kotlin   spring  '
+    mockedPostSearchService.search.mockResolvedValue([])
+
+    mountSearchResults()
+    await flushPromises()
+
+    expect(mockedPostSearchService.search).toBeCalledWith('kotlin spring')
+  })
+
   it('should keep the latest keyword results when an older search resolves later', async () => {
     const kotlinSearch = createDeferred<Awaited<ReturnType<typeof postSearchService.search>>>()
     const javaSearch = createDeferred<Awaited<ReturnType<typeof postSearchService.search>>>()
