@@ -21,9 +21,18 @@
 </template>
 
 <script lang="ts" setup>
+import { useRouter } from 'vue-router'
 import { createHeaderSearch } from './useHeaderSearch'
 
-const { keyword, submitSearch } = createHeaderSearch()
+const router = useRouter()
+const { keyword, submitSearch } = createHeaderSearch({
+  onSearch: searchKeyword => router.push({
+    path: '/search',
+    query: {
+      keyword: searchKeyword,
+    },
+  }),
+})
 </script>
 
 <style scoped>

@@ -2,6 +2,7 @@ import {createRouter, createWebHashHistory, RouteParams} from 'vue-router'
 import Homepage from './components/Homepage.vue'
 import PostDetail from './components/PostDetail.vue'
 import PostEditor from "./components/PostEditor.vue";
+import SearchResults from './components/SearchResults.vue'
 
 export type AppRouteNames = ''
 
@@ -9,6 +10,7 @@ export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: '/', component: Homepage },
+    { path: '/search', component: SearchResults },
     { path: '/post/edit', component: PostEditor },
     { path: '/post/:id', component: PostDetail },
     {

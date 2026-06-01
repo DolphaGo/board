@@ -1,0 +1,133 @@
+<template>
+  <MainLayout>
+    <section class="search-results">
+      <div class="search-results-header">
+        <h2>검색 결과</h2>
+        <p v-if="searchKeyword" class="search-keyword">"{{ searchKeyword }}"</p>
+      </div>
+
+      <p v-if="loading" class="search-message">검색 중...</p>
+      <p v-else-if="error" class="search-message">검색 결과를 불러오지 못했습니다.</p>
+      <p v-else-if="searchKeyword.length === 0" class="search-message">검색어를 입력해 주세요.</p>
+      <p v-else-if="results.length === 0" class="search-message">검색 결과가 없습니다.</p>
+
+      <ol v-else class="result-list">
+        <li v-for="result in results" :key="result.postId" class="result-item">
+          <router-link :to="`/post/${result.postId}`" class="result-title">{{ result.title }}</router-link>
+          <p class="result-preview">{{ result.contentPreview }}</p>
+          <div class="result-meta">
+            <span>score {{ result.score.toFixed(2) }}</span>
+            <span v-if="highlightCount(result) > 0">highlight {{ highlightCount(result) }}</span>
+          </div>
+        </li>
+      </ol>
+    </section>
+  </MainLayout>
+</template>
+
+<script lang="ts" setup>
+import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import MainLayout from './MainLayout.vue'
+import { postSearchService, type PostSearchResult } from 'src/api/postSearchService'
+
+const route = useRoute()
+const results = ref<PostSearchResult[]>([])
+const loading = ref(false)
+const error = ref(false)
+
+const searchKeyword = computed(() => {
+  const keyword = route.query.keyword
+
+  return typeof keyword === 'string' ? keyword : ''
+})
+
+const highlightCount = (result: PostSearchResult): number =>
+  Object.values(result.highlights).reduce((count, values) => count + values.length, 0)
+
+watch(
+  searchKeyword,
+  async keyword => {
+    if (keyword.length === 0) {
+      results.value = []
+      return
+    }
+
+    try {
+      loading.value = true
+      error.value = false
+      results.value = await postSearchService.search(keyword)
+    } catch (err) {
+      console.error('게시글 검색 실패:', err)
+      results.value = []
+      error.value = true
+    } finally {
+      loading.value = false
+    }
+  },
+  { immediate: true }
+)
+</script>
+
+<style scoped>
+.search-results {
+  width: 100%;
+}
+
+.search-results-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  border-bottom: 2px solid #1a1a1a;
+  padding-bottom: 10px;
+}
+
+.search-results-header h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.search-keyword {
+  margin: 0;
+  color: #555555;
+  font-size: 13px;
+}
+
+.search-message {
+  margin: 18px 0 0;
+  color: #757575;
+  font-size: 13px;
+}
+
+.result-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result-item {
+  padding: 14px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.result-title {
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.result-preview {
+  margin: 7px 0;
+  color: #333333;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.result-meta {
+  display: flex;
+  gap: 10px;
+  color: #757575;
+  font-size: 12px;
+}
+</style>
