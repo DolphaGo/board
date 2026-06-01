@@ -68,6 +68,12 @@ export const chatService = {
 
   // 채팅방 생성
   createRoom: async (name: string, options: CreateChatRoomOptions = {}): Promise<ChatRoom> => {
+    // 채팅방 이름은 사용자가 목록에서 방을 구분하는 최소 정보다.
+    // 공백 이름은 백엔드도 400으로 거부하므로, 프론트 API 경계에서도 요청을 만들지 않는다.
+    if (name.trim().length === 0) {
+      throw new Error('Chat room name is required')
+    }
+
     const response = await axios.post<ChatRoomResponse>(`${BASE_URL}/chat/rooms`, {
       name,
       description: options.description ?? null,

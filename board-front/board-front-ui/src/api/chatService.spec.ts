@@ -78,6 +78,12 @@ describe('# Chat service', function () {
     })
   })
 
+  it('should ignore blank room name when creating a chat room', async function () {
+    await expect(chatService.createRoom('   ')).rejects.toThrow('Chat room name is required')
+
+    expect(mockedAxios.post).not.toBeCalled()
+  })
+
   it('should reject malformed chat room list responses', async function () {
     mockedAxios.get.mockResolvedValue({
       data: '<html>vite fallback</html>',
