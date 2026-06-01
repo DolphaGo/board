@@ -117,13 +117,34 @@ export default defineComponent({
 
     const parseIncomingMessage = (body: string): ChatMessage | null => {
       try {
-        return JSON.parse(body)
+        const message = JSON.parse(body)
+
+        if (!isChatMessage(message)) {
+          console.warn('필수 필드가 없는 채팅 메시지를 무시했습니다:', message)
+          return null
+        }
+
+        return message
       } catch (error) {
         // WebSocket은 외부 입력 경계이므로 malformed payload가 와도 화면 전체가 깨지면 안 된다.
         // 공부 포인트: 신뢰할 수 없는 입력은 파싱 지점에서 좁게 막고, 렌더링 상태는 그대로 둔다.
         console.warn('잘못된 채팅 메시지를 무시했습니다:', error)
         return null
       }
+    }
+
+    const isChatMessage = (value: unknown): value is ChatMessage => {
+      if (!value || typeof value !== 'object') {
+        return false
+      }
+
+      const message = value as Partial<ChatMessage>
+
+      // 화면 렌더링과 구분 class 계산에 바로 쓰는 최소 필드만 먼저 검증한다.
+      // timestamp/content는 서버가 생략할 수 있어도 현재 화면은 기본 포맷으로 처리할 수 있다.
+      return typeof message.type === 'string'
+        && typeof message.roomId === 'string'
+        && typeof message.sender === 'string'
     }
 
     const sendMessage = (type: 'ENTER' | 'TALK' | 'LEAVE' = 'TALK') => {

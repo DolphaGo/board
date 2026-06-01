@@ -145,6 +145,24 @@ describe('# Chat room component', () => {
     warn.mockRestore()
   })
 
+  it('should ignore messages missing required chat fields', async () => {
+    const wrapper = mountChatRoom()
+    const warn = jest.spyOn(console, 'warn').mockImplementation()
+
+    subscribedMessageHandler?.({
+      body: JSON.stringify({
+        type: 'TALK',
+        roomId: 'room-1',
+        content: 'sender가 없는 메시지',
+      }),
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('.message.received').exists()).toBe(false)
+    expect(warn).toHaveBeenCalledWith('필수 필드가 없는 채팅 메시지를 무시했습니다:', expect.any(Object))
+    warn.mockRestore()
+  })
+
   it('should publish leave message and deactivate STOMP on unmount', () => {
     const wrapper = mountChatRoom()
     mockPublish.mockClear()
