@@ -53,6 +53,16 @@ describe('# Search ranking service', function () {
     await expect(searchRankingService.getRankings()).rejects.toThrow('Invalid search ranking response')
   })
 
+  it('should reject ranking arrays with non-finite scores', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        { keyword: 'kotlin', score: Number.NaN },
+      ],
+    })
+
+    await expect(searchRankingService.getRankings()).rejects.toThrow('Invalid search ranking response')
+  })
+
   it('should record a searched keyword', async function () {
     mockedAxios.post.mockResolvedValue({})
 

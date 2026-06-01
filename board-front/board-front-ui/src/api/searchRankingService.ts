@@ -13,7 +13,8 @@ const isSearchRankingItem = (data: unknown): data is SearchRankingItem => {
   const item = data as Partial<SearchRankingItem>
   return typeof item.keyword === 'string' &&
     item.keyword.trim().length > 0 &&
-    typeof item.score === 'number'
+    typeof item.score === 'number' &&
+    Number.isFinite(item.score)
 }
 
 export const searchRankingService = {
@@ -32,7 +33,7 @@ export const searchRankingService = {
 
     // 프론트 개발 서버만 켜진 상태에서는 /api 요청이 Vite fallback HTML을 받을 수 있다.
     // API 계약이 깨진 값을 그대로 렌더링하면 빈 순위 행이 생긴다.
-    // 그래서 배열 여부, keyword/score 타입, 공백뿐인 keyword 여부를 함께 확인한다.
+    // 그래서 배열 여부, keyword/score 타입, 공백뿐인 keyword, NaN 같은 비정상 score를 함께 확인한다.
     if (!Array.isArray(response.data) || !response.data.every(isSearchRankingItem)) {
       throw new Error('Invalid search ranking response')
     }
