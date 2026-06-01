@@ -2,7 +2,9 @@
   <section class="search-ranking" aria-labelledby="search-ranking-title">
     <div class="ranking-header">
       <h3 id="search-ranking-title">실시간 검색어</h3>
-      <button type="button" class="refresh-button" @click="fetchRankings">새로고침</button>
+      <button type="button" class="refresh-button" :disabled="loading" @click="fetchRankings">
+        {{ loading ? '불러오는 중' : '새로고침' }}
+      </button>
     </div>
 
     <p v-if="loading" class="ranking-message">불러오는 중...</p>
@@ -20,26 +22,11 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from 'vue'
-import { searchRankingService, type SearchRankingItem } from 'src/api/searchRankingService'
+import { onMounted, onUnmounted } from 'vue'
+import { createSearchRanking } from './useSearchRanking'
 
-const rankings = ref<SearchRankingItem[]>([])
-const loading = ref(false)
-const error = ref(false)
+const { rankings, loading, error, fetchRankings } = createSearchRanking()
 let refreshTimer: number | undefined
-
-const fetchRankings = async () => {
-  try {
-    loading.value = true
-    error.value = false
-    rankings.value = await searchRankingService.getRankings()
-  } catch (err) {
-    console.error('검색어 순위 조회 실패:', err)
-    error.value = true
-  } finally {
-    loading.value = false
-  }
-}
 
 onMounted(() => {
   fetchRankings()
@@ -76,12 +63,19 @@ onUnmounted(() => {
 }
 
 .refresh-button {
+  min-width: 64px;
   padding: 4px 6px;
   border: 1px solid #1a1a1a;
   background: #ffffff;
   color: #1a1a1a;
   font-size: 11px;
   cursor: pointer;
+}
+
+.refresh-button:disabled {
+  color: #757575;
+  border-color: #bdbdbd;
+  cursor: wait;
 }
 
 .ranking-message {
