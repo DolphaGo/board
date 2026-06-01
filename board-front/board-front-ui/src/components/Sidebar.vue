@@ -6,10 +6,12 @@
       <li><a href="#">Life</a></li>
       <li><a href="#">Art</a></li>
     </ul>
+    <SearchRanking />
   </aside>
 </template>
 
 <script lang="ts" setup>
+import SearchRanking from './SearchRanking.vue'
 </script>
 
 <style scoped>
