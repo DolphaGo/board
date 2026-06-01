@@ -28,7 +28,13 @@ data class Post(
     @Column(name = "content", nullable = false)
     val content: String, // 내용
 
-    val viewCount: Long, // 조회 수
+    var viewCount: Long, // 조회 수
 
     val display: Boolean // 노출 여부
-) : EntityListener()
+) : EntityListener() {
+    fun increaseViewCount() {
+        // 상세 조회처럼 "게시글을 실제로 읽은 행위"가 있을 때만 조회수를 올린다.
+        // JPA 변경 감지가 이 값을 UPDATE 하므로 서비스는 별도 save 호출 없이 의도를 표현한다.
+        viewCount += 1
+    }
+}

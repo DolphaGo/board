@@ -56,7 +56,7 @@ class PostServiceTest {
     }
 
     @Test
-    fun `게시글 단건을 조회한다`() {
+    fun `게시글 단건 조회 시 조회수를 1 증가시킨다`() {
         val author = Member(
             id = 1L,
             email = "writer@example.com",
@@ -75,7 +75,7 @@ class PostServiceTest {
 
         val result = postService.getPost(10L)
 
-        assertEquals(post, result)
+        assertEquals(4L, result.viewCount)
         verify(exactly = 1) { postRepository.findById(10L) }
     }
 }
