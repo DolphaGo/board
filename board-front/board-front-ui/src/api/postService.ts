@@ -29,6 +29,16 @@ const isPostResponse = (data: unknown): data is PostResponse => {
 }
 
 export const postService = {
+  getPost: async (id: number): Promise<PostResponse> => {
+    const response = await axios.get<PostResponse>(`/api/posts/${id}`)
+
+    if (!isPostResponse(response.data)) {
+      throw new Error('Invalid post response')
+    }
+
+    return response.data
+  },
+
   createPost: async (payload: CreatePostPayload): Promise<PostResponse> => {
     const response = await axios.post<PostResponse>('/api/posts', {
       // 공부용 MVP라 로그인 기능과 연결하기 전까지는 고정 학습 계정으로 요청한다.

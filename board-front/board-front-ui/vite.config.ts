@@ -34,6 +34,21 @@ export default defineConfig({
           res.end(JSON.stringify(createPostSearchFixture(keyword)))
         })
         server.middlewares.use('/api/posts', (req, res, next) => {
+          if (req.method === 'GET') {
+            const postId = (req.url ?? '').replace(/^\//, '') || '999'
+
+            // 상세 화면도 board-api 없이 확인할 수 있게 작성 fixture와 같은 형태를 돌려준다.
+            res.setHeader('Content-Type', 'application/json; charset=utf-8')
+            res.end(JSON.stringify({
+              id: Number(postId),
+              title: `local fixture post #${postId}`,
+              content: 'created by vite fixture',
+              viewCount: 0,
+              display: true,
+            }))
+            return
+          }
+
           if (req.method !== 'POST') {
             next()
             return
