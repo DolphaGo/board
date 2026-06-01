@@ -6,6 +6,14 @@ export interface SearchRankingItem {
 }
 
 export const searchRankingService = {
+  recordKeyword: async (keyword: string): Promise<void> => {
+    // 랭킹 기록은 서버가 정규화한다. 프론트는 사용자가 입력한 원문을 보내고,
+    // 같은 규칙을 여러 화면에 중복 구현하지 않는다.
+    await axios.post('/api/search/rankings', {
+      keyword,
+    })
+  },
+
   getRankings: async (limit = 10): Promise<SearchRankingItem[]> => {
     const response = await axios.get<SearchRankingItem[]>('/api/search/rankings', {
       params: { limit },

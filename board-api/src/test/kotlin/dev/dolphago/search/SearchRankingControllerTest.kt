@@ -29,4 +29,14 @@ class SearchRankingControllerTest {
 
         verify(exactly = 1) { searchRankingService.getTopKeywords(3) }
     }
+
+    @Test
+    fun `검색어 기록 요청은 검색어를 랭킹 서비스에 전달한다`() {
+        every { searchRankingService.record("Kotlin Spring") } returns Unit
+
+        val response = controller.recordKeyword(SearchKeywordRecordRequest(keyword = "Kotlin Spring"))
+
+        assertEquals(204, response.statusCode.value())
+        verify(exactly = 1) { searchRankingService.record("Kotlin Spring") }
+    }
 }

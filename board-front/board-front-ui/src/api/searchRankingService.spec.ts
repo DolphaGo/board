@@ -32,4 +32,14 @@ describe('# Search ranking service', function () {
 
     await expect(searchRankingService.getRankings()).rejects.toThrow('Invalid search ranking response')
   })
+
+  it('should record a searched keyword', async function () {
+    mockedAxios.post.mockResolvedValue({})
+
+    await searchRankingService.recordKeyword('kotlin spring')
+
+    expect(mockedAxios.post).toBeCalledWith('/api/search/rankings', {
+      keyword: 'kotlin spring',
+    })
+  })
 })
