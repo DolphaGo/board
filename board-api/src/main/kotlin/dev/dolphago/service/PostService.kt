@@ -112,6 +112,14 @@ class PostService(
         postId: Long,
         memberId: Long,
     ): PostRecommend {
+        val existingRecommend = postRecommendRepository.findByPostIdAndMemberIdAndDisplayTrue(postId, memberId)
+
+        if (existingRecommend != null) {
+            // 추천 버튼은 더블클릭이나 네트워크 재시도로 같은 요청이 반복될 수 있다.
+            // 이미 노출 중인 추천이 있으면 새 row를 만들지 않고 기존 추천을 돌려줘 추천 수가 부풀지 않게 한다.
+            return existingRecommend
+        }
+
         val post =
             postRepository.findById(postId).orElseThrow {
                 IllegalArgumentException("게시글을 찾을 수 없습니다: $postId")

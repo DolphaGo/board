@@ -176,6 +176,7 @@ class PostServiceTest {
             )
         val recommendSlot = slot<PostRecommend>()
 
+        every { postRecommendRepository.findByPostIdAndMemberIdAndDisplayTrue(10L, 1L) } returns null
         every { postRepository.findById(10L) } returns Optional.of(post)
         every { memberRepository.findById(1L) } returns Optional.of(author)
         every { postRecommendRepository.save(capture(recommendSlot)) } answers {
@@ -192,7 +193,49 @@ class PostServiceTest {
         assertEquals(post, recommendSlot.captured.post)
         assertEquals(author, recommendSlot.captured.member)
         assertEquals(true, recommendSlot.captured.display)
+        verify(exactly = 1) { postRecommendRepository.findByPostIdAndMemberIdAndDisplayTrue(10L, 1L) }
         verify(exactly = 1) { postRecommendRepository.save(any()) }
+    }
+
+    @Test
+    fun `이미 추천한 게시글은 기존 추천을 반환하고 새로 저장하지 않는다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "코프링 검색 게시글",
+                content = "상세 화면에서 보여줄 본문",
+                viewCount = 3,
+                display = true,
+            )
+        val existingRecommend =
+            PostRecommend(
+                id = 30L,
+                post = post,
+                member = author,
+                display = true,
+            )
+
+        every { postRecommendRepository.findByPostIdAndMemberIdAndDisplayTrue(10L, 1L) } returns existingRecommend
+
+        val recommend =
+            postService.createRecommend(
+                postId = 10L,
+                memberId = 1L,
+            )
+
+        assertEquals(existingRecommend, recommend)
+        verify(exactly = 1) { postRecommendRepository.findByPostIdAndMemberIdAndDisplayTrue(10L, 1L) }
+        verify(exactly = 0) { postRepository.findById(any()) }
+        verify(exactly = 0) { memberRepository.findById(any()) }
+        verify(exactly = 0) { postRecommendRepository.save(any()) }
     }
 
     @Test
