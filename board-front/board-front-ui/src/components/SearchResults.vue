@@ -49,7 +49,7 @@ let searchRequestId = 0
 const searchKeyword = computed(() => {
   const keyword = route.query.keyword
 
-  return typeof keyword === 'string' ? keyword : ''
+  return typeof keyword === 'string' ? keyword.trim() : ''
 })
 
 const highlightCount = (result: PostSearchResult): number =>

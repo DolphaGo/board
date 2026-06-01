@@ -111,6 +111,16 @@ describe('# Search results component', () => {
     }
   })
 
+  it('should treat whitespace-only keyword as empty search input', async () => {
+    mockRoute.query.keyword = '   '
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(mockedPostSearchService.search).not.toBeCalled()
+    expect(wrapper.text()).toContain('검색어를 입력해 주세요.')
+  })
+
   it('should keep the latest keyword results when an older search resolves later', async () => {
     const kotlinSearch = createDeferred<Awaited<ReturnType<typeof postSearchService.search>>>()
     const javaSearch = createDeferred<Awaited<ReturnType<typeof postSearchService.search>>>()
