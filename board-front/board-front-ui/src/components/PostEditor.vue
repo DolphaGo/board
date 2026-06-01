@@ -100,7 +100,7 @@
     <button data-testid="post-submit" @click="submit" class="btn-submit" :disabled="submitting">
       {{ submitting ? '저장 중...' : '작성하기' }}
     </button>
-    <p v-if="submitMessage" class="submit-message">{{ submitMessage }}</p>
+    <p v-if="submitMessage" class="submit-message" data-testid="submit-message">{{ submitMessage }}</p>
   </div>
 </template>
 
@@ -224,6 +224,29 @@ const selectAuthorRole = (role: 'user' | 'admin') => {
   }
 };
 
+const findApiErrorMessage = (error: unknown): string | undefined => {
+  if (typeof error !== 'object' || error === null || !('response' in error)) {
+    return undefined;
+  }
+
+  const response = (error as { response?: unknown }).response;
+  if (typeof response !== 'object' || response === null || !('data' in response)) {
+    return undefined;
+  }
+
+  const data = (response as { data?: unknown }).data;
+  if (typeof data === 'string' && data.trim().length > 0) {
+    return data;
+  }
+
+  if (typeof data === 'object' && data !== null && 'message' in data) {
+    const message = (data as { message?: unknown }).message;
+    return typeof message === 'string' && message.trim().length > 0 ? message : undefined;
+  }
+
+  return undefined;
+};
+
 const submit = async () => {
   submitting.value = true;
   submitMessage.value = '';
@@ -241,7 +264,9 @@ const submit = async () => {
     });
   } catch (error) {
     console.error('Post submit failed', error);
-    submitMessage.value = '게시글 저장에 실패했습니다.';
+    // 백엔드 권한 검사는 최종 보안 경계다.
+    // 프론트에서 관리자 모드를 켰더라도 API가 거절하면 서버 메시지를 보여줘 왜 막혔는지 학습할 수 있게 한다.
+    submitMessage.value = findApiErrorMessage(error) ?? '게시글 저장에 실패했습니다.';
   } finally {
     submitting.value = false;
   }

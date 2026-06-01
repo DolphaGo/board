@@ -242,4 +242,35 @@ describe('# Post editor component', () => {
       imageUrls: [],
     })
   })
+
+  it('should show backend permission error when notice creation is rejected', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    mockedPostService.createPost.mockRejectedValue({
+      response: {
+        status: 400,
+        data: {
+          message: '공지 게시글은 관리자만 작성할 수 있습니다.',
+        },
+      },
+    })
+    const wrapper = mount(PostEditor, {
+      props: {
+        authorRole: 'admin',
+      },
+    })
+
+    await wrapper.get('#issue-title').setValue('공지 작성')
+    await wrapper.get('#issue-body').setValue('권한 없는 공지')
+    await wrapper.get('[data-testid="notice-checkbox"]').setValue(true)
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="submit-message"]').text()).toBe(
+      '공지 게시글은 관리자만 작성할 수 있습니다.',
+    )
+    expect(push).not.toBeCalled()
+    expect(consoleError).toBeCalledWith('Post submit failed', expect.any(Object))
+
+    consoleError.mockRestore()
+  })
 })
