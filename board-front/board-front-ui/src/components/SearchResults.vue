@@ -16,8 +16,8 @@
           <router-link :to="`/post/${result.postId}`" class="result-title">{{ result.title }}</router-link>
           <p class="result-preview">{{ result.contentPreview }}</p>
           <div class="result-meta">
-            <span>score {{ result.score.toFixed(2) }}</span>
-            <span v-if="highlightCount(result) > 0">highlight {{ highlightCount(result) }}</span>
+            <span>점수 {{ result.score.toFixed(2) }}</span>
+            <span v-if="highlightCount(result) > 0">하이라이트 {{ highlightCount(result) }}개</span>
           </div>
           <ul v-if="highlightCount(result) > 0" class="highlight-list">
             <li v-for="snippet in highlightSnippets(result)" :key="`${snippet.field}:${snippet.text}`">
