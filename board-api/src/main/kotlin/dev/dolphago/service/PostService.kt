@@ -29,6 +29,12 @@ class PostService(
         return post
     }
 
+    fun listPosts(): List<Post> {
+        // 목록은 게시판 첫 화면을 빠르게 그리는 용도다.
+        // 상세 조회와 달리 "읽었다"는 사용자 행위가 아니므로 조회수를 올리지 않는다.
+        return postRepository.findByDisplayTrueOrderByIdDesc()
+    }
+
     fun createPost(
         memberId: Long,
         title: String,

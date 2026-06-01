@@ -19,6 +19,10 @@ describe('# Post list component', () => {
         content: 'Elasticsearch 색인까지 연결한다',
         viewCount: 3,
         display: true,
+        authorNickname: 'writer',
+        createdAt: '2026-06-02T04:00:00',
+        commentCount: 2,
+        recommendCount: 1,
       },
       {
         id: 11,
@@ -26,6 +30,10 @@ describe('# Post list component', () => {
         content: '방 단위 topic으로 메시지를 발행해야 다른 채팅방 메시지가 섞이지 않습니다.',
         viewCount: 7,
         display: true,
+        authorNickname: 'chat-lab',
+        createdAt: '2026-06-01T09:30:00',
+        commentCount: 0,
+        recommendCount: 3,
       },
     ])
 
@@ -47,6 +55,10 @@ describe('# Post list component', () => {
     expect(rows).toHaveLength(2)
     expect(rows[0].get('.board-title-link').text()).toBe('코프링 게시글')
     expect(rows[0].get('.post-preview').text()).toBe('Elasticsearch 색인까지 연결한다')
+    expect(rows[0].get('.meta-row').text()).toContain('writer')
+    expect(rows[0].get('.meta-row').text()).toContain('2026.06.02')
     expect(rows[0].get('.meta-row').text()).toContain('조회 3')
+    expect(rows[0].get('.meta-row').text()).toContain('댓글 2')
+    expect(rows[0].get('.meta-row').text()).toContain('추천 1')
   })
 })

@@ -32,6 +32,10 @@ describe('# Post service', function () {
           content: 'Elasticsearch 색인까지 연결한다',
           viewCount: 3,
           display: true,
+          authorNickname: 'writer',
+          createdAt: '2026-06-02T04:00:00',
+          commentCount: 2,
+          recommendCount: 1,
         },
       ],
     })
@@ -41,6 +45,8 @@ describe('# Post service', function () {
     expect(mockedAxios.get).toBeCalledWith('/api/posts')
     expect(posts).toHaveLength(1)
     expect(posts[0].title).toBe('코프링 게시글')
+    expect(posts[0].authorNickname).toBe('writer')
+    expect(posts[0].commentCount).toBe(2)
   })
 
   it('should create a post with the study member id', async function () {

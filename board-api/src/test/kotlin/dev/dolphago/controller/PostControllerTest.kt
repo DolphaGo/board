@@ -102,4 +102,45 @@ class PostControllerTest {
         )
         verify(exactly = 1) { postService.getPost(10L) }
     }
+
+    @Test
+    fun `게시글 목록 조회는 게시판 메타를 포함한 응답 DTO를 반환한다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "코프링 게시판 검색",
+                content = "목록에서 보여줄 본문",
+                viewCount = 3,
+                display = true,
+            )
+        every { postService.listPosts() } returns listOf(post)
+
+        val response = controller.listPosts()
+
+        assertEquals(
+            listOf(
+                PostListItemResponse(
+                    id = 10L,
+                    title = "코프링 게시판 검색",
+                    content = "목록에서 보여줄 본문",
+                    viewCount = 3,
+                    display = true,
+                    authorNickname = "writer",
+                    createdAt = post.createDate,
+                    commentCount = 0,
+                    recommendCount = 0,
+                ),
+            ),
+            response.body,
+        )
+        verify(exactly = 1) { postService.listPosts() }
+    }
 }

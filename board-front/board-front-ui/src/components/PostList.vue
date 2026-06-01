@@ -16,7 +16,11 @@
         </router-link>
         <p class="post-preview">{{ post.content }}</p>
         <div class="meta-row">
+          <span>{{ post.authorNickname }}</span>
+          <span>{{ formatCreatedAt(post.createdAt) }}</span>
           <span>조회 {{ post.viewCount }}</span>
+          <span>댓글 {{ post.commentCount }}</span>
+          <span>추천 {{ post.recommendCount }}</span>
         </div>
       </article>
     </div>
@@ -25,11 +29,17 @@
 
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import { postService, type PostResponse } from 'src/api/postService'
+import { postService, type PostListItemResponse } from 'src/api/postService'
 
-const posts = ref<PostResponse[]>([])
+const posts = ref<PostListItemResponse[]>([])
 const loading = ref(false)
 const error = ref(false)
+
+const formatCreatedAt = (createdAt: string) => {
+  // 서버는 LocalDateTime을 ISO 문자열로 내려준다.
+  // 목록에서는 시간보다 날짜 스캔성이 중요하므로 yyyy.MM.dd까지만 표시한다.
+  return createdAt.slice(0, 10).replaceAll('-', '.')
+}
 
 const fetchPosts = async () => {
   try {

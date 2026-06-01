@@ -15,6 +15,13 @@ export interface PostResponse {
   display: boolean
 }
 
+export interface PostListItemResponse extends PostResponse {
+  authorNickname: string
+  createdAt: string
+  commentCount: number
+  recommendCount: number
+}
+
 const isPostResponse = (data: unknown): data is PostResponse => {
   if (typeof data !== 'object' || data === null) {
     return false
@@ -28,6 +35,18 @@ const isPostResponse = (data: unknown): data is PostResponse => {
     typeof post.display === 'boolean'
 }
 
+const isPostListItemResponse = (data: unknown): data is PostListItemResponse => {
+  if (!isPostResponse(data)) {
+    return false
+  }
+
+  const post = data as Partial<PostListItemResponse>
+  return typeof post.authorNickname === 'string' &&
+    typeof post.createdAt === 'string' &&
+    typeof post.commentCount === 'number' &&
+    typeof post.recommendCount === 'number'
+}
+
 export const postService = {
   getPost: async (id: number): Promise<PostResponse> => {
     const response = await axios.get<PostResponse>(`/api/posts/${id}`)
@@ -39,12 +58,12 @@ export const postService = {
     return response.data
   },
 
-  listPosts: async (): Promise<PostResponse[]> => {
-    const response = await axios.get<PostResponse[]>('/api/posts')
+  listPosts: async (): Promise<PostListItemResponse[]> => {
+    const response = await axios.get<PostListItemResponse[]>('/api/posts')
 
     // 백엔드가 꺼진 Vite 단독 실행에서는 index.html 문자열이 내려올 수 있다.
     // 목록 화면은 배열 DTO만 렌더링하도록 경계에서 계약을 확인한다.
-    if (!Array.isArray(response.data) || !response.data.every(isPostResponse)) {
+    if (!Array.isArray(response.data) || !response.data.every(isPostListItemResponse)) {
       throw new Error('Invalid post list response')
     }
 

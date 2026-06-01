@@ -83,4 +83,31 @@ class PostServiceTest {
         assertEquals(4L, result.viewCount)
         verify(exactly = 1) { postRepository.findById(10L) }
     }
+
+    @Test
+    fun `목록 조회는 노출 게시글만 최신순으로 읽고 조회수를 올리지 않는다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "코프링 검색 게시글",
+                content = "목록에서 보여줄 본문",
+                viewCount = 3,
+                display = true,
+            )
+        every { postRepository.findByDisplayTrueOrderByIdDesc() } returns listOf(post)
+
+        val posts = postService.listPosts()
+
+        assertEquals(listOf(post), posts)
+        assertEquals(3L, post.viewCount)
+        verify(exactly = 1) { postRepository.findByDisplayTrueOrderByIdDesc() }
+    }
 }
