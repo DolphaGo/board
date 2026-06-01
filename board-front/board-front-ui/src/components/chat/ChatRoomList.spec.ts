@@ -79,7 +79,10 @@ describe('# Chat room list component', () => {
     await flushPromises()
 
     expect(mockedChatService.joinRoom).toHaveBeenCalledWith('room-1')
-    expect(pushMock).toHaveBeenCalledWith('/chat/rooms/room-1')
+    expect(pushMock).toHaveBeenCalledWith({
+      path: '/chat/rooms/room-1',
+      query: { username: 'study-user' },
+    })
   })
 
   it('should enter the room with the Space key from a room item', async () => {
@@ -99,7 +102,10 @@ describe('# Chat room list component', () => {
     await flushPromises()
 
     expect(mockedChatService.joinRoom).toHaveBeenCalledWith('room-2')
-    expect(pushMock).toHaveBeenCalledWith('/chat/rooms/room-2')
+    expect(pushMock).toHaveBeenCalledWith({
+      path: '/chat/rooms/room-2',
+      query: { username: 'study-user' },
+    })
   })
 
   it('should render the enter failure message above the room list', async () => {

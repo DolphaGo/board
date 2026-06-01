@@ -86,6 +86,8 @@ import { chatService, type ChatRoom } from 'src/api/chatService'
 import { buildCreateRoomRequest } from './createRoomDialogForm'
 import { buildChatRoomActionErrorMessage } from './chatRoomListFeedback'
 
+const STUDY_CHAT_USERNAME = 'study-user'
+
 export default defineComponent({
   name: 'ChatRoomList',
   setup() {
@@ -117,7 +119,12 @@ export default defineComponent({
       try {
         feedbackMessage.value = ''
         await chatService.joinRoom(roomId)
-        router.push(`/chat/rooms/${roomId}`)
+        // 로그인 기능이 붙기 전까지는 학습용 사용자명을 query로 넘겨 ChatRoom의 sender 흐름을 눈에 보이게 둔다.
+        // 이후 회원 세션을 붙이면 이 값은 로그인 사용자 닉네임이나 프로필명으로 교체한다.
+        router.push({
+          path: `/chat/rooms/${roomId}`,
+          query: { username: STUDY_CHAT_USERNAME },
+        })
       } catch (err) {
         console.error('채팅방 입장 실패:', err)
         feedbackMessage.value = buildChatRoomActionErrorMessage('enter')
