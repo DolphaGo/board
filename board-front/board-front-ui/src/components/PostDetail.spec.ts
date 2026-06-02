@@ -29,6 +29,10 @@ describe('# Post detail component', () => {
     jest.clearAllMocks()
   })
 
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   it('should connect comment submit and recommend click to post service', async () => {
     mockedPostService.getPost.mockResolvedValue({
       id: 10,
@@ -134,6 +138,8 @@ describe('# Post detail component', () => {
   })
 
   it('should show backend hide error message for admin viewer', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+
     mockedPostService.getPost.mockResolvedValue({
       id: 10,
       title: '숨김 실패 게시글',
@@ -162,6 +168,41 @@ describe('# Post detail component', () => {
     await wrapper.get('[data-testid="hide-post"]').trigger('click')
     await flushPromises()
 
+    expect(consoleError).toBeCalledWith('게시글 숨김 실패:', expect.anything())
     expect(wrapper.get('[data-testid="post-action-error"]').text()).toBe('관리자만 게시글을 숨길 수 있습니다.')
+  })
+
+  it('should mask post content and actions when the post is hidden', async () => {
+    mockedPostService.getPost.mockResolvedValue({
+      id: 10,
+      title: '숨김 처리된 제목',
+      content: '숨김 처리된 본문',
+      imageUrls: ['https://cdn.example.com/hidden.png'],
+      viewCount: 3,
+      display: false,
+      notice: false,
+    })
+    mockedPostService.listComments.mockResolvedValue([
+      {
+        id: 19,
+        postId: 10,
+        memberId: 1,
+        authorNickname: 'reader',
+        content: '숨김 글 댓글',
+        display: true,
+        createdAt: '2026-06-02T04:00:00',
+      },
+    ])
+
+    const wrapper = mount(PostDetail)
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="hidden-post"]').text()).toBe('숨김 처리된 게시글입니다.')
+    expect(wrapper.text()).not.toContain('숨김 처리된 제목')
+    expect(wrapper.text()).not.toContain('숨김 처리된 본문')
+    expect(wrapper.text()).not.toContain('숨김 글 댓글')
+    expect(wrapper.find('.post-image-list').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="recommend-button"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="comment-submit"]').exists()).toBe(false)
   })
 })

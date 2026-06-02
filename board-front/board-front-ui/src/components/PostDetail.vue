@@ -3,53 +3,57 @@
     <p v-if="loading">게시글을 불러오는 중...</p>
     <p v-else-if="error">게시글을 불러오지 못했습니다.</p>
     <article v-else-if="post" class="post-detail">
-      <h1>
-        <span v-if="post.notice" class="notice-badge">공지</span>
-        <span>{{ post.title }}</span>
-      </h1>
-      <p>{{ post.content }}</p>
-      <div v-if="post.imageUrls.length > 0" class="post-image-list" aria-label="본문 이미지">
-        <img
-          v-for="(imageUrl, index) in post.imageUrls"
-          :key="`${post.id}:image:${imageUrl}`"
-          :src="imageUrl"
-          :alt="`${post.title} 이미지 ${index + 1}`"
-          loading="lazy"
-        />
-      </div>
-      <p class="post-meta">조회수 {{ post.viewCount }}</p>
+      <template v-if="post.display">
+        <h1>
+          <span v-if="post.notice" class="notice-badge">공지</span>
+          <span>{{ post.title }}</span>
+        </h1>
+        <p>{{ post.content }}</p>
+        <div v-if="post.imageUrls.length > 0" class="post-image-list" aria-label="본문 이미지">
+          <img
+            v-for="(imageUrl, index) in post.imageUrls"
+            :key="`${post.id}:image:${imageUrl}`"
+            :src="imageUrl"
+            :alt="`${post.title} 이미지 ${index + 1}`"
+            loading="lazy"
+          />
+        </div>
+        <p class="post-meta">조회수 {{ post.viewCount }}</p>
 
-      <div class="post-actions" aria-label="게시글 액션">
-        <button
-          type="button"
-          class="recommend-button"
-          data-testid="recommend-button"
-          @click="submitRecommend"
-        >
-          추천
-        </button>
-        <button
-          v-if="isAdminViewer && post.display"
-          type="button"
-          class="hide-button"
-          data-testid="hide-post"
-          @click="hidePost"
-        >
-          숨김
-        </button>
-      </div>
+        <div class="post-actions" aria-label="게시글 액션">
+          <button
+            type="button"
+            class="recommend-button"
+            data-testid="recommend-button"
+            @click="submitRecommend"
+          >
+            추천
+          </button>
+          <button
+            v-if="isAdminViewer"
+            type="button"
+            class="hide-button"
+            data-testid="hide-post"
+            @click="hidePost"
+          >
+            숨김
+          </button>
+        </div>
 
-      <form class="comment-form" data-testid="comment-submit" @submit.prevent="submitComment">
-        <label for="comment-content">댓글</label>
-        <textarea
-          id="comment-content"
-          v-model="commentContent"
-          data-testid="comment-content"
-          rows="3"
-          placeholder="댓글을 입력하세요"
-        />
-        <button type="submit">댓글 등록</button>
-      </form>
+        <form class="comment-form" data-testid="comment-submit" @submit.prevent="submitComment">
+          <label for="comment-content">댓글</label>
+          <textarea
+            id="comment-content"
+            v-model="commentContent"
+            data-testid="comment-content"
+            rows="3"
+            placeholder="댓글을 입력하세요"
+          />
+          <button type="submit">댓글 등록</button>
+        </form>
+      </template>
+
+      <p v-else class="hidden-post" data-testid="hidden-post">숨김 처리된 게시글입니다.</p>
 
       <p v-if="commentMessage" class="action-message">{{ commentMessage }}</p>
       <p v-if="recommendMessage" class="action-message">{{ recommendMessage }}</p>
@@ -58,7 +62,7 @@
       </p>
       <p v-if="actionError" class="action-error" data-testid="post-action-error">{{ actionError }}</p>
 
-      <section class="comment-list" aria-label="댓글 목록">
+      <section v-if="post.display" class="comment-list" aria-label="댓글 목록">
         <p v-if="comments.length === 0" class="comment-empty">댓글이 없습니다.</p>
         <article v-for="comment in comments" :key="comment.id" class="comment-row">
           <strong>{{ comment.authorNickname }}</strong>
@@ -250,6 +254,15 @@ const hidePost = async () => {
 .post-image-list img {
   border: 1px solid #d8d8d8;
   max-width: 100%;
+}
+
+.hidden-post {
+  border: 1px solid #d8d8d8;
+  color: #777777;
+  font-size: 14px;
+  margin: 0;
+  padding: 16px;
+  text-align: center;
 }
 
 .post-actions {
