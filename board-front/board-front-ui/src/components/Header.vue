@@ -16,6 +16,7 @@
       <a href="#">Posts</a>
       <a href="#">About</a>
       <router-link to="/chat/rooms">Chat</router-link>
+      <router-link to="/admin/hidden-posts">숨김 관리</router-link>
     </nav>
   </header>
 </template>
