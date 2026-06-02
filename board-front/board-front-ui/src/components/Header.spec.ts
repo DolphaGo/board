@@ -176,6 +176,26 @@ describe('# Header component', () => {
     )
   })
 
+  it('should explain why a suggestion matched by syllable prefix', async () => {
+    mockedSearchRankingService.suggestKeywords.mockResolvedValue([
+      { keyword: '코프링 검색', score: 9, matchType: 'SYLLABLE_PREFIX' },
+    ])
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    await wrapper.get('.header-search-input').setValue('ㅋㅗ')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="search-suggestion-match-description"]').text()).toBe(
+      '초성+중성까지 분해한 음절 prefix가 맞았습니다.'
+    )
+  })
+
   it('should search with the clicked suggestion keyword', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
       { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
