@@ -99,6 +99,13 @@
               {{ result.scoreExplanation.description }}
             </p>
           </div>
+          <p
+            v-else-if="result.scoringSignals.length > 0"
+            class="score-explanation score-explanation-missing"
+            data-testid="score-explanation-missing"
+          >
+            점수 공식 요약이 없는 응답입니다. 그래도 점수와 scoringSignals를 함께 보면 BM25 원문, 음절/초성 recall, function_score 중 어떤 계열이 결과에 기여했는지 추적할 수 있습니다.
+          </p>
           <ul v-if="result.scoringSignals.length > 0" class="scoring-signal-list">
             <li
               v-for="signal in result.scoringSignals"
@@ -255,6 +262,9 @@ const scoreExplanationSummary = (result: PostSearchResult): string => {
     explanation.functionScoreApplied ? '공지 가산점 적용' : '공지 가산점 없음'
   }`
 }
+
+// 일부 fixture나 오래된 API 응답에는 scoreExplanation이 없을 수 있다.
+// 이때도 scoringSignals는 남아 있으므로, 화면은 "공식 요약 없음"을 명시하고 signal 목록으로 학습을 이어가게 한다.
 
 const findSignalByCategory = (category: string) =>
   results.value

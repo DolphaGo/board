@@ -399,6 +399,37 @@ describe('# Search results component', () => {
     )
   })
 
+  it('should explain when score formula details are missing from a search result', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: '오래된 목업 응답에는 점수 공식 요약이 없을 수 있다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [
+          {
+            field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
+            boost: 3,
+            keyword: '코프링',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="score-explanation-missing"]').text()).toBe(
+      '점수 공식 요약이 없는 응답입니다. 그래도 점수와 scoringSignals를 함께 보면 BM25 원문, 음절/초성 recall, function_score 중 어떤 계열이 결과에 기여했는지 추적할 수 있습니다.'
+    )
+  })
+
   it('should label each scoring signal explanation as applied evidence or pending reason', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {
