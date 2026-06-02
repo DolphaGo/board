@@ -12,6 +12,7 @@ data class SearchKeywordSuggestionItem(
     val keyword: String,
     val score: Long,
     val matchType: SearchKeywordSuggestionMatchType,
+    val matchDescription: String,
 )
 
 enum class SearchKeywordSuggestionMatchType {
@@ -79,11 +80,24 @@ class SearchRankingService(
                     keyword = keyword,
                     score = tuple.score?.toLong() ?: 0L,
                     matchType = matchType,
+                    matchDescription = suggestionMatchDescriptionOf(matchType),
                 )
             }
             .take(limit.toInt())
             .toList()
     }
+
+    private fun suggestionMatchDescriptionOf(matchType: SearchKeywordSuggestionMatchType): String =
+        // matchType만 내려주면 화면마다 설명 문구가 갈라질 수 있다.
+        // 학습용 API에서는 서버가 실제 판정 로직과 같은 위치에서 설명까지 내려줘야 ZSET 기반 추천 계약을 한 번에 읽을 수 있다.
+        when (matchType) {
+            SearchKeywordSuggestionMatchType.TEXT_PREFIX ->
+                "저장된 검색어 원문이 입력한 prefix로 시작합니다."
+            SearchKeywordSuggestionMatchType.SYLLABLE_PREFIX ->
+                "저장된 검색어를 자모로 분해한 값이 입력한 음절 prefix로 시작합니다."
+            SearchKeywordSuggestionMatchType.INITIAL_PREFIX ->
+                "저장된 검색어의 초성 토큰이 입력한 prefix로 시작합니다."
+        }
 
     private fun findSuggestionMatchType(
         keyword: String,

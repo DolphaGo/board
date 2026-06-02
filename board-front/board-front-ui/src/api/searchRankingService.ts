@@ -9,6 +9,7 @@ export type SearchKeywordSuggestionMatchType = 'TEXT_PREFIX' | 'SYLLABLE_PREFIX'
 
 export interface SearchKeywordSuggestionItem extends SearchRankingItem {
   matchType: SearchKeywordSuggestionMatchType
+  matchDescription: string
 }
 
 const isSearchRankingItem = (data: unknown): data is SearchRankingItem => {
@@ -33,7 +34,10 @@ const isSearchKeywordSuggestionItem = (data: unknown): data is SearchKeywordSugg
     return false
   }
 
-  return isSearchKeywordSuggestionMatchType((data as Partial<SearchKeywordSuggestionItem>).matchType)
+  const item = data as Partial<SearchKeywordSuggestionItem>
+  return isSearchKeywordSuggestionMatchType(item.matchType) &&
+    typeof item.matchDescription === 'string' &&
+    item.matchDescription.trim().length > 0
 }
 
 // 서버의 SearchRankingService는 limit이 1 이상이어야 한다고 검증한다.
@@ -89,8 +93,8 @@ export const searchRankingService = {
       },
     })
 
-    // 추천어는 랭킹 keyword/score에 더해 원문/음절/초성 중 어떤 prefix가 맞았는지 함께 내려온다.
-    // 이 값이 있어야 검색창에서 "왜 추천됐는지"를 학습용 라벨로 설명할 수 있다.
+    // 추천어는 랭킹 keyword/score에 더해 matchType과 matchDescription을 함께 내려온다.
+    // matchDescription은 서버의 실제 prefix 판정 로직 옆에서 만든 문구라 화면별 설명 불일치를 줄인다.
     if (!Array.isArray(response.data) || !response.data.every(isSearchKeywordSuggestionItem)) {
       throw new Error('Invalid search ranking response')
     }

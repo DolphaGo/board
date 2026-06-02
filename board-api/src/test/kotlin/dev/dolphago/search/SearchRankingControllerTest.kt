@@ -46,6 +46,7 @@ class SearchRankingControllerTest {
                     keyword = "kotlin spring",
                     score = 7,
                     matchType = SearchKeywordSuggestionMatchType.TEXT_PREFIX,
+                    matchDescription = "저장된 검색어 원문이 입력한 prefix로 시작합니다.",
                 ),
             )
         every { searchRankingService.suggest(rawKeyword = "Kotlin", limit = 3) } returns suggestions

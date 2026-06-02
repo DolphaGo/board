@@ -114,8 +114,18 @@ describe('# Header component', () => {
 
   it('should render ranked keyword suggestions while typing in the search input', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
-      { keyword: 'kotlin elasticsearch', score: 5, matchType: 'TEXT_PREFIX' },
+      {
+        keyword: 'kotlin spring',
+        score: 7,
+        matchType: 'TEXT_PREFIX',
+        matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+      },
+      {
+        keyword: 'kotlin elasticsearch',
+        score: 5,
+        matchType: 'TEXT_PREFIX',
+        matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+      },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -137,7 +147,12 @@ describe('# Header component', () => {
 
   it('should explain that keyword suggestions come from realtime search history', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
+      {
+        keyword: 'kotlin spring',
+        score: 7,
+        matchType: 'TEXT_PREFIX',
+        matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+      },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -158,7 +173,12 @@ describe('# Header component', () => {
 
   it('should explain that suggestions also support Korean initial and syllable jamo input', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: '코프링 검색', score: 9, matchType: 'SYLLABLE_PREFIX' },
+      {
+        keyword: '코프링 검색',
+        score: 9,
+        matchType: 'SYLLABLE_PREFIX',
+        matchDescription: '저장된 검색어를 자모로 분해한 값이 입력한 음절 prefix로 시작합니다.',
+      },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -178,7 +198,12 @@ describe('# Header component', () => {
 
   it('should explain why a suggestion matched by syllable prefix', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: '코프링 검색', score: 9, matchType: 'SYLLABLE_PREFIX' },
+      {
+        keyword: '코프링 검색',
+        score: 9,
+        matchType: 'SYLLABLE_PREFIX',
+        matchDescription: '저장된 검색어를 자모로 분해한 값이 입력한 음절 prefix로 시작합니다.',
+      },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -192,15 +217,30 @@ describe('# Header component', () => {
     await flushPromises()
 
     expect(wrapper.get('[data-testid="search-suggestion-match-description"]').text()).toBe(
-      '초성+중성까지 분해한 음절 prefix가 맞았습니다.'
+      '저장된 검색어를 자모로 분해한 값이 입력한 음절 prefix로 시작합니다.'
     )
   })
 
   it('should expose suggestion match types as structured study fields', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
-      { keyword: '코프링 검색', score: 9, matchType: 'SYLLABLE_PREFIX' },
-      { keyword: '코프링 ES', score: 5, matchType: 'INITIAL_PREFIX' },
+      {
+        keyword: 'kotlin spring',
+        score: 7,
+        matchType: 'TEXT_PREFIX',
+        matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+      },
+      {
+        keyword: '코프링 검색',
+        score: 9,
+        matchType: 'SYLLABLE_PREFIX',
+        matchDescription: '저장된 검색어를 자모로 분해한 값이 입력한 음절 prefix로 시작합니다.',
+      },
+      {
+        keyword: '코프링 ES',
+        score: 5,
+        matchType: 'INITIAL_PREFIX',
+        matchDescription: '저장된 검색어의 초성 토큰이 입력한 prefix로 시작합니다.',
+      },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -227,7 +267,12 @@ describe('# Header component', () => {
 
   it('should search with the clicked suggestion keyword', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
+      {
+        keyword: 'kotlin spring',
+        score: 7,
+        matchType: 'TEXT_PREFIX',
+        matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+      },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -283,8 +328,18 @@ describe('# Header component', () => {
 
   it('should search with the highlighted suggestion keyword from the keyboard', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
-      { keyword: 'kotlin elasticsearch', score: 5, matchType: 'TEXT_PREFIX' },
+      {
+        keyword: 'kotlin spring',
+        score: 7,
+        matchType: 'TEXT_PREFIX',
+        matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+      },
+      {
+        keyword: 'kotlin elasticsearch',
+        score: 5,
+        matchType: 'TEXT_PREFIX',
+        matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+      },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -312,8 +367,18 @@ describe('# Header component', () => {
 
   it('should connect the highlighted suggestion to the search input for screen readers', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
-      { keyword: 'kotlin elasticsearch', score: 5, matchType: 'TEXT_PREFIX' },
+      {
+        keyword: 'kotlin spring',
+        score: 7,
+        matchType: 'TEXT_PREFIX',
+        matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+      },
+      {
+        keyword: 'kotlin elasticsearch',
+        score: 5,
+        matchType: 'TEXT_PREFIX',
+        matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+      },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -343,7 +408,12 @@ describe('# Header component', () => {
 
   it('should expose search suggestions as a combobox listbox pattern', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
+      {
+        keyword: 'kotlin spring',
+        score: 7,
+        matchType: 'TEXT_PREFIX',
+        matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+      },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -364,7 +434,12 @@ describe('# Header component', () => {
 
   it('should close keyword suggestions with escape', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
+      {
+        keyword: 'kotlin spring',
+        score: 7,
+        matchType: 'TEXT_PREFIX',
+        matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+      },
     ])
     const wrapper = mount(Header, {
       global: {

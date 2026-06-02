@@ -56,7 +56,7 @@
             </span>
             <span>검색 {{ suggestion.score }}회</span>
             <span class="suggestion-match-description" data-testid="search-suggestion-match-description">
-              {{ suggestionMatchTypeDescription(suggestion.matchType) }}
+              {{ suggestion.matchDescription }}
             </span>
           </button>
         </li>
@@ -111,19 +111,6 @@ const suggestionMatchTypeLabel = (matchType: SearchKeywordSuggestionMatchType): 
       return '음절 일치'
     case 'INITIAL_PREFIX':
       return '초성 일치'
-  }
-}
-
-const suggestionMatchTypeDescription = (matchType: SearchKeywordSuggestionMatchType): string => {
-  // 추천 matchType은 사용자가 입력한 prefix와 랭킹 ZSET의 원문 검색어가 어떤 방식으로 맞았는지 설명한다.
-  // 원문 prefix는 일반 자동완성, 음절 prefix는 "ㅋㅗ"처럼 중성까지 구분한 입력, 초성 prefix는 "ㅋㅍ" 같은 빠른 한글 검색 입력이다.
-  switch (matchType) {
-    case 'TEXT_PREFIX':
-      return '저장된 인기 검색어의 원문 prefix가 맞았습니다.'
-    case 'SYLLABLE_PREFIX':
-      return '초성+중성까지 분해한 음절 prefix가 맞았습니다.'
-    case 'INITIAL_PREFIX':
-      return '초성만 뽑은 prefix가 맞았습니다.'
   }
 }
 
