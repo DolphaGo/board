@@ -119,6 +119,27 @@ describe('# Header component', () => {
     expect(wrapper.text()).toContain('7회')
   })
 
+  it('should explain that keyword suggestions come from realtime search history', async () => {
+    mockedSearchRankingService.suggestKeywords.mockResolvedValue([
+      { keyword: 'kotlin spring', score: 7 },
+    ])
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    await wrapper.get('.header-search-input').setValue('kotlin')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="search-suggestion-guide"]').text()).toBe(
+      '실시간 검색 기록 기반 추천'
+    )
+    expect(wrapper.get('[data-testid="search-suggestion"]').text()).toContain('검색 7회')
+  })
+
   it('should search with the clicked suggestion keyword', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
       { keyword: 'kotlin spring', score: 7 },

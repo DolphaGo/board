@@ -20,6 +20,9 @@
         class="search-suggestions"
         role="listbox"
       >
+        <li class="search-suggestion-guide" role="presentation" data-testid="search-suggestion-guide">
+          실시간 검색 기록 기반 추천
+        </li>
         <li v-for="(suggestion, index) in suggestions" :key="suggestion.keyword">
           <button
             type="button"
@@ -31,7 +34,7 @@
             @click="submitSuggestion(suggestion.keyword)"
           >
             <span>{{ suggestion.keyword }}</span>
-            <span>{{ suggestion.score }}회</span>
+            <span>검색 {{ suggestion.score }}회</span>
           </button>
         </li>
       </ul>
@@ -85,6 +88,7 @@ watch(keyword, async currentKeyword => {
 
   try {
     // 추천어는 실시간 검색어 랭킹 ZSET을 prefix로 좁힌 결과다.
+    // 그래서 추천 목록에는 "검색 기록 기반" 안내를 함께 보여 사용자가 개인 사전이 아니라 랭킹 데이터임을 알 수 있게 한다.
     // 사용자가 빠르게 타이핑하면 이전 요청이 늦게 도착할 수 있으므로 requestSequence로 최신 응답만 반영한다.
     const nextSuggestions = await searchRankingService.suggestKeywords(normalizedKeyword, 5)
     if (requestSequence === suggestionRequestSequence) {
@@ -216,6 +220,14 @@ const submitSuggestion = async (suggestionKeyword: string) => {
   background: #fff;
   list-style: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.search-suggestion-guide {
+  padding: 6px 8px 4px;
+  border-bottom: 1px solid #eeeeee;
+  color: #666666;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .search-suggestion {
