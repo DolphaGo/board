@@ -118,6 +118,40 @@ describe('# Search results component', () => {
     expect(wrapper.text()).toContain('대기')
   })
 
+  it('should explain highlights as matched snippets instead of score contribution', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: 'ES 하이라이트와 점수 기여를 구분해서 공부한다',
+        display: true,
+        score: 12.3456,
+        highlights: {
+          title: ['<em>코프링</em> 검색 구현'],
+          content: ['게시판 <em>검색</em> 스코어링'],
+        },
+        scoringSignals: [
+          {
+            field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
+            boost: 3,
+            keyword: '코프링',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="highlight-study-note"]').text()).toBe(
+      '하이라이트는 점수를 직접 올리는 가산점이 아니라, ES가 어떤 필드의 어느 문장을 매칭했는지 보여주는 스니펫입니다.'
+    )
+  })
+
   it('should show a scoring study guide above search results', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {

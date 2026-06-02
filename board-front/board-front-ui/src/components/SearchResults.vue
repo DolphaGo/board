@@ -119,6 +119,13 @@
               </span>
             </li>
           </ul>
+          <p
+            v-if="highlightCount(result) > 0"
+            class="highlight-study-note"
+            data-testid="highlight-study-note"
+          >
+            하이라이트는 점수를 직접 올리는 가산점이 아니라, ES가 어떤 필드의 어느 문장을 매칭했는지 보여주는 스니펫입니다.
+          </p>
           <ul v-if="highlightCount(result) > 0" class="highlight-list">
             <li v-for="snippet in highlightSnippets(result)" :key="`${snippet.field}:${snippet.text}`">
               <span class="highlight-field">{{ snippet.field }}</span>
@@ -617,6 +624,16 @@ watch(
 .signal-description {
   min-width: 0;
   word-break: keep-all;
+}
+
+.highlight-study-note {
+  margin: 8px 0 0;
+  border: 1px solid #d8e6ef;
+  background: #f8fbfd;
+  color: #333333;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 7px 9px;
 }
 
 .highlight-list {
