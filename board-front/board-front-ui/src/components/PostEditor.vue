@@ -83,7 +83,15 @@
       </div>
       <ol v-if="imageUrls.length > 0" class="image-url-list" aria-label="본문 이미지 URL">
         <li v-for="(imageUrl, index) in imageUrls" :key="`${imageUrl}:${index}`" class="image-url-item">
-          {{ index + 1 }}. {{ imageUrl }}
+          <span>{{ index + 1 }}. {{ imageUrl }}</span>
+          <button
+              type="button"
+              class="btn-image-remove"
+              data-testid="remove-image-url"
+              @click="removeImageUrl(index)"
+          >
+            삭제
+          </button>
         </li>
       </ol>
       <p
@@ -196,6 +204,30 @@ const insertImageMarkdown = (url: string) => {
   bodyText.value += `${separator}${markdownImage}\n`;
   imageUrls.value = [...imageUrls.value, url];
   imageUploadMessage.value = '';
+};
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const normalizeImageMarkdownNumbers = () => {
+  imageUrls.value.forEach((imageUrl, index) => {
+    const markdownPattern = new RegExp(`!\\[첨부 이미지 \\d+\\]\\(${escapeRegExp(imageUrl)}\\)`, 'g');
+    bodyText.value = bodyText.value.replace(markdownPattern, `![첨부 이미지 ${index + 1}](${imageUrl})`);
+  });
+};
+
+const removeImageUrl = (index: number) => {
+  const imageUrl = imageUrls.value[index];
+
+  if (!imageUrl) {
+    return;
+  }
+
+  // 이미지 URL 목록은 저장용 배열이고, 본문 Markdown은 사용자가 실제로 읽는 글 흐름이다.
+  // 삭제할 때 둘 중 하나만 지우면 상세 화면과 저장 DTO가 서로 다른 이미지를 가리키므로 항상 같이 갱신한다.
+  const markdownPattern = new RegExp(`\\n?!\\[첨부 이미지 \\d+\\]\\(${escapeRegExp(imageUrl)}\\)\\n?`, 'g');
+  bodyText.value = bodyText.value.replace(markdownPattern, '\n').replace(/\n{2,}/g, '\n').replace(/^\n/, '');
+  imageUrls.value = imageUrls.value.filter((_, imageIndex) => imageIndex !== index);
+  normalizeImageMarkdownNumbers();
 };
 
 const addImageUrl = () => {
