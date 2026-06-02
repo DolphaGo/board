@@ -9,6 +9,7 @@ const mockDeactivate = jest.fn()
 const pushMock = jest.fn()
 let mockConnected = true
 let subscribedMessageHandler: ((message: { body: string }) => void) | undefined
+let stompErrorHandler: (() => void) | undefined
 const mockedChatService = chatService as jest.Mocked<typeof chatService>
 const mockedUseRouter = useRouter as jest.Mock
 
@@ -27,6 +28,7 @@ jest.mock('@stomp/stompjs', () => ({
     activate: jest.Mock
     deactivate: jest.Mock
     onConnect?: () => void
+    onStompError?: () => void
   }) {
     this.connected = mockConnected
     this.publish = mockPublish
@@ -34,7 +36,10 @@ jest.mock('@stomp/stompjs', () => ({
       subscribedMessageHandler = callback
     })
     this.deactivate = mockDeactivate
-    this.activate = jest.fn(() => this.onConnect?.())
+    this.activate = jest.fn(() => {
+      stompErrorHandler = this.onStompError
+      this.onConnect?.()
+    })
   }),
 }))
 
@@ -99,6 +104,7 @@ describe('# Chat room component', () => {
     })
     mockConnected = true
     subscribedMessageHandler = undefined
+    stompErrorHandler = undefined
   })
 
   it('should not publish blank talk messages', async () => {
@@ -239,6 +245,17 @@ describe('# Chat room component', () => {
     expect(wrapper.find('.message.received').exists()).toBe(false)
     expect(warn).toHaveBeenCalledWith('지원하지 않는 채팅 타입을 무시했습니다:', 'NOTICE')
     warn.mockRestore()
+  })
+
+  it('should render a connection error message when STOMP reports an error', async () => {
+    const wrapper = mountChatRoom()
+
+    stompErrorHandler?.()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.get('.connection-feedback').text()).toBe(
+      '채팅 서버 연결에 문제가 생겼습니다. 새로고침하거나 잠시 후 다시 시도해주세요.'
+    )
   })
 
   it('should publish leave message and deactivate STOMP on unmount', () => {
