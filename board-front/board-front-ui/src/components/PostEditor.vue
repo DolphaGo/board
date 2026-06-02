@@ -86,6 +86,24 @@
           <span>{{ index + 1 }}. {{ imageUrl }}</span>
           <button
               type="button"
+              class="btn-image-move"
+              data-testid="move-image-up"
+              :disabled="index === 0"
+              @click="moveImageUrl(index, -1)"
+          >
+            위
+          </button>
+          <button
+              type="button"
+              class="btn-image-move"
+              data-testid="move-image-down"
+              :disabled="index === imageUrls.length - 1"
+              @click="moveImageUrl(index, 1)"
+          >
+            아래
+          </button>
+          <button
+              type="button"
               class="btn-image-remove"
               data-testid="remove-image-url"
               @click="removeImageUrl(index)"
@@ -215,6 +233,38 @@ const normalizeImageMarkdownNumbers = () => {
   });
 };
 
+const removeManagedImageMarkdown = () => {
+  if (imageUrls.value.length === 0) {
+    return;
+  }
+
+  const managedMarkdownPattern = new RegExp(
+    `\\n?!\\[첨부 이미지 \\d+\\]\\((${imageUrls.value.map(escapeRegExp).join('|')})\\)\\n?`,
+    'g',
+  );
+
+  bodyText.value = bodyText.value.replace(managedMarkdownPattern, '\n').replace(/\n{2,}/g, '\n').replace(/^\n/, '');
+};
+
+const appendManagedImageMarkdown = () => {
+  imageUrls.value.forEach((imageUrl, index) => {
+    const separator = bodyText.value.length === 0 || bodyText.value.endsWith('\n') ? '' : '\n';
+    bodyText.value += `${separator}![첨부 이미지 ${index + 1}](${imageUrl})\n`;
+  });
+};
+
+const rebuildManagedImageMarkdown = () => {
+  if (imageUrls.value.length === 0) {
+    removeManagedImageMarkdown();
+    return;
+  }
+
+  // 순서 변경은 단순히 배열만 swap하면 본문 Markdown 순서가 그대로 남는다.
+  // 그래서 현재 관리 중인 이미지 Markdown을 제거한 뒤, imageUrls 배열 순서대로 다시 붙여 저장 계약과 글 흐름을 맞춘다.
+  removeManagedImageMarkdown();
+  appendManagedImageMarkdown();
+};
+
 const removeImageUrl = (index: number) => {
   const imageUrl = imageUrls.value[index];
 
@@ -228,6 +278,19 @@ const removeImageUrl = (index: number) => {
   bodyText.value = bodyText.value.replace(markdownPattern, '\n').replace(/\n{2,}/g, '\n').replace(/^\n/, '');
   imageUrls.value = imageUrls.value.filter((_, imageIndex) => imageIndex !== index);
   normalizeImageMarkdownNumbers();
+};
+
+const moveImageUrl = (index: number, direction: -1 | 1) => {
+  const nextIndex = index + direction;
+
+  if (nextIndex < 0 || nextIndex >= imageUrls.value.length) {
+    return;
+  }
+
+  const nextImageUrls = [...imageUrls.value];
+  [nextImageUrls[index], nextImageUrls[nextIndex]] = [nextImageUrls[nextIndex], nextImageUrls[index]];
+  imageUrls.value = nextImageUrls;
+  rebuildManagedImageMarkdown();
 };
 
 const addImageUrl = () => {
@@ -439,6 +502,34 @@ const submit = async () => {
   padding-left: 20px;
   color: #555555;
   font-size: 12px;
+}
+
+.image-url-item {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.image-url-item span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.btn-image-move,
+.btn-image-remove {
+  background: #ffffff;
+  border: 1px solid #d1d5da;
+  color: #333333;
+  cursor: pointer;
+  font-size: 12px;
+  min-height: 26px;
+  padding: 0 8px;
+}
+
+.btn-image-move:disabled {
+  color: #999999;
+  cursor: not-allowed;
 }
 
 .image-upload-message {

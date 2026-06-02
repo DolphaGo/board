@@ -108,6 +108,48 @@ describe('# Post editor component', () => {
     expect(push).toBeCalledWith('/post/78')
   })
 
+  it('should move image URL markdown up and submit the reordered image URLs', async () => {
+    mockedPostService.createPost.mockResolvedValue({
+      id: 79,
+      title: '이미지 순서 변경 글쓰기',
+      content:
+        '본문과 이미지 URL을 함께 저장한다\n' +
+        '![첨부 이미지 1](https://cdn.example.com/second.png)\n' +
+        '![첨부 이미지 2](https://cdn.example.com/first.png)\n',
+      imageUrls: ['https://cdn.example.com/second.png', 'https://cdn.example.com/first.png'],
+      viewCount: 0,
+      display: true,
+      notice: false,
+    })
+    const wrapper = mount(PostEditor)
+
+    await wrapper.get('#issue-title').setValue('이미지 순서 변경 글쓰기')
+    await wrapper.get('#issue-body').setValue('본문과 이미지 URL을 함께 저장한다')
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/first.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/second.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.findAll('[data-testid="move-image-up"]')[1].trigger('click')
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('#issue-body').element).toHaveProperty(
+      'value',
+      '본문과 이미지 URL을 함께 저장한다\n' +
+        '![첨부 이미지 1](https://cdn.example.com/second.png)\n' +
+        '![첨부 이미지 2](https://cdn.example.com/first.png)\n',
+    )
+    expect(mockedPostService.createPost).toBeCalledWith({
+      title: '이미지 순서 변경 글쓰기',
+      content:
+        '본문과 이미지 URL을 함께 저장한다\n' +
+        '![첨부 이미지 1](https://cdn.example.com/second.png)\n' +
+        '![첨부 이미지 2](https://cdn.example.com/first.png)\n',
+      imageUrls: ['https://cdn.example.com/second.png', 'https://cdn.example.com/first.png'],
+    })
+    expect(push).toBeCalledWith('/post/79')
+  })
+
   it('should upload pasted images and submit the returned image URL', async () => {
     mockedRequest.postForm.mockResolvedValue({
       data: {
