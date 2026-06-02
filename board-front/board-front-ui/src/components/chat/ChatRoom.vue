@@ -36,6 +36,9 @@
       </div>
       
       <div class="message-container" ref="messageContainer">
+        <p v-if="messages.length === 0" class="empty-messages" data-testid="chat-empty-messages">
+          아직 메시지가 없습니다. ENTER/TALK/LEAVE 메시지가 /topic/chat/{{ roomId }} 구독으로 도착하면 이 영역에 시간순으로 쌓입니다.
+        </p>
         <div v-for="(message, index) in messages" :key="index" :class="['message', message.sender === username ? 'sent' : 'received']">
           <div class="message-content">
             <span class="sender">{{ message.sender }}</span>
@@ -142,6 +145,8 @@ export default defineComponent({
             return
           }
 
+          // 화면의 타임라인은 REST 목록이 아니라 STOMP topic으로 도착한 메시지를 append해서 만든다.
+          // 빈 상태 안내도 이 배열을 기준으로 숨겨져, 첫 ENTER/TALK/LEAVE 이벤트가 오면 즉시 채팅 로그로 전환된다.
           messages.value.push(chatMessage)
           if (chatMessage.type === 'ENTER' || chatMessage.type === 'LEAVE') {
             // 채팅 로그와 참가자 목록은 서로 다른 경로로 갱신된다.
@@ -537,6 +542,17 @@ export default defineComponent({
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
+}
+
+.empty-messages {
+  border: 1px dashed #c7d7ea;
+  border-radius: 4px;
+  color: #55708f;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+  padding: 12px;
+  text-align: center;
 }
 
 .message {

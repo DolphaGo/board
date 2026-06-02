@@ -241,6 +241,27 @@ describe('# Chat room component', () => {
     expect(wrapper.get('.message.received .timestamp').text()).toBe('18:29')
   })
 
+  it('should explain the empty chat timeline until the first room message arrives', async () => {
+    const wrapper = mountChatRoom()
+
+    expect(wrapper.get('[data-testid="chat-empty-messages"]').text()).toBe(
+      '아직 메시지가 없습니다. ENTER/TALK/LEAVE 메시지가 /topic/chat/room-1 구독으로 도착하면 이 영역에 시간순으로 쌓입니다.'
+    )
+
+    subscribedMessageHandler?.({
+      body: JSON.stringify({
+        type: 'TALK',
+        roomId: 'room-1',
+        sender: 'other-user',
+        content: '첫 메시지',
+        timestamp: '2026-06-01T18:31:00',
+      }),
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="chat-empty-messages"]').exists()).toBe(false)
+  })
+
   it('should refresh room participants when an enter message arrives', async () => {
     mockedChatService.getRoom
       .mockResolvedValueOnce({
