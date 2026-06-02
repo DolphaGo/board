@@ -97,6 +97,32 @@ describe('# Post detail component', () => {
     expect(wrapper.text()).toContain('추천을 반영했습니다.')
   })
 
+  it('should render markdown image content in the post body', async () => {
+    mockedPostService.getPost.mockResolvedValue({
+      id: 10,
+      title: '이미지 본문 게시글',
+      content:
+        '첫 문단\n\n' +
+        '![첨부 이미지 1](https://cdn.example.com/body.png)\n' +
+        '둘째 문단',
+      imageUrls: ['https://cdn.example.com/body.png'],
+      viewCount: 3,
+      display: true,
+      notice: false,
+    })
+    mockedPostService.listComments.mockResolvedValue([])
+
+    const wrapper = mount(PostDetail)
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="post-content"]').text()).toContain('첫 문단')
+    expect(wrapper.get('[data-testid="post-content"]').text()).toContain('둘째 문단')
+    expect(wrapper.get('[data-testid="post-content"] img').attributes('src')).toBe(
+      'https://cdn.example.com/body.png'
+    )
+    expect(wrapper.get('[data-testid="post-content"] img').attributes('alt')).toBe('첨부 이미지 1')
+  })
+
   it('should hide a visible post only when admin viewer clicks the hide button', async () => {
     mockedPostService.getPost.mockResolvedValue({
       id: 10,

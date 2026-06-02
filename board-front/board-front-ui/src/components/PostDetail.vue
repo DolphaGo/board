@@ -8,7 +8,7 @@
           <span v-if="post.notice" class="notice-badge">공지</span>
           <span>{{ post.title }}</span>
         </h1>
-        <p>{{ post.content }}</p>
+        <div class="post-content" data-testid="post-content" v-html="renderedPostContent"></div>
         <div v-if="post.imageUrls.length > 0" class="post-image-list" aria-label="본문 이미지">
           <img
             v-for="(imageUrl, index) in post.imageUrls"
@@ -88,6 +88,7 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { marked } from 'marked';
 import { postService, type CommentResponse, type PostResponse } from 'src/api/postService';
 
 type AuthorRole = 'user' | 'admin';
@@ -113,6 +114,16 @@ const actionError = ref('');
 const comments = ref<CommentResponse[]>([]);
 
 const isAdminViewer = computed(() => props.authorRole === 'admin');
+
+const renderedPostContent = computed(() => {
+  if (!post.value?.display) {
+    return '';
+  }
+
+  // 글쓰기 화면은 imageUrls 배열과 Markdown 본문을 함께 저장한다.
+  // 상세 화면에서 실제 독자가 보는 이미지 위치는 Markdown 순서가 결정하므로 본문은 Markdown으로 렌더링한다.
+  return marked(post.value.content);
+});
 
 const postId = computed(() => {
   const id = Number(route.params.id);
@@ -273,6 +284,19 @@ const restorePost = async () => {
 .post-meta {
   color: #777777;
   font-size: 13px;
+}
+
+.post-content {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.post-content img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 10px 0;
+  border: 1px solid #d8d8d8;
 }
 
 .post-image-list {
