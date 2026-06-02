@@ -143,6 +143,11 @@ class PostSearchService(
             .mapNotNull { hit ->
                 val document = hit.content
                 val postId = document.id ?: return@mapNotNull null
+                if (!document.display) {
+                    // ES 쿼리에도 display=true 필터가 있지만, 색인 지연이나 잘못 만든 테스트 문서가 섞일 수 있다.
+                    // 사용자에게 돌려주는 마지막 경계에서 한 번 더 거르면 숨김 게시글이 검색 결과로 새는 일을 막을 수 있다.
+                    return@mapNotNull null
+                }
                 val scoringSignals =
                     createScoringSignals(
                         keyword = keyword,

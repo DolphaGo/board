@@ -154,6 +154,50 @@ class PostSearchServiceTest {
     }
 
     @Test
+    fun `게시글 검색은 ES 응답에 숨김 문서가 섞여도 노출하지 않는다`() {
+        every {
+            elasticsearchOperations.search(any<NativeQuery>(), PostSearchDocument::class.java)
+        } returns
+            SearchHitsImpl(
+                1,
+                TotalHitsRelation.EQUAL_TO,
+                6.0f,
+                Duration.ofMillis(6),
+                null,
+                null,
+                listOf(
+                    SearchHit(
+                        "board-posts",
+                        "20",
+                        null,
+                        6.0f,
+                        emptyArray(),
+                        mapOf("title" to listOf("<em>숨김</em> 검색")),
+                        emptyMap(),
+                        null,
+                        null,
+                        emptyMap(),
+                        PostSearchDocument(
+                            id = 20L,
+                            title = "숨김 검색",
+                            content = "관리자가 숨긴 게시글은 검색 결과에 다시 나오면 안 된다",
+                            viewCount = 1,
+                            display = false,
+                            notice = false,
+                        ),
+                    ),
+                ),
+                null,
+                null,
+                null,
+            )
+
+        val results = postSearchService.search("숨김", 10)
+
+        assertEquals(emptyList(), results)
+    }
+
+    @Test
     fun `게시글 검색 preview는 이미지 Markdown URL 대신 이미지 설명만 남긴다`() {
         every {
             elasticsearchOperations.search(any<NativeQuery>(), PostSearchDocument::class.java)
