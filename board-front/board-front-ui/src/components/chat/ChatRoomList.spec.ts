@@ -104,6 +104,20 @@ describe('# Chat room list component', () => {
     )
   })
 
+  it('should explain that retry reloads the chat room list API after a list error', async () => {
+    mockedChatService.getRoomList.mockRejectedValue(new Error('list failed'))
+
+    const wrapper = mount(ChatRoomList)
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="chat-list-error"]').text()).toContain(
+      '채팅방 목록을 불러오는데 실패했습니다.'
+    )
+    expect(wrapper.get('[data-testid="chat-list-error"]').text()).toContain(
+      '다시 시도는 채팅방 목록 API를 다시 호출해 최신 방과 정원 상태를 읽습니다.'
+    )
+  })
+
   it('should enter the room with the Enter key from a room item', async () => {
     mockedChatService.getRoomList.mockResolvedValue([
       chatRoomFixture(),

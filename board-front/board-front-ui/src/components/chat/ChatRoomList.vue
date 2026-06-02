@@ -13,8 +13,9 @@
       로딩 중...
     </div>
 
-    <div v-else-if="error" class="error">
-      채팅방 목록을 불러오는데 실패했습니다.
+    <div v-else-if="error" class="error" data-testid="chat-list-error">
+      <p>채팅방 목록을 불러오는데 실패했습니다.</p>
+      <p>다시 시도는 채팅방 목록 API를 다시 호출해 최신 방과 정원 상태를 읽습니다.</p>
       <button @click="fetchRooms">다시 시도</button>
     </div>
 
@@ -261,6 +262,11 @@ export default defineComponent({
   text-align: center;
   padding: 40px;
   color: #666;
+}
+
+.error p {
+  margin: 0 0 8px;
+  line-height: 1.5;
 }
 
 .empty-state p {
