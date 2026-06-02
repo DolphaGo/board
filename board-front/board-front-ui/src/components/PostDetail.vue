@@ -90,6 +90,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { marked } from 'marked';
 import { postService, type CommentResponse, type PostResponse } from 'src/api/postService';
+import { sanitizeRenderedMarkdown } from 'src/markdown/sanitizeRenderedMarkdown';
 
 type AuthorRole = 'user' | 'admin';
 
@@ -122,7 +123,7 @@ const renderedPostContent = computed(() => {
 
   // 글쓰기 화면은 imageUrls 배열과 Markdown 본문을 함께 저장한다.
   // 상세 화면에서 실제 독자가 보는 이미지 위치는 Markdown 순서가 결정하므로 본문은 Markdown으로 렌더링한다.
-  return marked(post.value.content);
+  return sanitizeRenderedMarkdown(marked(post.value.content, { async: false }) as string);
 });
 
 const postId = computed(() => {

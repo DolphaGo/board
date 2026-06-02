@@ -123,6 +123,32 @@ describe('# Post detail component', () => {
     expect(wrapper.get('[data-testid="post-content"] img').attributes('alt')).toBe('첨부 이미지 1')
   })
 
+  it('should remove unsafe html from rendered markdown content', async () => {
+    mockedPostService.getPost.mockResolvedValue({
+      id: 10,
+      title: '위험 HTML 게시글',
+      content:
+        '본문\n' +
+        '<script>alert("xss")</script>\n' +
+        '<img src="https://cdn.example.com/body.png" onerror="alert(1)" alt="본문 이미지">',
+      imageUrls: ['https://cdn.example.com/body.png'],
+      viewCount: 3,
+      display: true,
+      notice: false,
+    })
+    mockedPostService.listComments.mockResolvedValue([])
+
+    const wrapper = mount(PostDetail)
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="post-content"]').text()).toContain('본문')
+    expect(wrapper.find('[data-testid="post-content"] script').exists()).toBe(false)
+    expect(wrapper.get('[data-testid="post-content"] img').attributes('src')).toBe(
+      'https://cdn.example.com/body.png'
+    )
+    expect(wrapper.get('[data-testid="post-content"] img').attributes('onerror')).toBeUndefined()
+  })
+
   it('should hide a visible post only when admin viewer clicks the hide button', async () => {
     mockedPostService.getPost.mockResolvedValue({
       id: 10,

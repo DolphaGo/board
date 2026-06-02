@@ -147,6 +147,7 @@ import { useRouter } from 'vue-router';
 import { marked } from 'marked';
 import { request } from 'src';  // 'request' 객체를 사용하여 서버에 요청
 import { postService } from 'src/api/postService';
+import { sanitizeRenderedMarkdown } from 'src/markdown/sanitizeRenderedMarkdown';
 import { submitPostEditorForm } from './postEditorSubmit';
 
 const props = withDefaults(
@@ -176,7 +177,7 @@ const isAdminEditor = computed(() => selectedAuthorRole.value === 'admin');
 
 // Convert markdown to HTML using Marked
 const markdownPreview = computed(() => {
-  return marked(bodyText.value);
+  return sanitizeRenderedMarkdown(marked(bodyText.value, { async: false }) as string);
 });
 
 // Handle paste event for image upload
