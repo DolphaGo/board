@@ -127,7 +127,7 @@ export default defineComponent({
         // 서버도 정원을 다시 검사하지만, 목록에서 이미 꽉 찬 방은 프론트에서 먼저 막아 불필요한 요청을 줄인다.
         // 공부 포인트: 프론트 검증은 사용자 경험용이고, 실제 보안/정합성은 백엔드 검증이 최종 책임진다.
         feedbackMessage.value = '정원이 가득 찬 채팅방입니다.'
-        return
+        return false
       }
 
       try {
@@ -139,6 +139,7 @@ export default defineComponent({
           path: `/chat/rooms/${room.id}`,
           query: { username: STUDY_CHAT_USERNAME },
         })
+        return true
       } catch (err) {
         console.error('채팅방 입장 실패:', err)
         feedbackMessage.value = buildChatRoomActionErrorMessage('enter')
@@ -153,6 +154,7 @@ export default defineComponent({
           // 사용자가 같은 방을 계속 누르기보다 잠시 후 다시 시도해야 한다는 점을 명확히 알려준다.
           feedbackMessage.value = '채팅방 입장에 실패했고 최신 목록을 다시 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
         }
+        return false
       }
     }
 
@@ -190,7 +192,12 @@ export default defineComponent({
           maxParticipants: newRoomMaxParticipants.value,
         })
         const newRoom = await chatService.createRoom(request.name, request.options)
-        await enterRoom(newRoom)
+        const entered = await enterRoom(newRoom)
+        if (entered) {
+          // 생성 성공 뒤 입장까지 끝났으면 다이얼로그 입력 흐름도 닫는다.
+          // router.push가 느리거나 테스트처럼 mock이어도 화면 상태가 "완료"로 정리된다.
+          showCreateDialog.value = false
+        }
       } catch (err) {
         console.error('채팅방 생성 실패:', err)
         feedbackMessage.value = buildChatRoomActionErrorMessage('create')

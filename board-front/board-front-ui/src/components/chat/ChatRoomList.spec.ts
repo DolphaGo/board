@@ -69,6 +69,37 @@ describe('# Chat room list component', () => {
     )
   })
 
+  it('should create a room, join it, navigate to the chat room, and close the dialog', async () => {
+    mockedChatService.createRoom.mockResolvedValue(chatRoomFixture({
+      id: 'created-room',
+      name: '생성 성공방',
+      description: '생성 후 바로 입장한다',
+      participantCount: 1,
+      maxParticipants: 12,
+    }))
+
+    const wrapper = mount(ChatRoomList)
+    await flushPromises()
+
+    await wrapper.get('.create-btn').trigger('click')
+    await wrapper.get('input[placeholder="채팅방 이름을 입력하세요"]').setValue('  생성 성공방  ')
+    await wrapper.get('textarea[placeholder="채팅방 설명을 입력하세요"]').setValue('생성 후 바로 입장한다')
+    await wrapper.get('input[aria-label="최대 참여자 수"]').setValue(12)
+    await wrapper.get('.confirm-btn').trigger('click')
+    await flushPromises()
+
+    expect(mockedChatService.createRoom).toHaveBeenCalledWith('생성 성공방', {
+      description: '생성 후 바로 입장한다',
+      maxParticipants: 12,
+    })
+    expect(mockedChatService.joinRoom).toHaveBeenCalledWith('created-room')
+    expect(pushMock).toHaveBeenCalledWith({
+      path: '/chat/rooms/created-room',
+      query: { username: 'study-user' },
+    })
+    expect(wrapper.find('.dialog-overlay').exists()).toBe(false)
+  })
+
   it('should render a name required message when submitting a blank room name with Enter', async () => {
     const wrapper = mount(ChatRoomList)
     await flushPromises()
