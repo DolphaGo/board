@@ -98,4 +98,23 @@ class SearchRankingServiceTest {
 
         assertEquals(listOf(SearchRankingItem(keyword = "코프링 검색", score = 9)), result)
     }
+
+    @Test
+    fun `검색어 추천은 초성과 중성으로 입력한 음절 prefix를 구분한다`() {
+        val first = mockk<ZSetOperations.TypedTuple<String>>()
+        val second = mockk<ZSetOperations.TypedTuple<String>>()
+
+        every { first.value } returns "코프링 검색"
+        every { first.score } returns 9.0
+        every { second.value } returns "카프카 검색"
+        every { second.score } returns 8.0
+        every { redisTemplate.opsForZSet() } returns zSetOperations
+        every {
+            zSetOperations.reverseRangeWithScores(SearchRankingService.RANKING_KEY, 0, -1)
+        } returns linkedSetOf(first, second)
+
+        val result = searchRankingService.suggest(rawKeyword = "ㅋㅗ", limit = 5)
+
+        assertEquals(listOf(SearchRankingItem(keyword = "코프링 검색", score = 9)), result)
+    }
 }

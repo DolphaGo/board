@@ -42,6 +42,43 @@ object KoreanSyllableTokenizer {
         return tokens.joinToString(" ")
     }
 
+    fun tokenizeSyllablePrefix(text: String): String {
+        val tokens = mutableListOf<String>()
+        val asciiWord = StringBuilder()
+
+        fun flushAsciiWord() {
+            if (asciiWord.isNotEmpty()) {
+                tokens += asciiWord.toString().lowercase(Locale.ROOT)
+                asciiWord.clear()
+            }
+        }
+
+        text.forEach { char ->
+            when {
+                char.isHangulSyllable() -> {
+                    flushAsciiWord()
+                    tokens += char.decomposeHangulSyllable()
+                }
+
+                char.isCompatibilityJamo() -> {
+                    flushAsciiWord()
+                    tokens += char.toString()
+                }
+
+                char.isLetterOrDigit() -> {
+                    asciiWord.append(char)
+                }
+
+                else -> {
+                    flushAsciiWord()
+                }
+            }
+        }
+        flushAsciiWord()
+
+        return tokens.joinToString(" ")
+    }
+
     fun tokenizeInitials(text: String): String {
         val tokens = mutableListOf<String>()
         val asciiWord = StringBuilder()
@@ -82,6 +119,8 @@ object KoreanSyllableTokenizer {
     private fun Char.isHangulSyllable(): Boolean = this in HANGUL_SYLLABLE_START..HANGUL_SYLLABLE_END
 
     private fun Char.isCompatibilityInitial(): Boolean = this in choseong
+
+    private fun Char.isCompatibilityJamo(): Boolean = this in choseong || this in jungseong || this in jongseong.drop(1)
 
     private fun Char.extractInitial(): Char {
         val syllableIndex = code - HANGUL_SYLLABLE_START.code

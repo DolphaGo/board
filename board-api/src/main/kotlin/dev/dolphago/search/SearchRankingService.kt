@@ -44,6 +44,7 @@ class SearchRankingService(
         require(limit > 0) { "추천 개수는 1 이상이어야 합니다." }
 
         val prefix = SearchKeyword.from(rawKeyword).value
+        val syllablePrefix = KoreanSyllableTokenizer.tokenizeSyllablePrefix(prefix)
         val initialPrefix = KoreanSyllableTokenizer.tokenizeInitials(prefix)
 
         return redisTemplate
@@ -55,7 +56,7 @@ class SearchRankingService(
             .asSequence()
             .mapNotNull { tuple ->
                 val keyword = tuple.value ?: return@mapNotNull null
-                if (!matchesSuggestionKeyword(keyword, prefix, initialPrefix)) {
+                if (!matchesSuggestionKeyword(keyword, prefix, syllablePrefix, initialPrefix)) {
                     return@mapNotNull null
                 }
                 SearchRankingItem(
@@ -70,10 +71,26 @@ class SearchRankingService(
     private fun matchesSuggestionKeyword(
         keyword: String,
         prefix: String,
+        syllablePrefix: String,
         initialPrefix: String,
     ): Boolean {
         if (keyword.startsWith(prefix)) {
             return true
+        }
+
+        // 사용자가 "ㅋㅗ"처럼 초성+중성을 직접 입력하면 초성만 비교해서는 "코"와 "카"를 구분할 수 없다.
+        // 저장된 원문 검색어도 같은 음절 토큰으로 분해한 뒤 prefix 비교하면 더 구체적인 자동완성이 가능하다.
+        if (
+            syllablePrefix.isNotBlank() &&
+            KoreanSyllableTokenizer.tokenizeSyllablePrefix(keyword).startsWith(syllablePrefix)
+        ) {
+            return true
+        }
+
+        if (syllablePrefix != initialPrefix) {
+            // "ㅋㅗ"처럼 중성까지 입력한 경우에는 사용자가 이미 "코" 계열을 의도한 상태다.
+            // 여기서 다시 초성 "ㅋ"만으로 fallback하면 "카프카" 같은 다른 모음 검색어가 섞여 추천 품질이 떨어진다.
+            return false
         }
 
         // 랭킹 ZSET에는 사용자가 실제 검색한 원문을 저장한다.

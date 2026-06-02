@@ -155,7 +155,7 @@ describe('# Header component', () => {
     expect(wrapper.get('[data-testid="search-suggestion"]').text()).toContain('검색 7회')
   })
 
-  it('should explain that suggestions also support Korean initial consonant input', async () => {
+  it('should explain that suggestions also support Korean initial and syllable jamo input', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
       { keyword: '코프링 검색', score: 9 },
     ])
@@ -167,11 +167,11 @@ describe('# Header component', () => {
       },
     })
 
-    await wrapper.get('.header-search-input').setValue('ㅋㅍ')
+    await wrapper.get('.header-search-input').setValue('ㅋㅗ')
     await flushPromises()
 
     expect(wrapper.get('[data-testid="search-suggestion-initial-guide"]').text()).toBe(
-      'ㅋㅍ처럼 초성만 입력해도 인기 검색어 초성으로 추천합니다.'
+      'ㅋㅍ 초성이나 ㅋㅗ 음절 조합으로도 인기 검색어를 추천합니다.'
     )
   })
 

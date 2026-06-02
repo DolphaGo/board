@@ -31,4 +31,11 @@ class KoreanSyllableTokenizerTest {
 
         assertEquals("ㅋ ㅌ ㄹ spring 42", initials)
     }
+
+    @Test
+    fun `사용자가 입력한 자모 문자열은 음절 검색 토큰으로 보존한다`() {
+        val tokens = KoreanSyllableTokenizer.tokenizeSyllablePrefix("ㅋㅗ spring 42")
+
+        assertEquals("ㅋ ㅗ spring 42", tokens)
+    }
 }
