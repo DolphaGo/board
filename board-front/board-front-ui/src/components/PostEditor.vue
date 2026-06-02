@@ -92,6 +92,12 @@
               loading="lazy"
           />
           <span>{{ index + 1 }}. {{ imageUrl }}</span>
+          <span
+              class="image-url-body-state"
+              data-testid="image-url-body-state"
+          >
+            {{ imageUrlBodyStateLabel(imageUrl) }}
+          </span>
           <button
               type="button"
               class="btn-image-move"
@@ -339,8 +345,12 @@ const addImageUrl = () => {
   imageUrlInput.value = '';
 };
 
+const isImageUrlInBody = (imageUrl: string) => bodyText.value.includes(`](${imageUrl})`);
+
+const imageUrlBodyStateLabel = (imageUrl: string) => isImageUrlInBody(imageUrl) ? '본문 포함' : '본문에서 제거됨';
+
 const prepareImagePayloadFromBody = () => {
-  const remainingImageUrls = imageUrls.value.filter(imageUrl => bodyText.value.includes(`](${imageUrl})`));
+  const remainingImageUrls = imageUrls.value.filter(isImageUrlInBody);
   let content = bodyText.value;
 
   remainingImageUrls.forEach((imageUrl, index) => {
@@ -574,6 +584,16 @@ const submit = async () => {
 .image-url-item span {
   flex: 1;
   overflow-wrap: anywhere;
+}
+
+.image-url-body-state {
+  flex: 0 0 auto;
+  border: 1px solid #d1d5da;
+  background: #f6f8fa;
+  color: #555555;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
 }
 
 .btn-image-move,

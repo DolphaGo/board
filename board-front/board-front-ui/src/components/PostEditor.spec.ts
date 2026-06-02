@@ -188,6 +188,23 @@ describe('# Post editor component', () => {
     expect(push).toBeCalledWith('/post/80')
   })
 
+  it('should show whether each image URL will be saved from the markdown body', async () => {
+    const wrapper = mount(PostEditor)
+
+    await wrapper.get('#issue-body').setValue('본문에서 첫 이미지를 직접 지웠다')
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/first.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/second.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.get('#issue-body').setValue(
+      '본문에서 첫 이미지를 직접 지웠다\n' +
+        '![첨부 이미지 2](https://cdn.example.com/second.png)\n',
+    )
+
+    const states = wrapper.findAll('[data-testid="image-url-body-state"]').map(state => state.text())
+    expect(states).toEqual(['본문에서 제거됨', '본문 포함'])
+  })
+
   it('should preview image URLs as thumbnails in the same order as the image list', async () => {
     const wrapper = mount(PostEditor)
 
