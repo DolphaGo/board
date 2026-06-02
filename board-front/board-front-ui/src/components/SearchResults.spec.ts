@@ -506,6 +506,12 @@ describe('# Search results component', () => {
     expect(wrapper.get('[data-testid="score-explanation-description"]').text()).toBe(
       'Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 음절/초성 recall 신호와 공지 가산점을 더한 값이다.'
     )
+    expect(wrapper.findAll('[data-testid="score-formula-term-row"]').map(row => row.text())).toEqual([
+      'bm25_text_score: 제목/본문 원문 match가 만드는 BM25 관련도입니다.',
+      'syllable_recall_score: 한글을 자모/음절 단위로 풀어 부분 기억 검색을 보조합니다.',
+      'initial_recall_score: ㅋㅍㄹ 같은 초성 입력이 후보를 놓치지 않게 보조합니다.',
+      'function_score_bonus: 공지 같은 운영 신호를 BM25 점수 위에 작은 가산점으로 더합니다.',
+    ])
   })
 
   it('should explain when score formula details are missing from a search result', async () => {

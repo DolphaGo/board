@@ -145,6 +145,21 @@
             <p data-testid="score-explanation-description">
               {{ result.scoreExplanation.description }}
             </p>
+            <dl
+              v-if="scoreFormulaTermRows(result).length > 0"
+              class="score-formula-term-list"
+              data-testid="score-formula-term-list"
+            >
+              <div
+                v-for="row in scoreFormulaTermRows(result)"
+                :key="`${result.postId}:${row.term}`"
+                class="score-formula-term-row"
+                data-testid="score-formula-term-row"
+              >
+                <dt>{{ row.term }}</dt>
+                <dd>: {{ row.description }}</dd>
+              </div>
+            </dl>
           </div>
           <p
             v-else-if="result.scoringSignals.length > 0"
@@ -396,6 +411,43 @@ const scoreExplanationSummary = (result: PostSearchResult): string => {
   }/${explanation.totalSignalCount}개 · ${
     explanation.functionScoreApplied ? '공지 가산점 적용' : '공지 가산점 없음'
   }`
+}
+
+interface ScoreFormulaTermRow {
+  term: string
+  description: string
+}
+
+const scoreFormulaTermDefinitions: ScoreFormulaTermRow[] = [
+  {
+    term: 'bm25_text_score',
+    description: '제목/본문 원문 match가 만드는 BM25 관련도입니다.',
+  },
+  {
+    term: 'syllable_recall_score',
+    description: '한글을 자모/음절 단위로 풀어 부분 기억 검색을 보조합니다.',
+  },
+  {
+    term: 'initial_recall_score',
+    description: 'ㅋㅍㄹ 같은 초성 입력이 후보를 놓치지 않게 보조합니다.',
+  },
+  {
+    term: 'function_score_bonus',
+    description: '공지 같은 운영 신호를 BM25 점수 위에 작은 가산점으로 더합니다.',
+  },
+]
+
+const scoreFormulaTermRows = (result: PostSearchResult): ScoreFormulaTermRow[] => {
+  const formula = result.scoreExplanation?.formula
+
+  if (!formula) {
+    return []
+  }
+
+  // formula는 서버가 만든 학습용 query plan 문자열이다.
+  // 그대로 한 줄로만 보여주면 bm25_text_score 같은 term이 무엇을 뜻하는지 알기 어렵기 때문에,
+  // 프론트는 공식에 실제 포함된 term만 골라 작은 용어집처럼 풀어준다.
+  return scoreFormulaTermDefinitions.filter(row => formula.includes(row.term))
 }
 
 // 일부 fixture나 오래된 API 응답에는 scoreExplanation이 없을 수 있다.
@@ -804,6 +856,29 @@ watch(
 
 .score-explanation p + p {
   margin-top: 4px;
+  color: #555555;
+}
+
+.score-formula-term-list {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+}
+
+.score-formula-term-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  line-height: 1.45;
+}
+
+.score-formula-term-row dt {
+  color: #057dbc;
+  font-weight: 800;
+}
+
+.score-formula-term-row dd {
+  margin: 0;
   color: #555555;
 }
 
