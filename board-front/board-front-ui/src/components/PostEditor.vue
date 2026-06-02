@@ -770,8 +770,8 @@ const submit = async () => {
 
 .image-url-item {
   align-items: flex-start;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
   gap: 6px;
   margin: 8px 0 0;
   border-top: 1px solid #edf1f4;
@@ -781,34 +781,45 @@ const submit = async () => {
 .image-url-thumbnail {
   aspect-ratio: 1;
   border: 1px solid #d1d5da;
-  flex: 0 0 48px;
+  grid-column: 1;
+  grid-row: 1 / span 4;
   height: 48px;
   object-fit: cover;
   width: 48px;
 }
 
 .image-url-item span {
-  flex: 1;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
+.image-url-item > span:first-of-type {
+  grid-column: 2;
+  grid-row: 1;
+  line-height: 1.45;
+}
+
 .image-url-body-state {
-  flex: 0 0 auto;
   border: 1px solid #d1d5da;
   background: #f6f8fa;
   color: #555555;
   font-size: 11px;
   font-weight: 700;
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
   padding: 2px 6px;
 }
 
 .image-url-placement {
-  flex: 0 0 auto;
   border: 1px solid #b7d8ea;
   background: #f5fbff;
   color: #057dbc;
   font-size: 11px;
   font-weight: 800;
+  grid-column: 2;
+  grid-row: 3;
+  justify-self: start;
   padding: 2px 6px;
 }
 
@@ -821,6 +832,26 @@ const submit = async () => {
   font-size: 12px;
   min-height: 26px;
   padding: 0 8px;
+}
+
+.image-url-item button {
+  grid-row: 4;
+  margin-top: 2px;
+}
+
+.image-url-item button:nth-of-type(1) {
+  grid-column: 2;
+  justify-self: start;
+}
+
+.image-url-item button:nth-of-type(2) {
+  grid-column: 2;
+  justify-self: center;
+}
+
+.image-url-item button:nth-of-type(3) {
+  grid-column: 2;
+  justify-self: end;
 }
 
 .btn-image-move:disabled {
