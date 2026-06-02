@@ -67,6 +67,7 @@ class PostSearchServiceTest {
         assertEquals(1L, results.single().postId)
         assertEquals("kotlin spring", results.single().title)
         assertEquals("Elasticsearch scoring example content", results.single().contentPreview)
+        assertEquals(true, results.single().display)
         assertEquals(10.5f, results.single().score)
         assertEquals(mapOf("title" to listOf("<em>kotlin</em> spring")), results.single().highlights)
         assertEquals(

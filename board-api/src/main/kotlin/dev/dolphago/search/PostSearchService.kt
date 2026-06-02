@@ -11,6 +11,7 @@ data class PostSearchResult(
     val postId: Long,
     val title: String,
     val contentPreview: String,
+    val display: Boolean,
     val score: Float,
     val highlights: Map<String, List<String>>,
     val scoringSignals: List<PostSearchScoreSignal> = emptyList(),
@@ -134,6 +135,7 @@ class PostSearchService(
                     postId = postId,
                     title = document.title,
                     contentPreview = document.content.take(CONTENT_PREVIEW_LENGTH),
+                    display = document.display,
                     score = hit.score,
                     highlights = hit.highlightFields,
                     scoringSignals =

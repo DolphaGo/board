@@ -19,6 +19,7 @@ class PostSearchControllerTest {
                     postId = 1L,
                     title = "Kotlin Spring 검색",
                     contentPreview = "Elasticsearch scoring sample",
+                    display = true,
                     score = 12.5f,
                     highlights = mapOf("title" to listOf("<em>Kotlin</em> Spring 검색")),
                 ),

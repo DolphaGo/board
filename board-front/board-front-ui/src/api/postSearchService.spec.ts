@@ -13,6 +13,7 @@ describe('# Post search service', function () {
           postId: 1,
           title: 'kotlin spring',
           contentPreview: 'Elasticsearch scoring example',
+          display: true,
           score: 10.5,
           highlights: {
             title: ['<em>kotlin</em> spring'],
@@ -39,6 +40,7 @@ describe('# Post search service', function () {
       },
     })
     expect(results).toHaveLength(1)
+    expect(results[0].display).toBe(true)
     expect(results[0].scoringSignals).toEqual([
       {
         field: 'title',
@@ -48,6 +50,36 @@ describe('# Post search service', function () {
         applied: true,
       },
     ])
+  })
+
+  it('should ignore hidden post search results when the API returns mixed display states', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          postId: 1,
+          title: 'visible kotlin spring',
+          contentPreview: 'Visible Elasticsearch scoring example',
+          display: true,
+          score: 10.5,
+          highlights: {},
+          scoringSignals: [],
+        },
+        {
+          postId: 2,
+          title: 'hidden kotlin spring',
+          contentPreview: 'Hidden Elasticsearch scoring example',
+          display: false,
+          score: 11.5,
+          highlights: {},
+          scoringSignals: [],
+        },
+      ],
+    })
+
+    const results = await postSearchService.search('kotlin spring')
+
+    expect(results).toHaveLength(1)
+    expect(results[0].postId).toBe(1)
   })
 
   it('should reject malformed post search responses', async function () {
@@ -65,6 +97,7 @@ describe('# Post search service', function () {
           postId: 1,
           title: 'kotlin spring',
           contentPreview: 'Elasticsearch scoring example',
+          display: true,
           score: '10.5',
           highlights: {
             title: '<em>kotlin</em> spring',
@@ -84,6 +117,7 @@ describe('# Post search service', function () {
           postId: 1,
           title: 'kotlin spring',
           contentPreview: 'Elasticsearch scoring example',
+          display: true,
           score: 10.5,
           highlights: {},
           scoringSignals: [

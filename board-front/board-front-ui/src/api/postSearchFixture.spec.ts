@@ -20,6 +20,7 @@ describe('# Post search fixture', function () {
         postId: 1,
         title: 'kotlin spring 검색 스코어링 예제',
         contentPreview: 'Elasticsearch nori analyzer와 게시글 점수 계산을 연습하는 샘플입니다.',
+        display: true,
         score: 9.75,
         highlights: {
           title: ['<em>kotlin spring</em> 검색 스코어링 예제'],

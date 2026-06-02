@@ -70,6 +70,7 @@ describe('# Search results component', () => {
         postId: 7,
         title: '코프링 검색 구현',
         contentPreview: 'Elasticsearch score를 게시판 검색에 반영한다',
+        display: true,
         score: 12.3456,
         highlights: {
           title: ['<em>코프링</em> 검색 구현'],
@@ -171,6 +172,7 @@ describe('# Search results component', () => {
         postId: 8,
         title: '자바 검색 결과',
         contentPreview: '최신 검색어 결과입니다',
+        display: true,
         score: 9.5,
         highlights: {},
         scoringSignals: [],
@@ -185,6 +187,7 @@ describe('# Search results component', () => {
         postId: 7,
         title: '코틀린 이전 검색 결과',
         contentPreview: '늦게 도착한 이전 검색어 결과입니다',
+        display: true,
         score: 11.2,
         highlights: {},
         scoringSignals: [],

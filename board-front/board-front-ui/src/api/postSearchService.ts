@@ -4,6 +4,7 @@ export interface PostSearchResult {
   postId: number
   title: string
   contentPreview: string
+  display: boolean
   score: number
   highlights: Record<string, string[]>
   scoringSignals: PostSearchScoreSignal[]
@@ -36,6 +37,7 @@ const isPostSearchResult = (data: unknown): data is PostSearchResult => {
   return typeof result.postId === 'number' &&
     typeof result.title === 'string' &&
     typeof result.contentPreview === 'string' &&
+    typeof result.display === 'boolean' &&
     typeof result.score === 'number' &&
     isHighlightMap(result.highlights) &&
     Array.isArray(result.scoringSignals) &&
@@ -73,6 +75,8 @@ export const postSearchService = {
       throw new Error('Invalid post search response')
     }
 
-    return response.data
+    // 검색 쿼리는 백엔드에서 display=true를 필터링한다.
+    // 그래도 ES 문서 갱신 지연이나 목업 응답이 섞일 수 있어 프론트 경계에서도 숨김 결과를 제외한다.
+    return response.data.filter(result => result.display)
   },
 }
