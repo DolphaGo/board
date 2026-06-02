@@ -7,7 +7,7 @@
       </button>
     </div>
     <p class="ranking-study-note" data-testid="ranking-study-note">
-      검색창에서 검색한 키워드를 서버가 랭킹 점수로 기록하고, 화면은 {{ refreshIntervalSeconds }}초마다
+      검색창에서 검색한 키워드를 서버가 최근 30분 live ZSET 점수로 기록하고, 화면은 {{ refreshIntervalSeconds }}초마다
       다시 읽거나 새 검색 성공 이벤트 때 즉시 갱신합니다.
     </p>
     <ol class="ranking-flow-list" data-testid="ranking-flow-list">
@@ -74,22 +74,22 @@ const rankingFlowSteps = [
     order: 1,
     label: '기록',
     // 검색 결과 조회 API와 헤더 검색 폼은 모두 검색어를 정규화한 뒤 Redis ZSET 점수를 올린다.
-    // ZSET의 score가 "검색된 횟수"가 되므로 별도 카운트 테이블 없이도 순위를 만들 수 있다.
-    description: '검색 성공 시 정규화된 검색어를 Redis ZSET 점수 +1로 저장',
+    // 누적 ZSET은 오래 쌓인 자동완성 후보를 만들고, live ZSET은 TTL이 있어 최근 분위기만 보여준다.
+    description: '검색 성공 시 정규화된 검색어를 누적 ZSET과 최근 30분 live ZSET에 함께 +1로 저장',
   },
   {
     order: 2,
     label: '집계',
-    // 서버는 reverseRangeWithScores로 점수가 높은 keyword부터 읽는다.
-    // 프론트는 Redis 자료구조를 알 필요 없이 /api/search/rankings 응답의 keyword/score만 렌더링한다.
-    description: '/api/search/rankings가 ZSET을 높은 점수순으로 읽어 상위 키워드 반환',
+    // 서버는 live ZSET을 reverseRangeWithScores로 읽어 실시간 검색어를 만든다.
+    // 자동완성은 같은 검색어라도 누적 ZSET을 읽고 prefix/초성/음절 토큰으로 좁혀 장기 인기 후보를 유지한다.
+    description: '/api/search/rankings는 live ZSET을 높은 점수순으로 읽고, 자동완성은 누적 ZSET을 prefix/초성/음절로 필터링',
   },
   {
     order: 3,
     label: '갱신',
     // polling은 서버 push 없이도 동작하는 기본 실시간성이고,
     // 검색 성공 이벤트는 사용자가 방금 검색한 키워드를 30초 기다리지 않고 반영하기 위한 즉시 갱신 경로다.
-    description: `${refreshIntervalSeconds}초 polling 또는 검색 성공 이벤트가 사이드바 순위를 다시 조회`,
+    description: `${refreshIntervalSeconds}초 polling 또는 검색 성공 이벤트가 사이드바의 최근 순위를 다시 조회`,
   },
 ]
 
