@@ -2,6 +2,7 @@ package dev.dolphago.search
 
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
+import java.time.Duration
 
 data class SearchRankingItem(
     val keyword: String,
@@ -87,6 +88,12 @@ class SearchRankingService(
         // 점수가 높은 순서로 읽으면 되기 때문에 ZSET이 가장 단순한 모델이다.
         zSetOperations.incrementScore(RANKING_KEY, keyword.value, 1.0)
 
+        // RANKING_KEY는 자동완성과 장기 학습용 누적 데이터다.
+        // 반면 화면에 보이는 "실시간 검색어"는 최근 분위기를 보여줘야 하므로 별도 ZSET에 기록하고 TTL을 갱신한다.
+        // 새 검색이 들어올 때마다 TTL을 다시 걸면 트래픽이 끊긴 뒤 자연스럽게 최근 랭킹이 비워진다.
+        zSetOperations.incrementScore(LIVE_RANKING_KEY, keyword.value, 1.0)
+        redisTemplate.expire(LIVE_RANKING_KEY, LIVE_RANKING_TTL)
+
         // source 랭킹은 "어디에서 검색이 시작됐는지"를 보는 학습용 이벤트 집계다.
         // 검색어 랭킹과 같은 ZSET 패턴을 쓰면 header/suggestion/ranking/direct 유입 비중을 같은 방식으로 읽을 수 있다.
         zSetOperations.incrementScore(SOURCE_RANKING_KEY, source.value, 1.0)
@@ -97,7 +104,9 @@ class SearchRankingService(
 
         return redisTemplate
             .opsForZSet()
-            .reverseRangeWithScores(RANKING_KEY, 0, limit - 1)
+            // 프론트의 "실시간 검색어" 영역은 장기 누적 순위가 아니라 최근 검색 흐름을 보여준다.
+            // 그래서 자동완성용 누적 RANKING_KEY와 분리된 LIVE_RANKING_KEY를 읽는다.
+            .reverseRangeWithScores(LIVE_RANKING_KEY, 0, limit - 1)
             .orEmpty()
             .mapNotNull { tuple ->
                 val keyword = tuple.value ?: return@mapNotNull null
@@ -230,7 +239,9 @@ class SearchRankingService(
 
     companion object {
         const val RANKING_KEY = "board:search:keyword-ranking"
+        const val LIVE_RANKING_KEY = "board:search:keyword-ranking:live"
         const val SOURCE_RANKING_KEY = "board:search:source-ranking"
+        private val LIVE_RANKING_TTL: Duration = Duration.ofMinutes(30)
         private const val KEYWORD_SCORE_DESCRIPTION = "Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다."
     }
 }

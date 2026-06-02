@@ -5,6 +5,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.data.redis.core.ZSetOperations
+import java.time.Duration
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -20,8 +21,14 @@ class SearchRankingServiceTest {
             zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
         } returns 1.0
         every {
+            zSetOperations.incrementScore(SearchRankingService.LIVE_RANKING_KEY, "kotlin springboot", 1.0)
+        } returns 1.0
+        every {
             zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "direct", 1.0)
         } returns 1.0
+        every {
+            redisTemplate.expire(SearchRankingService.LIVE_RANKING_KEY, Duration.ofMinutes(30))
+        } returns true
 
         searchRankingService.record("  Kotlin   SpringBoot  ")
 
@@ -29,7 +36,13 @@ class SearchRankingServiceTest {
             zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
         }
         verify(exactly = 1) {
+            zSetOperations.incrementScore(SearchRankingService.LIVE_RANKING_KEY, "kotlin springboot", 1.0)
+        }
+        verify(exactly = 1) {
             zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "direct", 1.0)
+        }
+        verify(exactly = 1) {
+            redisTemplate.expire(SearchRankingService.LIVE_RANKING_KEY, Duration.ofMinutes(30))
         }
     }
 
@@ -40,8 +53,14 @@ class SearchRankingServiceTest {
             zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
         } returns 1.0
         every {
+            zSetOperations.incrementScore(SearchRankingService.LIVE_RANKING_KEY, "kotlin springboot", 1.0)
+        } returns 1.0
+        every {
             zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "suggestion", 1.0)
         } returns 1.0
+        every {
+            redisTemplate.expire(SearchRankingService.LIVE_RANKING_KEY, Duration.ofMinutes(30))
+        } returns true
 
         searchRankingService.record("  Kotlin   SpringBoot  ", "suggestion")
 
@@ -60,8 +79,14 @@ class SearchRankingServiceTest {
             zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
         } returns 1.0
         every {
+            zSetOperations.incrementScore(SearchRankingService.LIVE_RANKING_KEY, "kotlin springboot", 1.0)
+        } returns 1.0
+        every {
             zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "direct", 1.0)
         } returns 1.0
+        every {
+            redisTemplate.expire(SearchRankingService.LIVE_RANKING_KEY, Duration.ofMinutes(30))
+        } returns true
 
         searchRankingService.record("  Kotlin   SpringBoot  ", "unknown")
 
@@ -81,7 +106,7 @@ class SearchRankingServiceTest {
         every { second.score } returns 3.0
         every { redisTemplate.opsForZSet() } returns zSetOperations
         every {
-            zSetOperations.reverseRangeWithScores(SearchRankingService.RANKING_KEY, 0, 1)
+            zSetOperations.reverseRangeWithScores(SearchRankingService.LIVE_RANKING_KEY, 0, 1)
         } returns linkedSetOf(first, second)
 
         val result = searchRankingService.getTopKeywords(limit = 2)
