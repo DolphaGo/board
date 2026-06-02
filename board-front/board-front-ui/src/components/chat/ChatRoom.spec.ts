@@ -177,6 +177,36 @@ describe('# Chat room component', () => {
     error.mockRestore()
   })
 
+  it('should retry room metadata fetch after a detail failure', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation()
+    mockedChatService.getRoom
+      .mockRejectedValueOnce(new Error('room failed'))
+      .mockResolvedValueOnce({
+        id: 'room-1',
+        name: '복구된 채팅방',
+        description: '재조회로 되살린 방 설명',
+        createdAt: '2026-06-01T17:00:00',
+        participants: [
+          { id: 1, nickname: '방장' },
+        ],
+        participantCount: 1,
+        maxParticipants: 20,
+      })
+
+    const wrapper = mountChatRoom()
+    await flushPromises()
+
+    await wrapper.get('[data-testid="chat-room-detail-retry"]').trigger('click')
+    await flushPromises()
+
+    expect(mockedChatService.getRoom).toHaveBeenCalledTimes(2)
+    expect(mockedChatService.getRoom).toHaveBeenLastCalledWith('room-1')
+    expect(wrapper.get('[data-testid="chat-room-title"]').text()).toBe('복구된 채팅방')
+    expect(wrapper.get('[data-testid="chat-room-description"]').text()).toBe('재조회로 되살린 방 설명')
+    expect(wrapper.find('[data-testid="chat-room-detail-feedback"]').exists()).toBe(false)
+    error.mockRestore()
+  })
+
   it('should publish talk messages and clear the input', async () => {
     const wrapper = mountChatRoom()
     mockPublish.mockClear()

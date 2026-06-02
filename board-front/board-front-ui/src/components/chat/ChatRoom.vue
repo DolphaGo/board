@@ -19,6 +19,15 @@
         <p v-if="roomDetailFeedback" class="chat-room-detail-feedback" data-testid="chat-room-detail-feedback">
           {{ roomDetailFeedback }}
         </p>
+        <button
+          v-if="roomDetailFeedback"
+          type="button"
+          class="chat-room-detail-retry"
+          data-testid="chat-room-detail-retry"
+          @click="fetchRoomDetail"
+        >
+          방 정보 다시 불러오기
+        </button>
       </div>
       <button class="leave-room-btn" @click="leaveRoomAndGoToList">나가기</button>
     </div>
@@ -174,6 +183,8 @@ export default defineComponent({
     const fetchRoomDetail = async () => {
       try {
         roomDetailFeedback.value = ''
+        // 채팅방 제목/정원/참가자 목록은 REST 상세 API의 책임이고, 메시지 송수신은 STOMP topic의 책임이다.
+        // 그래서 상세 재시도는 WebSocket 연결을 끊지 않고 같은 roomId의 메타데이터만 다시 읽는다.
         room.value = await chatService.getRoom(props.roomId)
       } catch (error) {
         console.error('채팅방 정보 조회 실패:', error)
@@ -431,6 +442,7 @@ export default defineComponent({
       newMessage,
       connectionFeedback,
       connectionFeedbackKind,
+      fetchRoomDetail,
       sendTalkMessage,
       leaveRoomAndGoToList,
       messageContainer,
@@ -485,6 +497,23 @@ export default defineComponent({
   margin: 4px 0 0 0;
   font-size: 0.85rem;
   opacity: 0.9;
+}
+
+.chat-room-detail-retry {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 4px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 8px;
+  min-height: 28px;
+  padding: 0 10px;
+}
+
+.chat-room-detail-retry:hover {
+  background: rgba(255, 255, 255, 0.26);
 }
 
 .leave-room-btn {
