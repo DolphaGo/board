@@ -226,6 +226,27 @@ describe('# Header component', () => {
     )
   })
 
+  it('should expose search suggestions as a combobox listbox pattern', async () => {
+    mockedSearchRankingService.suggestKeywords.mockResolvedValue([
+      { keyword: 'kotlin spring', score: 7 },
+    ])
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    await wrapper.get('.header-search-input').setValue('kotlin')
+    await flushPromises()
+
+    expect(wrapper.get('.header-search-input').attributes('role')).toBe('combobox')
+    expect(wrapper.get('.header-search-input').attributes('aria-haspopup')).toBe('listbox')
+    expect(wrapper.get('#header-search-suggestions').attributes('role')).toBe('listbox')
+    expect(wrapper.get('[data-testid="search-suggestion"]').attributes('role')).toBe('option')
+  })
+
   it('should close keyword suggestions with escape', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
       { keyword: 'kotlin spring', score: 7 },
