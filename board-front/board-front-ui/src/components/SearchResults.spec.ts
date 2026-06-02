@@ -625,6 +625,17 @@ describe('# Search results component', () => {
     )
   })
 
+  it('should suggest BM25 syllable and initial search strategies when no result matches', async () => {
+    mockedPostSearchService.search.mockResolvedValue([])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="search-empty-strategy-note"]').text()).toBe(
+      '원문 단어가 안 잡히면 핵심 단어를 줄이거나, 코프링처럼 음절 일부 또는 ㅋㅍㄹ 같은 초성으로 다시 검색해 보세요.'
+    )
+  })
+
   it('should notify search ranking refresh after a successful search request', async () => {
     const rankingRefreshListener = jest.fn()
     const unsubscribe = onSearchRankingChanged(rankingRefreshListener)

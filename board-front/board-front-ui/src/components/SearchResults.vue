@@ -14,6 +14,9 @@
         <p class="search-empty-study-note" data-testid="search-empty-study-note">
           검색어는 실시간 랭킹에 기록되지만, 관리자 숨김 또는 삭제 처리된 게시글은 display=true 필터 때문에 결과에서 제외됩니다.
         </p>
+        <p class="search-empty-study-note" data-testid="search-empty-strategy-note">
+          원문 단어가 안 잡히면 핵심 단어를 줄이거나, 코프링처럼 음절 일부 또는 ㅋㅍㄹ 같은 초성으로 다시 검색해 보세요.
+        </p>
       </div>
 
       <dl
