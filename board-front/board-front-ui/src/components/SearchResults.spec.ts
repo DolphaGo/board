@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { postSearchService } from 'src/api/postSearchService'
 import { nextTick, reactive } from 'vue'
+import { onSearchRankingChanged } from './searchRankingRefreshEvent'
 import SearchResults from './SearchResults.vue'
 
 const mockRoute = reactive({
@@ -622,6 +623,21 @@ describe('# Search results component', () => {
     expect(wrapper.get('[data-testid="search-empty-study-note"]').text()).toBe(
       '검색어는 실시간 랭킹에 기록되지만, 관리자 숨김 또는 삭제 처리된 게시글은 display=true 필터 때문에 결과에서 제외됩니다.'
     )
+  })
+
+  it('should notify search ranking refresh after a successful search request', async () => {
+    const rankingRefreshListener = jest.fn()
+    const unsubscribe = onSearchRankingChanged(rankingRefreshListener)
+    mockedPostSearchService.search.mockResolvedValue([])
+
+    try {
+      mountSearchResults()
+      await flushPromises()
+
+      expect(rankingRefreshListener).toBeCalledTimes(1)
+    } finally {
+      unsubscribe()
+    }
   })
 
   it('should keep the latest keyword results when an older search resolves later', async () => {

@@ -118,6 +118,7 @@ import {
 } from 'src/api/postSearchService'
 import { normalizeSearchKeyword } from 'src/search/normalizeSearchKeyword'
 import { collectSearchResultHighlights } from './searchResultHighlights'
+import { notifySearchRankingChanged } from './searchRankingRefreshEvent'
 
 const route = useRoute()
 const results = ref<PostSearchResult[]>([])
@@ -275,6 +276,9 @@ watch(
       }
 
       results.value = searchedResults
+      // /api/search/posts는 검색 결과 조회와 동시에 서버에서 검색어 랭킹을 기록한다.
+      // 성공 응답 뒤 이벤트를 발행하면 사이드바 랭킹이 30초 polling을 기다리지 않고 즉시 다시 읽는다.
+      notifySearchRankingChanged()
     } catch (err) {
       if (requestId !== searchRequestId) {
         return
