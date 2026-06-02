@@ -33,6 +33,9 @@
         <li class="search-suggestion-guide" role="presentation" data-testid="search-suggestion-guide">
           실시간 검색 기록 기반 추천
         </li>
+        <li class="search-suggestion-guide" role="presentation" data-testid="search-suggestion-initial-guide">
+          ㅋㅍ처럼 초성만 입력해도 인기 검색어 초성으로 추천합니다.
+        </li>
         <li v-for="(suggestion, index) in suggestions" :key="suggestion.keyword">
           <button
             type="button"
@@ -112,6 +115,7 @@ watch(keyword, async currentKeyword => {
 
   try {
     // 추천어는 실시간 검색어 랭킹 ZSET을 prefix로 좁힌 결과다.
+    // 서버는 원문 prefix뿐 아니라 "ㅋㅍ" 같은 초성 prefix도 비교하므로 검색창에는 두 학습 포인트를 함께 안내한다.
     // 그래서 추천 목록에는 "검색 기록 기반" 안내를 함께 보여 사용자가 개인 사전이 아니라 랭킹 데이터임을 알 수 있게 한다.
     // 사용자가 빠르게 타이핑하면 이전 요청이 늦게 도착할 수 있으므로 requestSequence로 최신 응답만 반영한다.
     const nextSuggestions = await searchRankingService.suggestKeywords(normalizedKeyword, 5)
