@@ -159,6 +159,25 @@ class PostSearchServiceTest {
                 appliedSignalCount = 2,
                 totalSignalCount = 7,
                 functionScoreApplied = true,
+                formulaTerms =
+                    listOf(
+                        PostSearchScoreFormulaTerm(
+                            term = "bm25_text_score",
+                            description = "제목/본문 원문 match가 만드는 BM25 관련도입니다.",
+                        ),
+                        PostSearchScoreFormulaTerm(
+                            term = "syllable_recall_score",
+                            description = "한글을 자모/음절 단위로 풀어 부분 기억 검색을 보조합니다.",
+                        ),
+                        PostSearchScoreFormulaTerm(
+                            term = "initial_recall_score",
+                            description = "ㅋㅍㄹ 같은 초성 입력이 후보를 놓치지 않게 보조합니다.",
+                        ),
+                        PostSearchScoreFormulaTerm(
+                            term = "function_score_bonus",
+                            description = "공지 같은 운영 신호를 BM25 점수 위에 작은 가산점으로 더합니다.",
+                        ),
+                    ),
                 description = "Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 음절/초성 recall 신호와 공지 가산점을 더한 값이다. 이번 결과 적용 계열: 원문/BM25, function_score.",
             ),
             results.single().scoreExplanation,

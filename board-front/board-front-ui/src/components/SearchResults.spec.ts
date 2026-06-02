@@ -514,6 +514,46 @@ describe('# Search results component', () => {
     ])
   })
 
+  it('should prefer backend score formula term descriptions when provided', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: '서버가 내려준 공식 용어 설명을 우선 사용한다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [],
+        scoreExplanation: {
+          formula: 'final_score = bm25_text_score + function_score_bonus',
+          finalScore: 12.3456,
+          appliedSignalCount: 1,
+          totalSignalCount: 2,
+          functionScoreApplied: false,
+          formulaTerms: [
+            {
+              term: 'bm25_text_score',
+              description: '서버 설명: BM25는 term frequency와 field length normalization을 함께 봅니다.',
+            },
+            {
+              term: 'function_score_bonus',
+              description: '서버 설명: 운영 신호는 boost_mode=sum으로 더합니다.',
+            },
+          ],
+          description: '서버 query plan 기준 점수 설명',
+        },
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(wrapper.findAll('[data-testid="score-formula-term-row"]').map(row => row.text())).toEqual([
+      'bm25_text_score: 서버 설명: BM25는 term frequency와 field length normalization을 함께 봅니다.',
+      'function_score_bonus: 서버 설명: 운영 신호는 boost_mode=sum으로 더합니다.',
+    ])
+  })
+
   it('should explain when score formula details are missing from a search result', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {

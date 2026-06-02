@@ -17,6 +17,12 @@ export interface PostSearchScoreExplanation {
   appliedSignalCount: number
   totalSignalCount: number
   functionScoreApplied: boolean
+  formulaTerms?: PostSearchScoreFormulaTerm[]
+  description: string
+}
+
+export interface PostSearchScoreFormulaTerm {
+  term: string
   description: string
 }
 
@@ -89,8 +95,27 @@ const isPostSearchScoreExplanation = (data: unknown): data is PostSearchScoreExp
     // ES 응답 경계에서 숫자 타입뿐 아니라 카운트의 의미 관계까지 검증한다.
     explanation.appliedSignalCount <= explanation.totalSignalCount &&
     typeof explanation.functionScoreApplied === 'boolean' &&
+    (
+      explanation.formulaTerms === undefined ||
+      (
+        Array.isArray(explanation.formulaTerms) &&
+        explanation.formulaTerms.every(isPostSearchScoreFormulaTerm)
+      )
+    ) &&
     typeof explanation.description === 'string' &&
     explanation.description.trim().length > 0
+}
+
+const isPostSearchScoreFormulaTerm = (data: unknown): data is PostSearchScoreFormulaTerm => {
+  if (typeof data !== 'object' || data === null) {
+    return false
+  }
+
+  const formulaTerm = data as Partial<PostSearchScoreFormulaTerm>
+  return typeof formulaTerm.term === 'string' &&
+    formulaTerm.term.trim().length > 0 &&
+    typeof formulaTerm.description === 'string' &&
+    formulaTerm.description.trim().length > 0
 }
 
 const isPostSearchScoreSignal = (data: unknown): data is PostSearchScoreSignal => {

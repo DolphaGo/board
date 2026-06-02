@@ -29,6 +29,7 @@ data class PostSearchScoreExplanation(
     val appliedSignalCount: Int,
     val totalSignalCount: Int,
     val functionScoreApplied: Boolean,
+    val formulaTerms: List<PostSearchScoreFormulaTerm> = emptyList(),
     val description: String,
 ) {
     init {
@@ -39,6 +40,16 @@ data class PostSearchScoreExplanation(
         require(appliedSignalCount <= totalSignalCount) {
             "적용 signal 수는 전체 signal 수보다 클 수 없습니다."
         }
+    }
+}
+
+data class PostSearchScoreFormulaTerm(
+    val term: String,
+    val description: String,
+) {
+    init {
+        require(term.isNotBlank()) { "점수 공식 term은 비어 있을 수 없습니다." }
+        require(description.isNotBlank()) { "점수 공식 term 설명은 비어 있을 수 없습니다." }
     }
 }
 
@@ -250,6 +261,7 @@ class PostSearchService(
             appliedSignalCount = appliedSignals.size,
             totalSignalCount = scoringSignals.size,
             functionScoreApplied = appliedSignals.any { it.category == "FUNCTION_SCORE" },
+            formulaTerms = SCORE_FORMULA_TERMS,
             // 실제 ES explain API 전체 트리를 그대로 노출하면 너무 길고 버전별 차이가 크다.
             // 학습용 샘플에서는 우리가 구성한 query plan 기준으로 최종 점수의 큰 재료를 먼저 설명한다.
             // 적용 계열 요약은 최종 점수 숫자와 scoringSignals 사이의 연결고리다.
@@ -437,5 +449,24 @@ class PostSearchService(
         private const val CONTENT_SYLLABLE_BOOST = 0.5f
         private const val TITLE_INITIAL_BOOST = 1.0f
         private const val CONTENT_INITIAL_BOOST = 0.25f
+        private val SCORE_FORMULA_TERMS =
+            listOf(
+                PostSearchScoreFormulaTerm(
+                    term = "bm25_text_score",
+                    description = "제목/본문 원문 match가 만드는 BM25 관련도입니다.",
+                ),
+                PostSearchScoreFormulaTerm(
+                    term = "syllable_recall_score",
+                    description = "한글을 자모/음절 단위로 풀어 부분 기억 검색을 보조합니다.",
+                ),
+                PostSearchScoreFormulaTerm(
+                    term = "initial_recall_score",
+                    description = "ㅋㅍㄹ 같은 초성 입력이 후보를 놓치지 않게 보조합니다.",
+                ),
+                PostSearchScoreFormulaTerm(
+                    term = "function_score_bonus",
+                    description = "공지 같은 운영 신호를 BM25 점수 위에 작은 가산점으로 더합니다.",
+                ),
+            )
     }
 }

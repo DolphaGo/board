@@ -217,6 +217,7 @@ import {
   postSearchService,
   type PostSearchResult,
   type PostSearchScoreSignal,
+  type PostSearchScoreFormulaTerm,
   type PostSearchSource,
 } from 'src/api/postSearchService'
 import {
@@ -413,12 +414,7 @@ const scoreExplanationSummary = (result: PostSearchResult): string => {
   }`
 }
 
-interface ScoreFormulaTermRow {
-  term: string
-  description: string
-}
-
-const scoreFormulaTermDefinitions: ScoreFormulaTermRow[] = [
+const scoreFormulaTermDefinitions: PostSearchScoreFormulaTerm[] = [
   {
     term: 'bm25_text_score',
     description: '제목/본문 원문 match가 만드는 BM25 관련도입니다.',
@@ -437,11 +433,18 @@ const scoreFormulaTermDefinitions: ScoreFormulaTermRow[] = [
   },
 ]
 
-const scoreFormulaTermRows = (result: PostSearchResult): ScoreFormulaTermRow[] => {
+const scoreFormulaTermRows = (result: PostSearchResult): PostSearchScoreFormulaTerm[] => {
   const formula = result.scoreExplanation?.formula
 
   if (!formula) {
     return []
+  }
+
+  const backendFormulaTerms = result.scoreExplanation?.formulaTerms ?? []
+  if (backendFormulaTerms.length > 0) {
+    // 공식 용어 설명은 백엔드 query plan이 가장 권위 있는 출처다.
+    // 프론트 fallback은 오래된 fixture나 목업 응답을 위한 보조이고, 서버가 내려준 설명이 있으면 그대로 우선한다.
+    return backendFormulaTerms.filter(row => formula.includes(row.term))
   }
 
   // formula는 서버가 만든 학습용 query plan 문자열이다.

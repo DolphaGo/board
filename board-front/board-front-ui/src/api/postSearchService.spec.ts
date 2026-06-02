@@ -36,6 +36,16 @@ describe('# Post search service', function () {
             appliedSignalCount: 1,
             totalSignalCount: 1,
             functionScoreApplied: false,
+            formulaTerms: [
+              {
+                term: 'bm25_text_score',
+                description: '제목/본문 원문 match가 만드는 BM25 관련도입니다.',
+              },
+              {
+                term: 'function_score_bonus',
+                description: '공지 같은 운영 신호를 BM25 점수 위에 작은 가산점으로 더합니다.',
+              },
+            ],
             description: 'Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 운영 가산점을 더한 값이다.',
           },
         },
@@ -71,6 +81,16 @@ describe('# Post search service', function () {
       appliedSignalCount: 1,
       totalSignalCount: 1,
       functionScoreApplied: false,
+      formulaTerms: [
+        {
+          term: 'bm25_text_score',
+          description: '제목/본문 원문 match가 만드는 BM25 관련도입니다.',
+        },
+        {
+          term: 'function_score_bonus',
+          description: '공지 같은 운영 신호를 BM25 점수 위에 작은 가산점으로 더합니다.',
+        },
+      ],
       description: 'Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 운영 가산점을 더한 값이다.',
     })
   })
