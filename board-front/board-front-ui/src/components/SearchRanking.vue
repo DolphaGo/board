@@ -10,6 +10,13 @@
       검색창에서 검색한 키워드를 서버가 랭킹 점수로 기록하고, 화면은 {{ refreshIntervalSeconds }}초마다
       다시 읽거나 새 검색 성공 이벤트 때 즉시 갱신합니다.
     </p>
+    <p
+      v-if="liveRefreshFeedback"
+      class="ranking-live-refresh-feedback"
+      data-testid="ranking-live-refresh-feedback"
+    >
+      {{ liveRefreshFeedback }}
+    </p>
 
     <p v-if="loading" class="ranking-message">불러오는 중...</p>
     <p v-else-if="error" class="ranking-message">검색어 순위를 불러오지 못했습니다.</p>
@@ -27,11 +34,12 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { createSearchRanking } from './useSearchRanking'
 import { onSearchRankingChanged } from './searchRankingRefreshEvent'
 
 const { rankings, loading, error, lastUpdatedAt, fetchRankings } = createSearchRanking()
+const liveRefreshFeedback = ref('')
 let refreshTimer: number | undefined
 let unsubscribeSearchRankingChanged: (() => void) | undefined
 const rankingRefreshIntervalMs = 30_000
@@ -48,6 +56,13 @@ const lastUpdatedLabel = computed(() => {
   })
 })
 
+const fetchRankingsAfterSearchEvent = () => {
+  // polling은 조용히 동작하지만, 검색 성공 이벤트로 다시 읽은 경우는 사용자가 즉시 갱신을 체감해야 한다.
+  // 그래서 "방금 검색어가 기록됨" 피드백을 별도 상태로 두어 실시간 랭킹 학습 포인트를 화면에 남긴다.
+  liveRefreshFeedback.value = '방금 검색어가 기록되어 순위를 다시 읽었습니다.'
+  fetchRankings()
+}
+
 onMounted(() => {
   fetchRankings()
 
@@ -55,7 +70,7 @@ onMounted(() => {
   // 검색어 랭킹은 Redis 집계 값을 주기적으로 다시 읽는 polling부터 시작한다.
   refreshTimer = window.setInterval(fetchRankings, rankingRefreshIntervalMs)
   // 검색창에서 새 검색어 기록이 성공하면 polling 주기를 기다리지 않고 즉시 다시 읽는다.
-  unsubscribeSearchRankingChanged = onSearchRankingChanged(fetchRankings)
+  unsubscribeSearchRankingChanged = onSearchRankingChanged(fetchRankingsAfterSearchEvent)
 })
 
 onUnmounted(() => {
@@ -112,6 +127,16 @@ onUnmounted(() => {
 .ranking-study-note {
   margin: 8px 0 0;
   color: #555555;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.ranking-live-refresh-feedback {
+  margin: 8px 0 0;
+  border: 1px solid #d8e6ef;
+  background: #f8fbfd;
+  padding: 7px 8px;
+  color: #057dbc;
   font-size: 11px;
   line-height: 1.45;
 }

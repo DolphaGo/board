@@ -3,6 +3,7 @@ import SearchRanking from './SearchRanking.vue'
 
 const fetchRankings = jest.fn()
 const unsubscribeSearchRankingChanged = jest.fn()
+let mockSearchRankingChangedListener: (() => void) | undefined
 let mockRankings: Array<{ keyword: string; score: number }> = []
 
 jest.mock('./useSearchRanking', () => {
@@ -20,7 +21,11 @@ jest.mock('./useSearchRanking', () => {
 })
 
 jest.mock('./searchRankingRefreshEvent', () => ({
-  onSearchRankingChanged: jest.fn(() => unsubscribeSearchRankingChanged),
+  onSearchRankingChanged: jest.fn(listener => {
+    mockSearchRankingChangedListener = listener
+
+    return unsubscribeSearchRankingChanged
+  }),
 }))
 
 describe('# Search ranking component', function () {
@@ -28,6 +33,7 @@ describe('# Search ranking component', function () {
     jest.useFakeTimers()
     fetchRankings.mockClear()
     unsubscribeSearchRankingChanged.mockClear()
+    mockSearchRankingChangedListener = undefined
     mockRankings = []
   })
 
@@ -54,6 +60,22 @@ describe('# Search ranking component', function () {
 
     expect(wrapper.get('.rank-keyword').text()).toBe('kotlin spring')
     expect(wrapper.get('.rank-score').text()).toBe('검색 7회')
+
+    wrapper.unmount()
+  })
+
+  it('should show immediate refresh feedback when a search ranking event arrives', async function () {
+    const wrapper = mount(SearchRanking)
+
+    expect(wrapper.find('[data-testid="ranking-live-refresh-feedback"]').exists()).toBe(false)
+
+    mockSearchRankingChangedListener?.()
+    await wrapper.vm.$nextTick()
+
+    expect(fetchRankings).toBeCalledTimes(2)
+    expect(wrapper.get('[data-testid="ranking-live-refresh-feedback"]').text()).toBe(
+      '방금 검색어가 기록되어 순위를 다시 읽었습니다.'
+    )
 
     wrapper.unmount()
   })
