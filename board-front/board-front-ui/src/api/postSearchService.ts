@@ -77,8 +77,13 @@ const isPostSearchScoreExplanation = (data: unknown): data is PostSearchScoreExp
     Number.isFinite(explanation.finalScore) &&
     typeof explanation.appliedSignalCount === 'number' &&
     Number.isInteger(explanation.appliedSignalCount) &&
+    explanation.appliedSignalCount >= 0 &&
     typeof explanation.totalSignalCount === 'number' &&
     Number.isInteger(explanation.totalSignalCount) &&
+    explanation.totalSignalCount >= 0 &&
+    // 적용된 signal 수가 전체 signal 수보다 크면 UI가 "적용 2/1개" 같은 불가능한 학습 설명을 렌더링하게 된다.
+    // ES 응답 경계에서 숫자 타입뿐 아니라 카운트의 의미 관계까지 검증한다.
+    explanation.appliedSignalCount <= explanation.totalSignalCount &&
     typeof explanation.functionScoreApplied === 'boolean' &&
     typeof explanation.description === 'string' &&
     explanation.description.trim().length > 0

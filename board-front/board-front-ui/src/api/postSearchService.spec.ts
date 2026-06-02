@@ -230,4 +230,30 @@ describe('# Post search service', function () {
 
     await expect(postSearchService.search('kotlin')).rejects.toThrow('Invalid post search response')
   })
+
+  it('should reject score explanations whose applied signal count exceeds total signals', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          postId: 1,
+          title: 'kotlin spring',
+          contentPreview: 'Elasticsearch scoring example',
+          display: true,
+          score: 10.5,
+          highlights: {},
+          scoringSignals: [],
+          scoreExplanation: {
+            formula: 'final_score = bm25',
+            finalScore: 10.5,
+            appliedSignalCount: 2,
+            totalSignalCount: 1,
+            functionScoreApplied: false,
+            description: '적용 signal 수가 전체 signal 수보다 크면 점수 설명으로 신뢰할 수 없다.',
+          },
+        },
+      ],
+    })
+
+    await expect(postSearchService.search('kotlin')).rejects.toThrow('Invalid post search response')
+  })
 })
