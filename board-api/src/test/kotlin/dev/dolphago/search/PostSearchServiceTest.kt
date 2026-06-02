@@ -515,4 +515,41 @@ class PostSearchServiceTest {
             highlightFields,
         )
     }
+
+    @Test
+    fun `게시글 검색 highlight는 게시판 목록용 snippet 크기와 태그 정책을 사용한다`() {
+        val querySlot = slot<NativeQuery>()
+        every {
+            elasticsearchOperations.search(capture(querySlot), PostSearchDocument::class.java)
+        } returns
+            SearchHitsImpl(
+                0,
+                TotalHitsRelation.EQUAL_TO,
+                0.0f,
+                Duration.ZERO,
+                null,
+                null,
+                emptyList(),
+                null,
+                null,
+                null,
+            )
+
+        postSearchService.search("코틀린", 10)
+
+        val highlightQuery =
+            querySlot.captured.getHighlightQuery().orElseThrow {
+                AssertionError("검색 결과 목록 snippet 길이를 제어하려면 highlight parameter가 필요하다.")
+            }
+        val parameters =
+            requireNotNull(highlightQuery.highlight.parameters) {
+                "목록형 게시판 검색에서는 긴 본문 highlight를 그대로 받지 않도록 fragment 정책을 지정해야 한다."
+            }
+
+        assertEquals(80, parameters.fragmentSize)
+        assertEquals(2, parameters.numberOfFragments)
+        assertEquals(true, parameters.requireFieldMatch)
+        assertEquals(listOf("<em>"), parameters.preTags.toList())
+        assertEquals(listOf("</em>"), parameters.postTags.toList())
+    }
 }

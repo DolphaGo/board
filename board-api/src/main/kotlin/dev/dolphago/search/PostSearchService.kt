@@ -8,6 +8,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations
 import org.springframework.data.elasticsearch.core.query.HighlightQuery
 import org.springframework.data.elasticsearch.core.query.highlight.Highlight
 import org.springframework.data.elasticsearch.core.query.highlight.HighlightField
+import org.springframework.data.elasticsearch.core.query.highlight.HighlightParameters
 import org.springframework.stereotype.Service
 
 data class PostSearchResult(
@@ -333,6 +334,18 @@ class PostSearchService(
     private fun createScoringHighlightQuery(): HighlightQuery =
         HighlightQuery(
             Highlight(
+                HighlightParameters
+                    .builder()
+                    // 검색 결과 목록은 본문 전체를 읽는 화면이 아니다.
+                    // fragmentSize/numberOfFragments를 제한하면 ES가 매칭 주변 짧은 문맥만 내려줘서 목록 UI가 안정적이다.
+                    .withFragmentSize(HIGHLIGHT_FRAGMENT_SIZE)
+                    .withNumberOfFragments(HIGHLIGHT_FRAGMENT_COUNT)
+                    // 각 signal은 title/content/자모/초성 필드별 적용 근거로 읽힌다.
+                    // requireFieldMatch=true로 두면 다른 필드 match 때문에 모든 필드가 highlight되는 혼선을 줄인다.
+                    .withRequireFieldMatch(true)
+                    .withPreTags("<em>")
+                    .withPostTags("</em>")
+                    .build(),
                 listOf(
                     HighlightField("title"),
                     HighlightField("content"),
@@ -361,6 +374,8 @@ class PostSearchService(
         private val WHITESPACE_PATTERN = Regex("\\s+")
         private const val MAX_SEARCH_SIZE = 50
         private const val CONTENT_PREVIEW_LENGTH = 120
+        private const val HIGHLIGHT_FRAGMENT_SIZE = 80
+        private const val HIGHLIGHT_FRAGMENT_COUNT = 2
         private const val NOTICE_SCORE_WEIGHT = 2.0
         private const val TITLE_MATCH_BOOST = 3.0f
         private const val CONTENT_MATCH_BOOST = 1.0f
