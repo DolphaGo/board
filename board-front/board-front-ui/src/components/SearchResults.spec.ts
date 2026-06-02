@@ -7,7 +7,7 @@ import SearchResults from './SearchResults.vue'
 const mockRoute = reactive({
   query: {
     keyword: 'kotlin',
-  },
+  } as Record<string, unknown>,
 })
 
 jest.mock('vue-router', () => ({
@@ -57,7 +57,9 @@ const createDeferred = <T>() => {
 
 describe('# Search results component', () => {
   beforeEach(() => {
-    mockRoute.query.keyword = 'kotlin'
+    mockRoute.query = {
+      keyword: 'kotlin',
+    }
     mockedPostSearchService.search.mockReset()
   })
 
@@ -116,6 +118,21 @@ describe('# Search results component', () => {
     expect(wrapper.text()).toContain('FUNCTION_SCORE')
     expect(wrapper.text()).toContain('공지 가산점 x2.00')
     expect(wrapper.text()).toContain('대기')
+  })
+
+  it('should explain when the search comes from a realtime ranking keyword click', async () => {
+    mockRoute.query = {
+      keyword: 'kotlin',
+      source: 'ranking',
+    }
+    mockedPostSearchService.search.mockResolvedValue([])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="ranking-source-study-note"]').text()).toBe(
+      '실시간 검색어에서 선택한 키워드입니다. 이 화면의 검색 API가 성공하면 같은 키워드가 다시 랭킹 기록 이벤트를 발생시켜 사이드바 순위 갱신으로 이어집니다.'
+    )
   })
 
   it('should explain highlights as matched snippets instead of score contribution', async () => {

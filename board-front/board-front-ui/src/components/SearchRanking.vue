@@ -117,6 +117,7 @@ const searchRankedKeyword = (rankedKeyword: string) => {
     path: '/search',
     query: {
       keyword: rankedKeyword,
+      source: 'ranking',
     },
   })
 }

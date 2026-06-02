@@ -5,6 +5,13 @@
         <h2>검색 결과</h2>
         <p v-if="searchKeyword" class="search-keyword">"{{ searchKeyword }}"</p>
       </div>
+      <p
+        v-if="isRankingSourceSearch"
+        class="ranking-source-study-note"
+        data-testid="ranking-source-study-note"
+      >
+        실시간 검색어에서 선택한 키워드입니다. 이 화면의 검색 API가 성공하면 같은 키워드가 다시 랭킹 기록 이벤트를 발생시켜 사이드바 순위 갱신으로 이어집니다.
+      </p>
 
       <p v-if="loading" class="search-message">검색 중...</p>
       <p v-else-if="error" class="search-message">검색 결과를 불러오지 못했습니다.</p>
@@ -171,6 +178,8 @@ const searchKeyword = computed(() => {
 
   return typeof keyword === 'string' ? normalizeSearchKeyword(keyword) : ''
 })
+
+const isRankingSourceSearch = computed(() => route.query.source === 'ranking' && searchKeyword.value.length > 0)
 
 const highlightCount = (result: PostSearchResult): number =>
   Object.values(result.highlights).reduce((count, values) => count + values.length, 0)
@@ -479,6 +488,16 @@ watch(
   margin: 18px 0 0;
   color: #757575;
   font-size: 13px;
+}
+
+.ranking-source-study-note {
+  margin: 12px 0 0;
+  border: 1px solid #e5dcc4;
+  background: #fffdf7;
+  padding: 9px 10px;
+  color: #5f4b15;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .search-empty-study-note {

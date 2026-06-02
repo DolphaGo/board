@@ -113,6 +113,7 @@ describe('# Search ranking component', function () {
       path: '/search',
       query: {
         keyword: 'kotlin spring',
+        source: 'ranking',
       },
     })
     expect(wrapper.get('[data-testid="ranking-click-feedback"]').text()).toBe(
