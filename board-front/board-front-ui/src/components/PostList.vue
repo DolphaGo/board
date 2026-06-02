@@ -92,6 +92,19 @@
       </button>
       <span class="board-page-status">{{ currentPage }} / {{ totalPages }}</span>
     </nav>
+
+    <div class="board-action-bar" data-testid="board-action-bar">
+      <p class="board-action-copy">
+        이미지와 Markdown 흐름까지 확인하는 글쓰기 화면으로 이동합니다.
+      </p>
+      <router-link
+        to="/post/edit"
+        class="board-write-link"
+        data-testid="board-write-link"
+      >
+        글쓰기
+      </router-link>
+    </div>
   </section>
 </template>
 
@@ -329,5 +342,52 @@ onMounted(fetchPosts)
   font-weight: 700;
   min-width: 54px;
   text-align: center;
+}
+
+.board-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: 16px 12px 0;
+  padding-top: 12px;
+  border-top: 1px solid #e8edf2;
+}
+
+.board-action-copy {
+  margin: 0;
+  color: #64717d;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.board-write-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 82px;
+  min-height: 36px;
+  border: 1px solid #111827;
+  background: #111827;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.board-write-link:hover {
+  background: #057dbc;
+  border-color: #057dbc;
+}
+
+@media (max-width: 640px) {
+  .board-action-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .board-write-link {
+    inline-size: 100%;
+  }
 }
 </style>

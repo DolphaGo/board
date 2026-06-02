@@ -11,6 +11,11 @@ jest.mock('src/api/postService', () => ({
 const mockedPostService = postService as jest.Mocked<typeof postService>
 
 describe('# Post list component', () => {
+  const routerLinkStub = {
+    props: ['to'],
+    template: '<a :data-to="to"><slot /></a>',
+  }
+
   const createPost = (id: number) => ({
     id,
     title: `게시글 ${id}`,
@@ -64,9 +69,7 @@ describe('# Post list component', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          RouterLink: {
-            template: '<a><slot /></a>',
-          },
+          RouterLink: routerLinkStub,
         },
       },
     })
@@ -108,9 +111,7 @@ describe('# Post list component', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          RouterLink: {
-            template: '<a><slot /></a>',
-          },
+          RouterLink: routerLinkStub,
         },
       },
     })
@@ -163,9 +164,7 @@ describe('# Post list component', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          RouterLink: {
-            template: '<a><slot /></a>',
-          },
+          RouterLink: routerLinkStub,
         },
       },
     })
@@ -194,5 +193,29 @@ describe('# Post list component', () => {
     expect(mockedPostService.listPosts).toHaveBeenLastCalledWith({ page: 7, size: 10 })
     expect(wrapper.get('[data-testid="board-page-last"]').attributes('disabled')).toBeDefined()
     expect(wrapper.findAll('.board-title-text')[0].text()).toBe('게시글 71')
+  })
+
+  it('should expose a board-local writing action below the post rows', async () => {
+    mockedPostService.listPosts.mockResolvedValue({
+      items: [createPost(1)],
+      page: 0,
+      size: 10,
+      totalElements: 1,
+      totalPages: 1,
+    })
+
+    const wrapper = mount(PostList, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+    await flushPromises()
+
+    const writeLink = wrapper.get('[data-testid="board-write-link"]')
+
+    expect(writeLink.text()).toBe('글쓰기')
+    expect(writeLink.attributes('data-to')).toBe('/post/edit')
   })
 })
