@@ -27,4 +27,19 @@ describe('# Header component', () => {
     expect(hiddenPostLink.exists()).toBe(true)
     expect(hiddenPostLink.text()).toBe('숨김 관리')
   })
+
+  it('should expose a navigation link to the post editor', () => {
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    const postEditorLink = wrapper.find('[data-to="/post/edit"]')
+
+    expect(postEditorLink.exists()).toBe(true)
+    expect(postEditorLink.text()).toBe('글쓰기')
+  })
 })
