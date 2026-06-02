@@ -5,6 +5,9 @@ import co.elastic.clients.elasticsearch._types.query_dsl.FunctionScoreMode
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.elasticsearch.client.elc.NativeQuery
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations
+import org.springframework.data.elasticsearch.core.query.HighlightQuery
+import org.springframework.data.elasticsearch.core.query.highlight.Highlight
+import org.springframework.data.elasticsearch.core.query.highlight.HighlightField
 import org.springframework.stereotype.Service
 
 data class PostSearchResult(
@@ -145,7 +148,12 @@ class PostSearchService(
                             .scoreMode(FunctionScoreMode.Sum)
                             .boostMode(FunctionBoostMode.Sum)
                     }
-                }.withPageable(PageRequest.of(0, safeSize))
+                }
+                // scoringSignals.applied는 SearchHit.highlightFields에 해당 필드가 있는지로 판단한다.
+                // 따라서 쿼리에서 title/content뿐 아니라 음절/초성 보조 필드도 highlight 대상으로 요청해야
+                // 화면의 "적용 근거"가 실제 ES 매칭 필드와 일관되게 표시된다.
+                .withHighlightQuery(createScoringHighlightQuery())
+                .withPageable(PageRequest.of(0, safeSize))
                 .build()
 
         return elasticsearchOperations
@@ -321,6 +329,21 @@ class PostSearchService(
         highlights.mapValues { (_, snippets) ->
             snippets.map(::createDisplayText)
         }
+
+    private fun createScoringHighlightQuery(): HighlightQuery =
+        HighlightQuery(
+            Highlight(
+                listOf(
+                    HighlightField("title"),
+                    HighlightField("content"),
+                    HighlightField("titleSyllables"),
+                    HighlightField("contentSyllables"),
+                    HighlightField("titleInitials"),
+                    HighlightField("contentInitials"),
+                ),
+            ),
+            PostSearchDocument::class.java,
+        )
 
     private fun createDisplayText(content: String): String =
         content

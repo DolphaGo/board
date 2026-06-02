@@ -475,4 +475,44 @@ class PostSearchServiceTest {
         assertEquals("ㅋ ㅌ ㄹ", matchQueries.getValue("contentInitials").query().stringValue())
         assertEquals(0.25f, matchQueries.getValue("contentInitials").boost())
     }
+
+    @Test
+    fun `게시글 검색은 점수 signal 적용 근거를 위해 검색 필드 highlight를 요청한다`() {
+        val querySlot = slot<NativeQuery>()
+        every {
+            elasticsearchOperations.search(capture(querySlot), PostSearchDocument::class.java)
+        } returns
+            SearchHitsImpl(
+                0,
+                TotalHitsRelation.EQUAL_TO,
+                0.0f,
+                Duration.ZERO,
+                null,
+                null,
+                emptyList(),
+                null,
+                null,
+                null,
+            )
+
+        postSearchService.search("코틀린", 10)
+
+        val highlightQuery =
+            querySlot.captured.getHighlightQuery().orElseThrow {
+                AssertionError("scoringSignals.applied 판정에 쓰는 highlight field 요청이 필요하다.")
+            }
+        val highlightFields = highlightQuery.highlight.fields.map { it.name }
+
+        assertEquals(
+            listOf(
+                "title",
+                "content",
+                "titleSyllables",
+                "contentSyllables",
+                "titleInitials",
+                "contentInitials",
+            ),
+            highlightFields,
+        )
+    }
 }
