@@ -54,6 +54,44 @@ describe('# Post service', function () {
     expect(posts[0].commentCount).toBe(2)
   })
 
+  it('should ignore hidden posts when the list API returns mixed display states', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          id: 10,
+          title: '보이는 게시글',
+          content: '목록에 남아야 한다',
+          imageUrls: [],
+          viewCount: 3,
+          display: true,
+          notice: false,
+          authorNickname: 'writer',
+          createdAt: '2026-06-02T04:00:00',
+          commentCount: 2,
+          recommendCount: 1,
+        },
+        {
+          id: 11,
+          title: '숨김 게시글',
+          content: '목록에서 가려야 한다',
+          imageUrls: [],
+          viewCount: 1,
+          display: false,
+          notice: false,
+          authorNickname: 'admin',
+          createdAt: '2026-06-02T05:00:00',
+          commentCount: 0,
+          recommendCount: 0,
+        },
+      ],
+    })
+
+    const posts = await postService.listPosts()
+
+    expect(posts).toHaveLength(1)
+    expect(posts[0].title).toBe('보이는 게시글')
+  })
+
   it('should create a post with the study member id', async function () {
     mockedAxios.post.mockResolvedValue({
       data: {

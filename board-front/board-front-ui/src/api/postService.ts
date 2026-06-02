@@ -124,7 +124,9 @@ export const postService = {
       throw new Error('Invalid post list response')
     }
 
-    return response.data
+    // 목록 API는 원칙적으로 display=true만 내려주지만, 프론트 경계에서도 한 번 더 거른다.
+    // 관리자 숨김 직후 오래된 캐시나 잘못된 목업 응답이 섞여도 사용자 목록에는 숨김 글이 보이지 않는다.
+    return response.data.filter(post => post.display)
   },
 
   listComments: async (postId: number): Promise<CommentResponse[]> => {
