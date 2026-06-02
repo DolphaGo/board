@@ -196,6 +196,35 @@ describe('# Header component', () => {
     )
   })
 
+  it('should expose suggestion match types as structured study fields', async () => {
+    mockedSearchRankingService.suggestKeywords.mockResolvedValue([
+      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
+      { keyword: '코프링 검색', score: 9, matchType: 'SYLLABLE_PREFIX' },
+      { keyword: '코프링 ES', score: 5, matchType: 'INITIAL_PREFIX' },
+    ])
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    await wrapper.get('.header-search-input').setValue('ㅋㅗ')
+    await flushPromises()
+
+    expect(wrapper.findAll('[data-testid="search-suggestion-match-label"]').map(label => label.text())).toEqual([
+      '매칭 방식: 원문 일치',
+      '매칭 방식: 음절 일치',
+      '매칭 방식: 초성 일치',
+    ])
+    expect(wrapper.findAll('[data-testid="search-suggestion-match-rule"]').map(rule => rule.text())).toEqual([
+      '판정 기준: 저장된 검색어가 입력한 원문으로 시작',
+      '판정 기준: 저장된 검색어를 자모로 분해한 값이 ㅋㅗ 같은 입력으로 시작',
+      '판정 기준: 저장된 검색어의 초성만 뽑은 값이 ㅋㅍ 같은 입력으로 시작',
+    ])
+  })
+
   it('should search with the clicked suggestion keyword', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
       { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },

@@ -48,7 +48,12 @@
             @click="submitSuggestion(suggestion.keyword)"
           >
             <span>{{ suggestion.keyword }}</span>
-            <span>{{ suggestionMatchTypeLabel(suggestion.matchType) }}</span>
+            <span data-testid="search-suggestion-match-label">
+              매칭 방식: {{ suggestionMatchTypeLabel(suggestion.matchType) }}
+            </span>
+            <span data-testid="search-suggestion-match-rule">
+              판정 기준: {{ suggestionMatchTypeRule(suggestion.matchType) }}
+            </span>
             <span>검색 {{ suggestion.score }}회</span>
             <span class="suggestion-match-description" data-testid="search-suggestion-match-description">
               {{ suggestionMatchTypeDescription(suggestion.matchType) }}
@@ -119,6 +124,19 @@ const suggestionMatchTypeDescription = (matchType: SearchKeywordSuggestionMatchT
       return '초성+중성까지 분해한 음절 prefix가 맞았습니다.'
     case 'INITIAL_PREFIX':
       return '초성만 뽑은 prefix가 맞았습니다.'
+  }
+}
+
+const suggestionMatchTypeRule = (matchType: SearchKeywordSuggestionMatchType): string => {
+  // label은 짧은 badge 역할이고, rule은 실제 서버 필터 조건을 사용자가 읽기 쉬운 문장으로 푼 것이다.
+  // 추천 API는 같은 랭킹 ZSET을 읽되 matchType별로 원문 startsWith, 음절 토큰 prefix, 초성 prefix 중 하나를 만족한 항목만 돌려준다.
+  switch (matchType) {
+    case 'TEXT_PREFIX':
+      return '저장된 검색어가 입력한 원문으로 시작'
+    case 'SYLLABLE_PREFIX':
+      return '저장된 검색어를 자모로 분해한 값이 ㅋㅗ 같은 입력으로 시작'
+    case 'INITIAL_PREFIX':
+      return '저장된 검색어의 초성만 뽑은 값이 ㅋㅍ 같은 입력으로 시작'
   }
 }
 
