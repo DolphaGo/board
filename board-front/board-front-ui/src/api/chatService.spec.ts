@@ -80,7 +80,7 @@ describe('# Chat service', function () {
     })
   })
 
-  it('should create a chat room with the study member id', async function () {
+  it('should create a chat room with the study user member id', async function () {
     mockedAxios.post.mockResolvedValue({
       data: {
         id: 'room-1',
@@ -97,7 +97,7 @@ describe('# Chat service', function () {
     expect(mockedAxios.post).toBeCalledWith('/api/chat/rooms', {
       name: '새 채팅방',
       description: null,
-      createdBy: 1,
+      createdBy: 2,
     })
     expect(room).toMatchObject({
       participantCount: 1,
@@ -125,8 +125,22 @@ describe('# Chat service', function () {
     expect(mockedAxios.post).toBeCalledWith('/api/chat/rooms', {
       name: '스터디 채팅방',
       description: '코프링 검색 기능을 같이 공부한다',
-      createdBy: 1,
+      createdBy: 2,
       maxParticipants: 20,
+    })
+  })
+
+  it('should join and leave chat rooms with the study user member id', async function () {
+    mockedAxios.post.mockResolvedValue({ data: undefined })
+
+    await chatService.joinRoom('room-1')
+    await chatService.leaveRoom('room-1')
+
+    expect(mockedAxios.post).toHaveBeenNthCalledWith(1, '/api/chat/rooms/room-1/join', {
+      memberId: 2,
+    })
+    expect(mockedAxios.post).toHaveBeenNthCalledWith(2, '/api/chat/rooms/room-1/leave', {
+      memberId: 2,
     })
   })
 

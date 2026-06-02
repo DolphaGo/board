@@ -1,7 +1,7 @@
 import axios from 'axios'
+import { STUDY_CHAT_MEMBER_ID } from 'src/chat/chatStudyConfig'
 
 const BASE_URL = '/api'
-const STUDY_MEMBER_ID = 1
 
 interface ChatParticipantResponse {
   id: number
@@ -134,8 +134,9 @@ export const chatService = {
       name,
       description: options.description ?? null,
       // 공부용 MVP라 로그인 기능과 연결하기 전까지는 고정 학습 계정으로 요청한다.
+      // 채팅은 일반 사용자 기능이므로 공지/관리자 액션과 구분되는 일반 사용자 id를 쓴다.
       // 이후 Kakao 로그인과 회원 세션이 붙으면 이 값은 로그인 사용자 id로 교체한다.
-      createdBy: STUDY_MEMBER_ID,
+      createdBy: STUDY_CHAT_MEMBER_ID,
       ...(options.maxParticipants === undefined ? {} : { maxParticipants: options.maxParticipants }),
     })
     return parseChatRoom(response.data)
@@ -149,7 +150,7 @@ export const chatService = {
       return
     }
 
-    await axios.post(`${BASE_URL}/chat/rooms/${roomId}/join`, { memberId: STUDY_MEMBER_ID })
+    await axios.post(`${BASE_URL}/chat/rooms/${roomId}/join`, { memberId: STUDY_CHAT_MEMBER_ID })
   },
 
   // 채팅방 나가기
@@ -159,6 +160,6 @@ export const chatService = {
       return
     }
 
-    await axios.post(`${BASE_URL}/chat/rooms/${roomId}/leave`, { memberId: STUDY_MEMBER_ID })
+    await axios.post(`${BASE_URL}/chat/rooms/${roomId}/leave`, { memberId: STUDY_CHAT_MEMBER_ID })
   }
 }
