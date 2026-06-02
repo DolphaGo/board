@@ -10,6 +10,11 @@
       검색창에서 검색한 키워드를 서버가 랭킹 점수로 기록하고, 화면은 {{ refreshIntervalSeconds }}초마다
       다시 읽거나 새 검색 성공 이벤트 때 즉시 갱신합니다.
     </p>
+    <ol class="ranking-flow-list" data-testid="ranking-flow-list">
+      <li v-for="step in rankingFlowSteps" :key="step.label" data-testid="ranking-flow-step">
+        <strong>{{ step.order }}. {{ step.label }}</strong>: {{ step.description }}
+      </li>
+    </ol>
     <p
       v-if="liveRefreshFeedback"
       class="ranking-live-refresh-feedback"
@@ -44,6 +49,29 @@ let refreshTimer: number | undefined
 let unsubscribeSearchRankingChanged: (() => void) | undefined
 const rankingRefreshIntervalMs = 30_000
 const refreshIntervalSeconds = rankingRefreshIntervalMs / 1_000
+const rankingFlowSteps = [
+  {
+    order: 1,
+    label: '기록',
+    // 검색 결과 조회 API와 헤더 검색 폼은 모두 검색어를 정규화한 뒤 Redis ZSET 점수를 올린다.
+    // ZSET의 score가 "검색된 횟수"가 되므로 별도 카운트 테이블 없이도 순위를 만들 수 있다.
+    description: '검색 성공 시 정규화된 검색어를 Redis ZSET 점수 +1로 저장',
+  },
+  {
+    order: 2,
+    label: '집계',
+    // 서버는 reverseRangeWithScores로 점수가 높은 keyword부터 읽는다.
+    // 프론트는 Redis 자료구조를 알 필요 없이 /api/search/rankings 응답의 keyword/score만 렌더링한다.
+    description: '/api/search/rankings가 ZSET을 높은 점수순으로 읽어 상위 키워드 반환',
+  },
+  {
+    order: 3,
+    label: '갱신',
+    // polling은 서버 push 없이도 동작하는 기본 실시간성이고,
+    // 검색 성공 이벤트는 사용자가 방금 검색한 키워드를 30초 기다리지 않고 반영하기 위한 즉시 갱신 경로다.
+    description: `${refreshIntervalSeconds}초 polling 또는 검색 성공 이벤트가 사이드바 순위를 다시 조회`,
+  },
+]
 
 const lastUpdatedLabel = computed(() => {
   if (lastUpdatedAt.value === null) {
@@ -129,6 +157,18 @@ onUnmounted(() => {
   color: #555555;
   font-size: 11px;
   line-height: 1.45;
+}
+
+.ranking-flow-list {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  color: #333333;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.ranking-flow-list li + li {
+  margin-top: 3px;
 }
 
 .ranking-live-refresh-feedback {

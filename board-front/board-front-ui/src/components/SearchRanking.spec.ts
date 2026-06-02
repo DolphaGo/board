@@ -51,6 +51,19 @@ describe('# Search ranking component', function () {
     wrapper.unmount()
   })
 
+  it('should show the realtime ranking pipeline as study steps', function () {
+    const wrapper = mount(SearchRanking)
+
+    const steps = wrapper.findAll('[data-testid="ranking-flow-step"]').map(step => step.text())
+    expect(steps).toEqual([
+      '1. 기록: 검색 성공 시 정규화된 검색어를 Redis ZSET 점수 +1로 저장',
+      '2. 집계: /api/search/rankings가 ZSET을 높은 점수순으로 읽어 상위 키워드 반환',
+      '3. 갱신: 30초 polling 또는 검색 성공 이벤트가 사이드바 순위를 다시 조회',
+    ])
+
+    wrapper.unmount()
+  })
+
   it('should label ranking scores as search counts', function () {
     mockRankings = [
       { keyword: 'kotlin spring', score: 7 },
