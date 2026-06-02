@@ -135,6 +135,25 @@ describe('# Search results component', () => {
     )
   })
 
+  it('should explain when the search comes from the header search box', async () => {
+    mockRoute.query = {
+      keyword: 'kotlin',
+      source: 'header',
+    }
+    mockedPostSearchService.search.mockResolvedValue([])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    const sourceRows = wrapper
+      .findAll('[data-testid="search-source-analysis-row"]')
+      .map(row => row.text())
+    expect(sourceRows).toEqual([
+      '유입 경로: 헤더 검색창',
+      '랭킹 기록: 헤더 submit이 검색어를 Redis ZSET에 먼저 기록한 뒤 검색 결과로 이동',
+    ])
+  })
+
   it('should explain highlights as matched snippets instead of score contribution', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {

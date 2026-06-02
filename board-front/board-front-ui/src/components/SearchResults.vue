@@ -12,6 +12,21 @@
       >
         실시간 검색어에서 선택한 키워드입니다. 이 화면의 검색 API가 성공하면 같은 키워드가 다시 랭킹 기록 이벤트를 발생시켜 사이드바 순위 갱신으로 이어집니다.
       </p>
+      <dl
+        v-if="searchSourceAnalysisRows.length > 0"
+        class="search-source-analysis"
+        data-testid="search-source-analysis"
+      >
+        <div
+          v-for="row in searchSourceAnalysisRows"
+          :key="row.label"
+          class="search-source-analysis-row"
+          data-testid="search-source-analysis-row"
+        >
+          <dt>{{ row.label }}</dt>
+          <dd>: {{ row.description }}</dd>
+        </div>
+      </dl>
 
       <p v-if="loading" class="search-message">검색 중...</p>
       <p v-else-if="error" class="search-message">검색 결과를 불러오지 못했습니다.</p>
@@ -180,6 +195,40 @@ const searchKeyword = computed(() => {
 })
 
 const isRankingSourceSearch = computed(() => route.query.source === 'ranking' && searchKeyword.value.length > 0)
+
+const searchSourceAnalysisRows = computed(() => {
+  if (searchKeyword.value.length === 0) {
+    return []
+  }
+
+  if (route.query.source === 'header') {
+    return [
+      {
+        label: '유입 경로',
+        description: '헤더 검색창',
+      },
+      {
+        label: '랭킹 기록',
+        description: '헤더 submit이 검색어를 Redis ZSET에 먼저 기록한 뒤 검색 결과로 이동',
+      },
+    ]
+  }
+
+  if (route.query.source === 'ranking') {
+    return [
+      {
+        label: '유입 경로',
+        description: '실시간 검색어 클릭',
+      },
+      {
+        label: '랭킹 기록',
+        description: '검색 결과 API 성공 뒤 같은 키워드가 다시 랭킹 기록 이벤트로 연결',
+      },
+    ]
+  }
+
+  return []
+})
 
 const highlightCount = (result: PostSearchResult): number =>
   Object.values(result.highlights).reduce((count, values) => count + values.length, 0)
@@ -498,6 +547,32 @@ watch(
   color: #5f4b15;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.search-source-analysis {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 8px;
+  margin: 12px 0 0;
+  padding: 9px 10px;
+  border: 1px solid #e5dcc4;
+  background: #fffdf7;
+  color: #333333;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.search-source-analysis-row {
+  display: contents;
+}
+
+.search-source-analysis dt {
+  color: #5f4b15;
+  font-weight: 700;
+}
+
+.search-source-analysis dd {
+  margin: 0;
 }
 
 .search-empty-study-note {

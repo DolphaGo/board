@@ -97,6 +97,7 @@ const { keyword, rankingRecordError, submitSearch } = createHeaderSearch({
     path: '/search',
     query: {
       keyword: searchKeyword,
+      source: 'header',
     },
   }),
 })

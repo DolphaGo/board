@@ -292,6 +292,7 @@ describe('# Header component', () => {
       path: '/search',
       query: {
         keyword: 'kotlin spring',
+        source: 'header',
       },
     })
   })
@@ -316,6 +317,7 @@ describe('# Header component', () => {
         path: '/search',
         query: {
           keyword: 'kotlin',
+          source: 'header',
         },
       })
       expect(wrapper.get('[data-testid="ranking-record-error"]').text()).toBe(
@@ -361,6 +363,7 @@ describe('# Header component', () => {
       path: '/search',
       query: {
         keyword: 'kotlin spring',
+        source: 'header',
       },
     })
   })
