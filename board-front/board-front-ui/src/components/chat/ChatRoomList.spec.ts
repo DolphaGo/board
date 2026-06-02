@@ -259,4 +259,30 @@ describe('# Chat room list component', () => {
       '채팅방 입장에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해주세요.'
     )
   })
+
+  it('should explain stale capacity risk when refreshing rooms also fails after an enter failure', async () => {
+    mockedChatService.getRoomList
+      .mockResolvedValueOnce([
+        chatRoomFixture({
+          id: 'room-5',
+          name: '갱신 실패방',
+          participantCount: 1,
+          maxParticipants: 2,
+        }),
+      ])
+      .mockRejectedValueOnce(new Error('refresh failed'))
+    mockedChatService.joinRoom.mockRejectedValue(new Error('join failed'))
+
+    const wrapper = mount(ChatRoomList)
+    await flushPromises()
+
+    await wrapper.get('.room-item').trigger('click')
+    await flushPromises()
+
+    expect(mockedChatService.getRoomList).toHaveBeenCalledTimes(2)
+    expect(wrapper.get('.participant-count').text()).toBe('참여자: 1/2명')
+    expect(wrapper.get('.action-feedback').text()).toBe(
+      '채팅방 입장에 실패했고 최신 목록을 다시 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    )
+  })
 })

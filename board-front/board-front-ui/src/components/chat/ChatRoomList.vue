@@ -149,6 +149,9 @@ export default defineComponent({
           rooms.value = await chatService.getRoomList()
         } catch (refreshError) {
           console.error('채팅방 목록 갱신 실패:', refreshError)
+          // 입장 실패 뒤 목록 재조회까지 실패하면 화면의 참여자 수가 낡은 값일 수 있다.
+          // 사용자가 같은 방을 계속 누르기보다 잠시 후 다시 시도해야 한다는 점을 명확히 알려준다.
+          feedbackMessage.value = '채팅방 입장에 실패했고 최신 목록을 다시 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
         }
       }
     }
