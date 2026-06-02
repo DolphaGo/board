@@ -9,9 +9,9 @@
           <span>{{ post.title }}</span>
         </h1>
         <div class="post-content" data-testid="post-content" v-html="renderedPostContent"></div>
-        <div v-if="post.imageUrls.length > 0" class="post-image-list" aria-label="본문 이미지">
+        <div v-if="fallbackImageUrls.length > 0" class="post-image-list" aria-label="본문 이미지">
           <img
-            v-for="(imageUrl, index) in post.imageUrls"
+            v-for="(imageUrl, index) in fallbackImageUrls"
             :key="`${post.id}:image:${imageUrl}`"
             :src="imageUrl"
             :alt="`${post.title} 이미지 ${index + 1}`"
@@ -124,6 +124,16 @@ const renderedPostContent = computed(() => {
   // 글쓰기 화면은 imageUrls 배열과 Markdown 본문을 함께 저장한다.
   // 상세 화면에서 실제 독자가 보는 이미지 위치는 Markdown 순서가 결정하므로 본문은 Markdown으로 렌더링한다.
   return sanitizeRenderedMarkdown(marked(post.value.content, { async: false }) as string);
+});
+
+const fallbackImageUrls = computed(() => {
+  if (!post.value?.display) {
+    return [];
+  }
+
+  // imageUrls는 검색 색인과 첨부 관리용 배열이고, Markdown 본문은 독자가 실제로 보는 이미지 위치다.
+  // 본문에 이미 들어간 이미지를 하단 첨부 목록에 다시 그리면 같은 사진이 두 번 보여서 블로그형 글 흐름이 깨진다.
+  return post.value.imageUrls.filter(imageUrl => !post.value?.content.includes(`](${imageUrl})`));
 });
 
 const postId = computed(() => {

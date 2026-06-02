@@ -123,6 +123,28 @@ describe('# Post detail component', () => {
     expect(wrapper.get('[data-testid="post-content"] img').attributes('alt')).toBe('첨부 이미지 1')
   })
 
+  it('should not repeat markdown body images in the fallback image list', async () => {
+    mockedPostService.getPost.mockResolvedValue({
+      id: 10,
+      title: '본문 이미지 중복 방지',
+      content:
+        '첫 문단\n\n' +
+        '![첨부 이미지 1](https://cdn.example.com/body.png)\n' +
+        '둘째 문단',
+      imageUrls: ['https://cdn.example.com/body.png'],
+      viewCount: 3,
+      display: true,
+      notice: false,
+    })
+    mockedPostService.listComments.mockResolvedValue([])
+
+    const wrapper = mount(PostDetail)
+    await flushPromises()
+
+    expect(wrapper.findAll('[data-testid="post-content"] img')).toHaveLength(1)
+    expect(wrapper.find('.post-image-list').exists()).toBe(false)
+  })
+
   it('should remove unsafe html from rendered markdown content', async () => {
     mockedPostService.getPost.mockResolvedValue({
       id: 10,
