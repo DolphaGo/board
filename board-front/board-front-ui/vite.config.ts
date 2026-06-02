@@ -10,7 +10,7 @@ import {
   createLocalPostListPageFixture,
   parseLocalPostRequestPath,
 } from "./src/api/localPostFixture";
-import {createPostSearchFixture} from "./src/api/postSearchFixture";
+import {createPostSearchFixture, createRelatedPostSearchFixture} from "./src/api/postSearchFixture";
 import {createSearchRankingFixture} from "./src/api/searchRankingFixture";
 
 // https://vitejs.dev/config/
@@ -35,6 +35,19 @@ export default defineConfig({
           }
 
           const requestUrl = new URL(req.url ?? '', 'http://localhost')
+          const relatedPostMatch = /^\/(\d+)\/related$/.exec(requestUrl.pathname)
+
+          if (relatedPostMatch) {
+            const postId = Number(relatedPostMatch[1])
+            const size = Number(requestUrl.searchParams.get('size') ?? '3')
+
+            // 관련 글 추천은 검색 결과와 같은 DTO를 사용한다.
+            // Vite 단독 상세 화면에서도 scoreExplanation/scoringSignals를 확인하며 추천 점수 학습 UI를 볼 수 있게 한다.
+            res.setHeader('Content-Type', 'application/json; charset=utf-8')
+            res.end(JSON.stringify(createRelatedPostSearchFixture(postId, Number.isInteger(size) && size > 0 ? size : 3)))
+            return
+          }
+
           const keyword = requestUrl.searchParams.get('keyword') ?? ''
 
           // local Vite 단독 실행에서도 ES 검색 성공 화면을 학습/검증할 수 있게
