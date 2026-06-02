@@ -283,6 +283,66 @@ class PostServiceTest {
     }
 
     @Test
+    fun `관리자는 숨김 게시글 목록을 게시판 메타와 함께 조회한다`() {
+        val admin =
+            Member(
+                id = 1L,
+                email = "admin@example.com",
+                nickname = "admin",
+                role = Authority.ROLE_ADMIN,
+            )
+        val author =
+            Member(
+                id = 2L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val hiddenPost =
+            Post(
+                id = 10L,
+                member = author,
+                title = "숨김 게시글",
+                content = "관리자만 목록에서 확인한다",
+                viewCount = 3,
+                display = false,
+            )
+
+        every { memberRepository.findById(1L) } returns Optional.of(admin)
+        every { postRepository.findByDisplayFalseOrderByIdDesc() } returns listOf(hiddenPost)
+        every { commentRepository.countByPostIdAndDisplayTrue(10L) } returns 2
+        every { postRecommendRepository.countByPostIdAndDisplayTrue(10L) } returns 5
+
+        val hiddenPosts = postService.listHiddenPosts(actorMemberId = 1L)
+
+        assertEquals(1, hiddenPosts.size)
+        assertEquals(hiddenPost, hiddenPosts.single().post)
+        assertEquals(2, hiddenPosts.single().commentCount)
+        assertEquals(5, hiddenPosts.single().recommendCount)
+    }
+
+    @Test
+    fun `일반 사용자는 숨김 게시글 목록을 조회할 수 없다`() {
+        val user =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+
+        every { memberRepository.findById(1L) } returns Optional.of(user)
+
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                postService.listHiddenPosts(actorMemberId = 1L)
+            }
+
+        assertEquals("숨김 게시글 목록은 관리자만 조회할 수 있습니다.", exception.message)
+        verify(exactly = 0) { postRepository.findByDisplayFalseOrderByIdDesc() }
+    }
+
+    @Test
     fun `게시글 댓글을 저장한다`() {
         val author =
             Member(

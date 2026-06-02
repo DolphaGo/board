@@ -513,4 +513,54 @@ class PostControllerTest {
         )
         verify(exactly = 1) { postService.listPosts() }
     }
+
+    @Test
+    fun `숨김 게시글 목록 조회는 관리자 식별자를 서비스에 전달하고 게시판 메타를 반환한다`() {
+        val author =
+            Member(
+                id = 2L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val hiddenPost =
+            Post(
+                id = 10L,
+                member = author,
+                title = "숨김 게시글",
+                content = "관리자가 복구할 대상을 찾는다",
+                viewCount = 3,
+                display = false,
+            )
+        every { postService.listHiddenPosts(actorMemberId = 1L) } returns
+            listOf(
+                PostListItem(
+                    post = hiddenPost,
+                    commentCount = 2,
+                    recommendCount = 5,
+                ),
+            )
+
+        val response = controller.listHiddenPosts(actorMemberId = 1L)
+
+        assertEquals(
+            listOf(
+                PostListItemResponse(
+                    id = 10L,
+                    title = "숨김 게시글",
+                    content = "관리자가 복구할 대상을 찾는다",
+                    imageUrls = emptyList(),
+                    viewCount = 3,
+                    display = false,
+                    notice = false,
+                    authorNickname = "writer",
+                    createdAt = hiddenPost.createDate,
+                    commentCount = 2,
+                    recommendCount = 5,
+                ),
+            ),
+            response.body,
+        )
+        verify(exactly = 1) { postService.listHiddenPosts(actorMemberId = 1L) }
+    }
 }

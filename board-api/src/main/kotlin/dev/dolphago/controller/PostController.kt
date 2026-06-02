@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDateTime
 
@@ -23,6 +24,15 @@ class PostController(
     @GetMapping
     fun listPosts(): ResponseEntity<List<PostListItemResponse>> =
         ResponseEntity.ok(postService.listPosts().map { it.toListItemResponse() })
+
+    @GetMapping("/hidden")
+    fun listHiddenPosts(
+        @RequestParam actorMemberId: Long,
+    ): ResponseEntity<List<PostListItemResponse>> {
+        // 숨김 목록은 복구 대상을 찾기 위한 관리자 전용 읽기 API다.
+        // 권한 검사는 서비스에 두고, 컨트롤러는 같은 목록 DTO로 변환만 한다.
+        return ResponseEntity.ok(postService.listHiddenPosts(actorMemberId).map { it.toListItemResponse() })
+    }
 
     @GetMapping("/{id}")
     fun getPost(

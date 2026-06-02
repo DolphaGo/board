@@ -53,6 +53,29 @@ class PostService(
         }
     }
 
+    fun listHiddenPosts(actorMemberId: Long): List<PostListItem> {
+        val actor =
+            memberRepository.findById(actorMemberId).orElseThrow {
+                IllegalArgumentException("사용자를 찾을 수 없습니다: $actorMemberId")
+            }
+
+        if (actor.role != Authority.ROLE_ADMIN) {
+            // 숨김 목록은 운영자가 복구 대상을 찾기 위한 관리 데이터다.
+            // 일반 사용자 목록과 분리해서 관리자 권한이 있을 때만 원본 숨김 글을 노출한다.
+            throw IllegalArgumentException("숨김 게시글 목록은 관리자만 조회할 수 있습니다.")
+        }
+
+        return postRepository.findByDisplayFalseOrderByIdDesc().map { post ->
+            PostListItem(
+                post = post,
+                // 숨김 글의 관리 목록에서도 댓글/추천 수는 실제 노출 중인 보조 데이터 기준으로 보여준다.
+                // 이렇게 해야 복구했을 때 사용자 목록의 메타 수치와 같은 기준을 유지한다.
+                commentCount = post.id?.let(commentRepository::countByPostIdAndDisplayTrue) ?: 0,
+                recommendCount = post.id?.let(postRecommendRepository::countByPostIdAndDisplayTrue) ?: 0,
+            )
+        }
+    }
+
     fun listComments(postId: Long): List<Comment> {
         // 댓글 목록은 상세 화면의 보조 데이터이므로 게시글 조회수에 영향을 주지 않는다.
         // 삭제/숨김 처리된 댓글은 display=false로 남기고, 사용자 화면에는 노출 댓글만 오래된 순으로 보여준다.
