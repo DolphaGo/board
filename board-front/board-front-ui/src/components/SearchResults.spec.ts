@@ -166,6 +166,64 @@ describe('# Search results component', () => {
     )
   })
 
+  it('should summarize applied scoring signals by category', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: 'Elasticsearch score를 게시판 검색에 반영한다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [
+          {
+            field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
+            boost: 3,
+            keyword: 'kotlin',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+          {
+            field: 'content',
+            category: 'BM25_TEXT',
+            label: '본문 원문',
+            boost: 1,
+            keyword: 'kotlin',
+            description: '본문 원문 match는 제목보다 넓은 recall을 담당한다.',
+            applied: true,
+          },
+          {
+            field: 'titleSyllables',
+            category: 'SYLLABLE_RECALL',
+            label: '제목 음절',
+            boost: 1.5,
+            keyword: 'ㅋㅗㅌㅡㄹㅣㄴ',
+            description: '음절 분해 제목 필드는 한글 부분 기억과 오타성 검색을 보조한다.',
+            applied: false,
+          },
+          {
+            field: 'notice',
+            category: 'FUNCTION_SCORE',
+            label: '공지 가산점',
+            boost: 2,
+            keyword: 'notice=true',
+            description: '공지글은 function_score sum 모드로 관련도 점수에 작은 운영 가산점을 더한다.',
+            applied: true,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="scoring-category-summary"]').text()).toBe(
+      '카테고리: BM25_TEXT 2개 · FUNCTION_SCORE 1개'
+    )
+  })
+
   it('should clear failed search state when keyword becomes empty', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 

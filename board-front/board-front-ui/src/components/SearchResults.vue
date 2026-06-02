@@ -26,6 +26,13 @@
           >
             {{ scoringSummary(result) }}
           </p>
+          <p
+            v-if="result.scoringSignals.length > 0"
+            class="scoring-category-summary"
+            data-testid="scoring-category-summary"
+          >
+            {{ scoringCategorySummary(result) }}
+          </p>
           <ul v-if="result.scoringSignals.length > 0" class="scoring-signal-list">
             <li v-for="signal in result.scoringSignals" :key="`${result.postId}:${signal.field}`">
               <span class="signal-category">{{ signal.category }}</span>
@@ -82,6 +89,23 @@ const scoringSummary = (result: PostSearchResult): string => {
   return `적용 신호 ${appliedSignals.length}/${result.scoringSignals.length}개: ${
     appliedSignalLabels.length > 0 ? appliedSignalLabels.join(', ') : '없음'
   }`
+}
+
+const scoringCategorySummary = (result: PostSearchResult): string => {
+  const appliedCategoryCounts = result.scoringSignals
+    .filter(signal => signal.applied)
+    .reduce<Record<string, number>>((counts, signal) => {
+      counts[signal.category] = (counts[signal.category] ?? 0) + 1
+
+      return counts
+    }, {})
+  const summary = Object.entries(appliedCategoryCounts)
+    .map(([category, count]) => `${category} ${count}개`)
+    .join(' · ')
+
+  // category는 BM25 원문 점수, 음절/초성 recall, function_score 같은 큰 학습 단위다.
+  // 같은 적용 신호라도 어느 계열의 검색 전략이 먹혔는지 묶어 보면 점수 튜닝 방향을 잡기 쉽다.
+  return `카테고리: ${summary.length > 0 ? summary : '없음'}`
 }
 
 // scoringSignals는 Elasticsearch explain API의 원문이 아니라, 우리가 구성한 query plan을 학습용으로 풀어낸 값이다.
@@ -197,6 +221,12 @@ watch(
   color: #333333;
   font-size: 12px;
   font-weight: 700;
+}
+
+.scoring-category-summary {
+  margin: 4px 0 0;
+  color: #555555;
+  font-size: 12px;
 }
 
 .scoring-signal-list {
