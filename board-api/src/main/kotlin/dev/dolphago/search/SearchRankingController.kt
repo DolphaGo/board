@@ -32,6 +32,20 @@ class SearchRankingController(
         return ResponseEntity.ok(searchRankingService.getTopKeywords(limit))
     }
 
+    @GetMapping("/suggestions")
+    fun suggestKeywords(
+        @RequestParam keyword: String,
+        @RequestParam(defaultValue = "5") limit: Long = 5,
+    ): ResponseEntity<List<SearchRankingItem>> {
+        if (keyword.isBlank() || limit < 1) {
+            return ResponseEntity.badRequest().build()
+        }
+
+        // 추천어는 사용자가 검색창에 입력 중인 prefix를 기반으로 랭킹 데이터를 좁힌 결과다.
+        // 컨트롤러는 HTTP 파라미터 검증만 하고, 정규화와 ZSET 필터링은 서비스에 맡긴다.
+        return ResponseEntity.ok(searchRankingService.suggest(rawKeyword = keyword, limit = limit))
+    }
+
     @PostMapping
     fun recordKeyword(
         @RequestBody request: SearchKeywordRecordRequest,

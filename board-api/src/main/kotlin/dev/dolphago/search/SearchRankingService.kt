@@ -37,6 +37,35 @@ class SearchRankingService(
             }
     }
 
+    fun suggest(
+        rawKeyword: String,
+        limit: Long,
+    ): List<SearchRankingItem> {
+        require(limit > 0) { "추천 개수는 1 이상이어야 합니다." }
+
+        val prefix = SearchKeyword.from(rawKeyword).value
+
+        return redisTemplate
+            .opsForZSet()
+            // 학습용 첫 구현은 랭킹 ZSET을 점수순으로 읽고 prefix를 프론트처럼 필터링한다.
+            // 운영 서비스라면 검색어 자동완성용 trie, edge-ngram index, Redis lex index를 별도로 두는 편이 낫다.
+            .reverseRangeWithScores(RANKING_KEY, 0, -1)
+            .orEmpty()
+            .asSequence()
+            .mapNotNull { tuple ->
+                val keyword = tuple.value ?: return@mapNotNull null
+                if (!keyword.startsWith(prefix)) {
+                    return@mapNotNull null
+                }
+                SearchRankingItem(
+                    keyword = keyword,
+                    score = tuple.score?.toLong() ?: 0L,
+                )
+            }
+            .take(limit.toInt())
+            .toList()
+    }
+
     companion object {
         const val RANKING_KEY = "board:search:keyword-ranking"
     }

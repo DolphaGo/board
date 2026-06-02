@@ -37,6 +37,33 @@ describe('# Search ranking service', function () {
     })
   })
 
+  it('should request search keyword suggestions with keyword and limit', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        { keyword: 'kotlin spring', score: 7 },
+      ],
+    })
+
+    const suggestions = await searchRankingService.suggestKeywords('kotlin', 5)
+
+    expect(mockedAxios.get).toBeCalledWith('/api/search/rankings/suggestions', {
+      params: {
+        keyword: 'kotlin',
+        limit: 5,
+      },
+    })
+    expect(suggestions).toEqual([
+      { keyword: 'kotlin spring', score: 7 },
+    ])
+  })
+
+  it('should ignore blank search keyword suggestions', async function () {
+    const suggestions = await searchRankingService.suggestKeywords('   ')
+
+    expect(mockedAxios.get).not.toBeCalled()
+    expect(suggestions).toEqual([])
+  })
+
   it('should reject malformed ranking responses', async function () {
     mockedAxios.get.mockResolvedValue({
       data: '<html>vite fallback</html>',

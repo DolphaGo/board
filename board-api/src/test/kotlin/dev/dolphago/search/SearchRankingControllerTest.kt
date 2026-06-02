@@ -39,6 +39,33 @@ class SearchRankingControllerTest {
     }
 
     @Test
+    fun `검색어 추천은 키워드와 개수를 랭킹 서비스에 전달한다`() {
+        val suggestions = listOf(SearchRankingItem(keyword = "kotlin spring", score = 7))
+        every { searchRankingService.suggest(rawKeyword = "Kotlin", limit = 3) } returns suggestions
+
+        val response = controller.suggestKeywords(keyword = "Kotlin", limit = 3)
+
+        assertEquals(suggestions, response.body)
+        verify(exactly = 1) { searchRankingService.suggest(rawKeyword = "Kotlin", limit = 3) }
+    }
+
+    @Test
+    fun `검색어 추천 키워드가 비어 있으면 400을 반환한다`() {
+        val response = controller.suggestKeywords(keyword = "   ", limit = 3)
+
+        assertEquals(400, response.statusCode.value())
+        verify(exactly = 0) { searchRankingService.suggest(any(), any()) }
+    }
+
+    @Test
+    fun `검색어 추천 개수가 1보다 작으면 400을 반환한다`() {
+        val response = controller.suggestKeywords(keyword = "kotlin", limit = 0)
+
+        assertEquals(400, response.statusCode.value())
+        verify(exactly = 0) { searchRankingService.suggest(any(), any()) }
+    }
+
+    @Test
     fun `검색어 기록 요청은 검색어를 랭킹 서비스에 전달한다`() {
         every { searchRankingService.record("Kotlin Spring") } returns Unit
 

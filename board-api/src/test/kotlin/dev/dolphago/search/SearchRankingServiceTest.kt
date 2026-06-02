@@ -51,4 +51,29 @@ class SearchRankingServiceTest {
             result,
         )
     }
+
+    @Test
+    fun `검색어 추천은 정규화된 입력으로 시작하는 인기 검색어만 반환한다`() {
+        val first = mockk<ZSetOperations.TypedTuple<String>>()
+        val second = mockk<ZSetOperations.TypedTuple<String>>()
+        val third = mockk<ZSetOperations.TypedTuple<String>>()
+
+        every { first.value } returns "kotlin spring"
+        every { first.score } returns 7.0
+        every { second.value } returns "kotlin elasticsearch"
+        every { second.score } returns 5.0
+        every { third.value } returns "spring boot"
+        every { third.score } returns 4.0
+        every { redisTemplate.opsForZSet() } returns zSetOperations
+        every {
+            zSetOperations.reverseRangeWithScores(SearchRankingService.RANKING_KEY, 0, -1)
+        } returns linkedSetOf(first, second, third)
+
+        val result = searchRankingService.suggest(rawKeyword = "  Kotlin  ", limit = 1)
+
+        assertEquals(listOf(SearchRankingItem(keyword = "kotlin spring", score = 7)), result)
+        verify(exactly = 1) {
+            zSetOperations.reverseRangeWithScores(SearchRankingService.RANKING_KEY, 0, -1)
+        }
+    }
 }
