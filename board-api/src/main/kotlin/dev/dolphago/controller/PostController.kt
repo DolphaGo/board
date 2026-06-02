@@ -25,6 +25,13 @@ class PostController(
     fun listPosts(): ResponseEntity<List<PostListItemResponse>> =
         ResponseEntity.ok(postService.listPosts().map { it.toListItemResponse() })
 
+    @GetMapping("/notices")
+    fun listNoticePosts(): ResponseEntity<List<PostListItemResponse>> {
+        // 공지사항 탭은 일반 목록 API를 프론트에서 필터링하지 않고 별도 읽기 계약으로 제공한다.
+        // 이렇게 두면 공지 전용 캐시/페이징/고정 정책을 나중에 붙일 때 화면 계약을 바꾸지 않아도 된다.
+        return ResponseEntity.ok(postService.listNoticePosts().map { it.toListItemResponse() })
+    }
+
     @GetMapping("/hidden")
     fun listHiddenPosts(
         @RequestParam actorMemberId: Long,

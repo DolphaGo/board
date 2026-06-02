@@ -53,6 +53,20 @@ class PostService(
         }
     }
 
+    fun listNoticePosts(): List<PostListItem> {
+        // 공지사항 탭은 일반 목록과 달리 notice=true인 운영 글만 보여준다.
+        // display=true 조건을 Repository 메서드 이름에 같이 둬서 숨김 처리된 공지가 사용자 화면에 새지 않게 한다.
+        return postRepository.findByDisplayTrueAndNoticeTrueOrderByIdDesc().map { post ->
+            PostListItem(
+                post = post,
+                // 공지 화면에서도 목록과 같은 메타 기준을 쓴다.
+                // 댓글/추천 수 기준이 다르면 같은 게시글이 화면마다 다른 수치를 보여 학습용 예제가 헷갈린다.
+                commentCount = post.id?.let(commentRepository::countByPostIdAndDisplayTrue) ?: 0,
+                recommendCount = post.id?.let(postRecommendRepository::countByPostIdAndDisplayTrue) ?: 0,
+            )
+        }
+    }
+
     fun listHiddenPosts(actorMemberId: Long): List<PostListItem> {
         val actor =
             memberRepository.findById(actorMemberId).orElseThrow {

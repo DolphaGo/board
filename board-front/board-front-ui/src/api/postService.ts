@@ -130,10 +130,10 @@ export const postService = {
   },
 
   listNoticePosts: async (): Promise<PostListItemResponse[]> => {
-    const response = await axios.get<PostListItemResponse[]>('/api/posts')
+    const response = await axios.get<PostListItemResponse[]>('/api/posts/notices')
 
-    // 공지 모아보기는 현재 목록 API의 notice 플래그를 재사용한다.
-    // 별도 API가 생기기 전까지 같은 DTO 계약을 검증해 화면이 깨진 데이터를 렌더링하지 않게 한다.
+    // 공지 모아보기는 별도 API를 사용하지만 응답 DTO는 일반 목록과 같다.
+    // 같은 DTO 계약을 검증해 화면이 깨진 데이터를 렌더링하지 않게 한다.
     if (!Array.isArray(response.data) || !response.data.every(isPostListItemResponse)) {
       throw new Error('Invalid notice post list response')
     }

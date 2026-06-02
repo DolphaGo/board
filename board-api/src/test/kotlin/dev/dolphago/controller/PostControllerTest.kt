@@ -515,6 +515,57 @@ class PostControllerTest {
     }
 
     @Test
+    fun `공지 목록 조회는 공지 게시글 메타 응답 DTO를 반환한다`() {
+        val admin =
+            Member(
+                id = 1L,
+                email = "admin@example.com",
+                nickname = "admin",
+                role = Authority.ROLE_ADMIN,
+            )
+        val notice =
+            Post(
+                id = 20L,
+                member = admin,
+                title = "검색 색인 점검 공지",
+                content = "ES 재색인 시간에는 검색 결과가 늦게 반영될 수 있다",
+                viewCount = 7,
+                display = true,
+                notice = true,
+            )
+        every { postService.listNoticePosts() } returns
+            listOf(
+                PostListItem(
+                    post = notice,
+                    commentCount = 3,
+                    recommendCount = 4,
+                ),
+            )
+
+        val response = controller.listNoticePosts()
+
+        assertEquals(
+            listOf(
+                PostListItemResponse(
+                    id = 20L,
+                    title = "검색 색인 점검 공지",
+                    content = "ES 재색인 시간에는 검색 결과가 늦게 반영될 수 있다",
+                    imageUrls = emptyList(),
+                    viewCount = 7,
+                    display = true,
+                    notice = true,
+                    authorNickname = "admin",
+                    createdAt = notice.createDate,
+                    commentCount = 3,
+                    recommendCount = 4,
+                ),
+            ),
+            response.body,
+        )
+        verify(exactly = 1) { postService.listNoticePosts() }
+    }
+
+    @Test
     fun `숨김 게시글 목록 조회는 관리자 식별자를 서비스에 전달하고 게시판 메타를 반환한다`() {
         val author =
             Member(

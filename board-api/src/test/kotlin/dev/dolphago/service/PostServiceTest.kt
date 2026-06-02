@@ -582,4 +582,38 @@ class PostServiceTest {
         verify(exactly = 1) { postRecommendRepository.countByPostIdAndDisplayTrue(9L) }
         verify(exactly = 1) { postRecommendRepository.countByPostIdAndDisplayTrue(10L) }
     }
+
+    @Test
+    fun `공지 목록 조회는 노출 중인 공지만 최신순으로 읽는다`() {
+        val admin =
+            Member(
+                id = 1L,
+                email = "admin@example.com",
+                nickname = "admin",
+                role = Authority.ROLE_ADMIN,
+            )
+        val notice =
+            Post(
+                id = 20L,
+                member = admin,
+                title = "검색 색인 점검 공지",
+                content = "ES 재색인 시간에는 검색 결과가 늦게 반영될 수 있다",
+                viewCount = 7,
+                display = true,
+                notice = true,
+            )
+
+        every { postRepository.findByDisplayTrueAndNoticeTrueOrderByIdDesc() } returns listOf(notice)
+        every { commentRepository.countByPostIdAndDisplayTrue(20L) } returns 3L
+        every { postRecommendRepository.countByPostIdAndDisplayTrue(20L) } returns 4L
+
+        val posts = postService.listNoticePosts()
+
+        assertEquals(listOf(notice), posts.map { it.post })
+        assertEquals(3L, posts.single().commentCount)
+        assertEquals(4L, posts.single().recommendCount)
+        verify(exactly = 1) { postRepository.findByDisplayTrueAndNoticeTrueOrderByIdDesc() }
+        verify(exactly = 1) { commentRepository.countByPostIdAndDisplayTrue(20L) }
+        verify(exactly = 1) { postRecommendRepository.countByPostIdAndDisplayTrue(20L) }
+    }
 }

@@ -139,7 +139,7 @@ describe('# Post service', function () {
 
     const posts = await postService.listNoticePosts()
 
-    expect(mockedAxios.get).toBeCalledWith('/api/posts')
+    expect(mockedAxios.get).toBeCalledWith('/api/posts/notices')
     expect(posts).toHaveLength(1)
     expect(posts[0].title).toBe('점검 공지')
     expect(posts[0].notice).toBe(true)
