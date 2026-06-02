@@ -97,6 +97,21 @@ describe('# Header component', () => {
     expect(noticesLink.text()).toBe('공지사항')
   })
 
+  it('should expose an admin notice writing link', () => {
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    const noticeWriteLink = wrapper.find('[data-to="/post/edit?role=admin"]')
+
+    expect(noticeWriteLink.exists()).toBe(true)
+    expect(noticeWriteLink.text()).toBe('공지 작성')
+  })
+
   it('should render ranked keyword suggestions while typing in the search input', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
       { keyword: 'kotlin spring', score: 7 },

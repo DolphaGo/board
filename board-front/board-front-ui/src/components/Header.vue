@@ -55,6 +55,9 @@
       <router-link to="/" data-nav="posts">Posts</router-link>
       <router-link to="/notices">공지사항</router-link>
       <router-link to="/post/edit">글쓰기</router-link>
+      <!-- 로그인/세션을 붙이기 전 학습 단계에서는 role=admin query로 공지 작성 UI를 직접 열어 본다.
+           실제 권한은 백엔드가 member authority로 다시 검사하므로 이 링크는 관리자 흐름 학습용 진입점이다. -->
+      <router-link to="/post/edit?role=admin">공지 작성</router-link>
       <router-link to="/chat/rooms">Chat</router-link>
       <router-link to="/admin/hidden-posts">숨김 관리</router-link>
     </nav>
