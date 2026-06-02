@@ -66,6 +66,7 @@ describe('# Post editor component', () => {
         '![첨부 이미지 1](https://cdn.example.com/first.png)\n' +
         '![첨부 이미지 2](https://cdn.example.com/second.png)\n',
       imageUrls: ['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'],
+      actorRole: 'user',
     })
     expect(push).toBeCalledWith('/post/77')
   })
@@ -105,6 +106,7 @@ describe('# Post editor component', () => {
         '본문과 이미지 URL을 함께 저장한다\n' +
         '![첨부 이미지 1](https://cdn.example.com/second.png)\n',
       imageUrls: ['https://cdn.example.com/second.png'],
+      actorRole: 'user',
     })
     expect(push).toBeCalledWith('/post/78')
   })
@@ -147,6 +149,7 @@ describe('# Post editor component', () => {
         '![첨부 이미지 1](https://cdn.example.com/second.png)\n' +
         '![첨부 이미지 2](https://cdn.example.com/first.png)\n',
       imageUrls: ['https://cdn.example.com/second.png', 'https://cdn.example.com/first.png'],
+      actorRole: 'user',
     })
     expect(push).toBeCalledWith('/post/79')
   })
@@ -184,6 +187,7 @@ describe('# Post editor component', () => {
         '본문에서 첫 이미지를 직접 지웠다\n' +
         '![첨부 이미지 1](https://cdn.example.com/second.png)\n',
       imageUrls: ['https://cdn.example.com/second.png'],
+      actorRole: 'user',
     })
     expect(push).toBeCalledWith('/post/80')
   })
@@ -378,6 +382,7 @@ describe('# Post editor component', () => {
       title: '붙여넣기 이미지',
       content: '본문\n![첨부 이미지 1](/api/images/stored.png)\n',
       imageUrls: ['/api/images/stored.png'],
+      actorRole: 'user',
     })
     expect(push).toBeCalledWith('/post/88')
   })
@@ -485,6 +490,7 @@ describe('# Post editor component', () => {
       content: '운영 공지',
       imageUrls: [],
       notice: true,
+      actorRole: 'admin',
     })
     expect(push).toBeCalledWith('/post/99')
   })
@@ -516,6 +522,7 @@ describe('# Post editor component', () => {
       title: '일반 글',
       content: '공지 아님',
       imageUrls: [],
+      actorRole: 'user',
     })
   })
 
@@ -547,6 +554,7 @@ describe('# Post editor component', () => {
       title: '라우트 권한 변경',
       content: '쿼리가 user로 바뀌면 일반 글로 저장한다',
       imageUrls: [],
+      actorRole: 'user',
     })
   })
 

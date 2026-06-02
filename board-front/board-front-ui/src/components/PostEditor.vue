@@ -471,6 +471,7 @@ const submit = async () => {
       content: imagePayload.content,
       imageUrls: imagePayload.imageUrls,
       notice: isAdminEditor.value ? notice.value : false,
+      actorRole: selectedAuthorRole.value,
       createPost: postService.createPost,
       moveToPostDetail: postId => {
         router.push(`/post/${postId}`);

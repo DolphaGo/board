@@ -1,12 +1,19 @@
 import axios from 'axios'
 
-const STUDY_MEMBER_ID = 1
+export type StudyActorRole = 'user' | 'admin'
+
+const STUDY_ADMIN_MEMBER_ID = 1
+const STUDY_USER_MEMBER_ID = 2
+
+const studyMemberIdOf = (actorRole: StudyActorRole = 'user'): number =>
+  actorRole === 'admin' ? STUDY_ADMIN_MEMBER_ID : STUDY_USER_MEMBER_ID
 
 export interface CreatePostPayload {
   title: string
   content: string
   imageUrls?: string[]
   notice?: boolean
+  actorRole?: StudyActorRole
 }
 
 export interface CreateCommentPayload {
@@ -156,7 +163,7 @@ export const postService = {
       params: {
         // 숨김 목록은 운영자만 봐야 하는 데이터라 백엔드 권한 검사용 actorMemberId를 함께 보낸다.
         // 로그인 세션을 배우기 전 단계에서는 학습용 관리자 계정 id를 고정값으로 사용한다.
-        actorMemberId: STUDY_MEMBER_ID,
+        actorMemberId: STUDY_ADMIN_MEMBER_ID,
       },
     })
 
@@ -186,8 +193,9 @@ export const postService = {
   createPost: async (payload: CreatePostPayload): Promise<PostResponse> => {
     const response = await axios.post<PostResponse>('/api/posts', {
       // 공부용 MVP라 로그인 기능과 연결하기 전까지는 고정 학습 계정으로 요청한다.
+      // 일반/관리자 역할을 다른 memberId로 보내야 백엔드 Authority 검사를 실제로 학습할 수 있다.
       // 이후 Kakao 로그인과 회원 세션이 붙으면 이 값은 로그인 사용자 id로 교체한다.
-      memberId: STUDY_MEMBER_ID,
+      memberId: studyMemberIdOf(payload.actorRole),
       title: payload.title,
       content: payload.content,
       // 글쓰기 화면은 이미지 파일 업로드가 붙기 전에도 URL 배열을 보낼 수 있다.
@@ -209,7 +217,7 @@ export const postService = {
     const response = await axios.post<CommentResponse>(`/api/posts/${postId}/comments`, {
       // 댓글 작성도 로그인 연동 전까지는 학습 계정으로 요청한다.
       // 백엔드는 memberId로 작성자를 찾으므로 UI에서 같은 고정 계정을 사용한다.
-      memberId: STUDY_MEMBER_ID,
+      memberId: STUDY_USER_MEMBER_ID,
       content: payload.content,
     })
 
@@ -223,7 +231,7 @@ export const postService = {
   createRecommend: async (postId: number): Promise<PostRecommendResponse> => {
     const response = await axios.post<PostRecommendResponse>(`/api/posts/${postId}/recommends`, {
       // 추천 역시 아직 로그인 세션이 없으므로 학습 계정 id를 함께 보낸다.
-      memberId: STUDY_MEMBER_ID,
+      memberId: STUDY_USER_MEMBER_ID,
     })
 
     if (!isPostRecommendResponse(response.data)) {
@@ -237,7 +245,7 @@ export const postService = {
     const response = await axios.patch<PostResponse>(`/api/posts/${postId}/hide`, {
       // 숨김은 관리자 행위라 백엔드 DTO 이름에 맞춰 actorMemberId로 보낸다.
       // 지금은 학습용 관리자 계정 id를 쓰고, 로그인 세션이 붙으면 현재 관리자 id로 교체한다.
-      actorMemberId: STUDY_MEMBER_ID,
+      actorMemberId: STUDY_ADMIN_MEMBER_ID,
     })
 
     if (!isPostResponse(response.data)) {
@@ -251,7 +259,7 @@ export const postService = {
     const response = await axios.patch<PostResponse>(`/api/posts/${postId}/restore`, {
       // 복구도 숨김과 같은 관리자 운영 액션이다.
       // 로그인 전 샘플 UI에서는 같은 학습용 관리자 id로 백엔드 권한 검사를 통과시킨다.
-      actorMemberId: STUDY_MEMBER_ID,
+      actorMemberId: STUDY_ADMIN_MEMBER_ID,
     })
 
     if (!isPostResponse(response.data)) {

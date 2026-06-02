@@ -23,6 +23,7 @@ describe('# Post editor submit', () => {
       title: '코프링 게시글',
       content: '작성 후 상세 화면으로 이동한다',
       imageUrls: ['https://cdn.example.com/first.png'],
+      actorRole: 'user',
     })
     expect(moveToPostDetail).toBeCalledWith(77)
     expect(message).toBe('게시글 #77 저장 완료')
@@ -43,6 +44,7 @@ describe('# Post editor submit', () => {
       title: '공지',
       content: '관리자 공지',
       notice: true,
+      actorRole: 'admin',
       createPost,
       moveToPostDetail: jest.fn(),
     })
@@ -52,6 +54,7 @@ describe('# Post editor submit', () => {
       content: '관리자 공지',
       imageUrls: [],
       notice: true,
+      actorRole: 'admin',
     })
   })
 })

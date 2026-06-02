@@ -1,10 +1,11 @@
-import type { CreatePostPayload, PostResponse } from 'src/api/postService'
+import type { CreatePostPayload, PostResponse, StudyActorRole } from 'src/api/postService'
 
 interface SubmitPostEditorFormOptions {
   title: string
   content: string
   imageUrls?: string[]
   notice?: boolean
+  actorRole?: StudyActorRole
   createPost: (payload: CreatePostPayload) => Promise<PostResponse>
   moveToPostDetail: (postId: number) => void
 }
@@ -14,6 +15,7 @@ export const submitPostEditorForm = async ({
   content,
   imageUrls = [],
   notice = false,
+  actorRole = 'user',
   createPost,
   moveToPostDetail,
 }: SubmitPostEditorFormOptions): Promise<string> => {
@@ -21,6 +23,7 @@ export const submitPostEditorForm = async ({
     title,
     content,
     imageUrls,
+    actorRole,
   }
 
   if (notice) {

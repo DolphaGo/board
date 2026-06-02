@@ -214,7 +214,7 @@ describe('# Post service', function () {
     expect(posts[0].title).toBe('숨김 게시글')
   })
 
-  it('should create a post with the study member id', async function () {
+  it('should create a post with the study user member id by default', async function () {
     mockedAxios.post.mockResolvedValue({
       data: {
         id: 10,
@@ -234,7 +234,7 @@ describe('# Post service', function () {
     })
 
     expect(mockedAxios.post).toBeCalledWith('/api/posts', {
-      memberId: 1,
+      memberId: 2,
       title: '코프링 게시글',
       content: 'Elasticsearch 색인까지 연결한다',
       imageUrls: ['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'],
@@ -244,12 +244,41 @@ describe('# Post service', function () {
     expect(post.imageUrls).toEqual(['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'])
   })
 
-  it('should create a comment with the study member id', async function () {
+  it('should create an admin notice post with the study admin member id', async function () {
+    mockedAxios.post.mockResolvedValue({
+      data: {
+        id: 11,
+        title: '점검 공지',
+        content: '관리자가 공지를 작성한다',
+        imageUrls: [],
+        viewCount: 0,
+        display: true,
+        notice: true,
+      },
+    })
+
+    await postService.createPost({
+      title: '점검 공지',
+      content: '관리자가 공지를 작성한다',
+      notice: true,
+      actorRole: 'admin',
+    })
+
+    expect(mockedAxios.post).toBeCalledWith('/api/posts', {
+      memberId: 1,
+      title: '점검 공지',
+      content: '관리자가 공지를 작성한다',
+      imageUrls: [],
+      notice: true,
+    })
+  })
+
+  it('should create a comment with the study user member id', async function () {
     mockedAxios.post.mockResolvedValue({
       data: {
         id: 20,
         postId: 10,
-        memberId: 1,
+        memberId: 2,
         authorNickname: 'writer',
         content: '검색 스코어링 설명이 좋아요',
         display: true,
@@ -262,7 +291,7 @@ describe('# Post service', function () {
     })
 
     expect(mockedAxios.post).toBeCalledWith('/api/posts/10/comments', {
-      memberId: 1,
+      memberId: 2,
       content: '검색 스코어링 설명이 좋아요',
     })
     expect(comment.id).toBe(20)
@@ -291,12 +320,12 @@ describe('# Post service', function () {
     expect(comments[0].content).toBe('첫 댓글')
   })
 
-  it('should create a recommendation with the study member id', async function () {
+  it('should create a recommendation with the study user member id', async function () {
     mockedAxios.post.mockResolvedValue({
       data: {
         id: 30,
         postId: 10,
-        memberId: 1,
+        memberId: 2,
         display: true,
         createdAt: '2026-06-02T04:12:00',
       },
@@ -305,7 +334,7 @@ describe('# Post service', function () {
     const recommend = await postService.createRecommend(10)
 
     expect(mockedAxios.post).toBeCalledWith('/api/posts/10/recommends', {
-      memberId: 1,
+      memberId: 2,
     })
     expect(recommend.id).toBe(30)
     expect(recommend.display).toBe(true)
