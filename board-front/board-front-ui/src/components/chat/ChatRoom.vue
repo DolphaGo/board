@@ -7,6 +7,9 @@
     
     <div class="chat-main">
       <p v-if="connectionFeedback" class="connection-feedback" role="status">
+        <span class="connection-feedback-kind" data-testid="connection-feedback-kind">
+          {{ connectionFeedbackKind }}
+        </span>
         {{ connectionFeedback }}
       </p>
       <div class="video-container" v-if="isVideoEnabled">
@@ -87,6 +90,7 @@ export default defineComponent({
     const messages = ref<ChatMessage[]>([])
     const newMessage = ref('')
     const connectionFeedback = ref('')
+    const connectionFeedbackKind = ref('')
     const messageContainer = ref<HTMLElement | null>(null)
     let isUnmounted = false
     let hasLeftRoom = false
@@ -111,6 +115,7 @@ export default defineComponent({
 
       stompClient.value.onConnect = () => {
         connectionFeedback.value = ''
+        connectionFeedbackKind.value = ''
         stompClient.value?.subscribe(`/topic/chat/${props.roomId}`, (message) => {
           const chatMessage = parseIncomingMessage(message.body)
           if (!chatMessage) {
@@ -128,6 +133,7 @@ export default defineComponent({
       stompClient.value.onStompError = () => {
         // WebSocket/STOMP는 HTTP 요청처럼 버튼 클릭 하나에 바로 실패가 보이지 않는다.
         // broker 오류를 화면 상태로 바꿔두면 사용자가 "전송이 안 되는 이유"를 빠르게 알 수 있다.
+        connectionFeedbackKind.value = '연결 문제'
         connectionFeedback.value = '채팅 서버 연결에 문제가 생겼습니다. 새로고침하거나 잠시 후 다시 시도해주세요.'
       }
 
@@ -201,6 +207,7 @@ export default defineComponent({
         if (type === 'TALK') {
           // publish()가 실패했을 때 입력값까지 지우면 사용자는 같은 메시지를 다시 작성해야 한다.
           // 전송 성공을 확인한 뒤에만 입력을 비우는 구조가 채팅 UX에서는 더 안전하다.
+          connectionFeedbackKind.value = '전송 실패'
           connectionFeedback.value = '메시지 전송에 실패했습니다. 연결 상태를 확인한 뒤 다시 시도해주세요.'
         }
         return
@@ -208,6 +215,7 @@ export default defineComponent({
 
       if (type === 'TALK') {
         connectionFeedback.value = ''
+        connectionFeedbackKind.value = ''
         newMessage.value = ''
       }
     }
@@ -361,6 +369,7 @@ export default defineComponent({
       messages,
       newMessage,
       connectionFeedback,
+      connectionFeedbackKind,
       sendTalkMessage,
       leaveRoomAndGoToList,
       messageContainer,
@@ -427,6 +436,11 @@ export default defineComponent({
   background: #fff4f3;
   color: #9f2f28;
   font-size: 0.9rem;
+}
+
+.connection-feedback-kind {
+  margin-right: 6px;
+  font-weight: 700;
 }
 
 .video-container {

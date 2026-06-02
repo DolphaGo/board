@@ -154,8 +154,9 @@ describe('# Chat room component', () => {
     await wrapper.vm.$nextTick()
 
     expect((input.element as HTMLInputElement).value).toBe('실패해도 남아야 하는 메시지')
+    expect(wrapper.get('[data-testid="connection-feedback-kind"]').text()).toBe('전송 실패')
     expect(wrapper.get('.connection-feedback').text()).toBe(
-      '메시지 전송에 실패했습니다. 연결 상태를 확인한 뒤 다시 시도해주세요.'
+      '전송 실패 메시지 전송에 실패했습니다. 연결 상태를 확인한 뒤 다시 시도해주세요.'
     )
     expect(error).toHaveBeenCalledWith('채팅 메시지 전송 실패:', expect.any(Error))
     error.mockRestore()
@@ -275,8 +276,9 @@ describe('# Chat room component', () => {
     stompErrorHandler?.()
     await wrapper.vm.$nextTick()
 
+    expect(wrapper.get('[data-testid="connection-feedback-kind"]').text()).toBe('연결 문제')
     expect(wrapper.get('.connection-feedback').text()).toBe(
-      '채팅 서버 연결에 문제가 생겼습니다. 새로고침하거나 잠시 후 다시 시도해주세요.'
+      '연결 문제 채팅 서버 연결에 문제가 생겼습니다. 새로고침하거나 잠시 후 다시 시도해주세요.'
     )
   })
 
