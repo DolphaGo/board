@@ -72,6 +72,8 @@ describe('# Search ranking service', function () {
           score: 7,
           matchType: 'TEXT_PREFIX',
           matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+          inputToken: 'kotlin',
+          keywordToken: 'kotlin spring',
         },
       ],
     })
@@ -90,6 +92,8 @@ describe('# Search ranking service', function () {
         score: 7,
         matchType: 'TEXT_PREFIX',
         matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+        inputToken: 'kotlin',
+        keywordToken: 'kotlin spring',
       },
     ])
   })
@@ -150,7 +154,28 @@ describe('# Search ranking service', function () {
   it('should reject suggestion arrays without match description', async function () {
     mockedAxios.get.mockResolvedValue({
       data: [
-        { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
+        {
+          keyword: 'kotlin spring',
+          score: 7,
+          matchType: 'TEXT_PREFIX',
+          inputToken: 'kotlin',
+          keywordToken: 'kotlin spring',
+        },
+      ],
+    })
+
+    await expect(searchRankingService.suggestKeywords('kotlin')).rejects.toThrow('Invalid search ranking response')
+  })
+
+  it('should reject suggestion arrays without token explanations', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          keyword: 'kotlin spring',
+          score: 7,
+          matchType: 'TEXT_PREFIX',
+          matchDescription: '저장된 검색어 원문이 입력한 prefix로 시작합니다.',
+        },
       ],
     })
 

@@ -13,6 +13,8 @@ data class SearchKeywordSuggestionItem(
     val score: Long,
     val matchType: SearchKeywordSuggestionMatchType,
     val matchDescription: String,
+    val inputToken: String,
+    val keywordToken: String,
 )
 
 data class SearchSourceRankingItem(
@@ -65,6 +67,12 @@ enum class SearchRankingSource(
 class SearchRankingService(
     private val redisTemplate: StringRedisTemplate,
 ) {
+    private data class SuggestionMatch(
+        val matchType: SearchKeywordSuggestionMatchType,
+        val inputToken: String,
+        val keywordToken: String,
+    )
+
     fun record(
         rawKeyword: String,
         rawSource: String = SearchRankingSource.DIRECT.value,
@@ -136,8 +144,8 @@ class SearchRankingService(
             .asSequence()
             .mapNotNull { tuple ->
                 val keyword = tuple.value ?: return@mapNotNull null
-                val matchType =
-                    findSuggestionMatchType(
+                val match =
+                    findSuggestionMatch(
                         keyword = keyword,
                         prefix = prefix,
                         syllablePrefix = syllablePrefix,
@@ -146,8 +154,10 @@ class SearchRankingService(
                 SearchKeywordSuggestionItem(
                     keyword = keyword,
                     score = tuple.score?.toLong() ?: 0L,
-                    matchType = matchType,
-                    matchDescription = suggestionMatchDescriptionOf(matchType),
+                    matchType = match.matchType,
+                    matchDescription = suggestionMatchDescriptionOf(match.matchType),
+                    inputToken = match.inputToken,
+                    keywordToken = match.keywordToken,
                 )
             }
             .take(limit.toInt())
@@ -166,23 +176,32 @@ class SearchRankingService(
                 "저장된 검색어의 초성 토큰이 입력한 prefix로 시작합니다."
         }
 
-    private fun findSuggestionMatchType(
+    private fun findSuggestionMatch(
         keyword: String,
         prefix: String,
         syllablePrefix: String,
         initialPrefix: String,
-    ): SearchKeywordSuggestionMatchType? {
+    ): SuggestionMatch? {
         if (keyword.startsWith(prefix)) {
-            return SearchKeywordSuggestionMatchType.TEXT_PREFIX
+            return SuggestionMatch(
+                matchType = SearchKeywordSuggestionMatchType.TEXT_PREFIX,
+                inputToken = prefix,
+                keywordToken = keyword,
+            )
         }
 
         // 사용자가 "ㅋㅗ"처럼 초성+중성을 직접 입력하면 초성만 비교해서는 "코"와 "카"를 구분할 수 없다.
         // 저장된 원문 검색어도 같은 음절 토큰으로 분해한 뒤 prefix 비교하면 더 구체적인 자동완성이 가능하다.
+        val keywordSyllableToken = KoreanSyllableTokenizer.tokenizeSyllablePrefix(keyword)
         if (
             syllablePrefix.isNotBlank() &&
-            KoreanSyllableTokenizer.tokenizeSyllablePrefix(keyword).startsWith(syllablePrefix)
+            keywordSyllableToken.startsWith(syllablePrefix)
         ) {
-            return SearchKeywordSuggestionMatchType.SYLLABLE_PREFIX
+            return SuggestionMatch(
+                matchType = SearchKeywordSuggestionMatchType.SYLLABLE_PREFIX,
+                inputToken = syllablePrefix,
+                keywordToken = keywordSyllableToken,
+            )
         }
 
         if (syllablePrefix != initialPrefix) {
@@ -193,8 +212,13 @@ class SearchRankingService(
 
         // 랭킹 ZSET에는 사용자가 실제 검색한 원문을 저장한다.
         // 자동완성에서 "ㅋㅍ" 같은 초성 입력까지 지원하려면 저장된 원문을 초성 토큰으로 바꿔 같은 prefix 규칙으로 비교한다.
-        return if (KoreanSyllableTokenizer.tokenizeInitials(keyword).startsWith(initialPrefix)) {
-            SearchKeywordSuggestionMatchType.INITIAL_PREFIX
+        val keywordInitialToken = KoreanSyllableTokenizer.tokenizeInitials(keyword)
+        return if (keywordInitialToken.startsWith(initialPrefix)) {
+            SuggestionMatch(
+                matchType = SearchKeywordSuggestionMatchType.INITIAL_PREFIX,
+                inputToken = initialPrefix,
+                keywordToken = keywordInitialToken,
+            )
         } else {
             null
         }

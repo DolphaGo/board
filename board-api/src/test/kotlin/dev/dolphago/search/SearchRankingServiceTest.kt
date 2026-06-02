@@ -156,6 +156,8 @@ class SearchRankingServiceTest {
                     score = 7,
                     matchType = SearchKeywordSuggestionMatchType.TEXT_PREFIX,
                     matchDescription = "저장된 검색어 원문이 입력한 prefix로 시작합니다.",
+                    inputToken = "kotlin",
+                    keywordToken = "kotlin spring",
                 ),
             ),
             result,
@@ -191,6 +193,8 @@ class SearchRankingServiceTest {
                     score = 9,
                     matchType = SearchKeywordSuggestionMatchType.INITIAL_PREFIX,
                     matchDescription = "저장된 검색어의 초성 토큰이 입력한 prefix로 시작합니다.",
+                    inputToken = "ㅋ ㅍ",
+                    keywordToken = "ㅋ ㅍ ㄹ ㄱ ㅅ",
                 ),
             ),
             result,
@@ -220,9 +224,28 @@ class SearchRankingServiceTest {
                     score = 9,
                     matchType = SearchKeywordSuggestionMatchType.SYLLABLE_PREFIX,
                     matchDescription = "저장된 검색어를 자모로 분해한 값이 입력한 음절 prefix로 시작합니다.",
+                    inputToken = "ㅋ ㅗ",
+                    keywordToken = "ㅋ ㅗ ㅍ ㅡ ㄹ ㅣ ㅇ ㄱ ㅓ ㅁ ㅅ ㅐ ㄱ",
                 ),
             ),
             result,
         )
+    }
+
+    @Test
+    fun `검색어 추천은 입력 토큰과 저장 키워드 토큰을 함께 반환한다`() {
+        val first = mockk<ZSetOperations.TypedTuple<String>>()
+
+        every { first.value } returns "코프링 검색"
+        every { first.score } returns 9.0
+        every { redisTemplate.opsForZSet() } returns zSetOperations
+        every {
+            zSetOperations.reverseRangeWithScores(SearchRankingService.RANKING_KEY, 0, -1)
+        } returns linkedSetOf(first)
+
+        val result = searchRankingService.suggest(rawKeyword = "ㅋㅗ", limit = 5).single()
+
+        assertEquals("ㅋ ㅗ", result.inputToken)
+        assertEquals("ㅋ ㅗ ㅍ ㅡ ㄹ ㅣ ㅇ ㄱ ㅓ ㅁ ㅅ ㅐ ㄱ", result.keywordToken)
     }
 }

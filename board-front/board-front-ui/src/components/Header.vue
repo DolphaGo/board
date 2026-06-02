@@ -58,6 +58,12 @@
             <span class="suggestion-match-description" data-testid="search-suggestion-match-description">
               {{ suggestion.matchDescription }}
             </span>
+            <span class="suggestion-token" data-testid="search-suggestion-input-token">
+              입력 토큰: {{ suggestion.inputToken }}
+            </span>
+            <span class="suggestion-token" data-testid="search-suggestion-keyword-token">
+              저장 토큰: {{ suggestion.keywordToken }}
+            </span>
           </button>
         </li>
       </ul>
@@ -320,7 +326,9 @@ const submitSuggestion = async (suggestionKeyword: string) => {
 .search-suggestion {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   justify-content: space-between;
+  gap: 4px 8px;
   width: 100%;
   padding: 6px 8px;
   border: 0;
@@ -329,6 +337,14 @@ const submitSuggestion = async (suggestionKeyword: string) => {
   font-size: 13px;
   text-align: left;
   cursor: pointer;
+}
+
+.suggestion-match-description,
+.suggestion-token {
+  flex: 1 0 100%;
+  color: #666666;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .search-suggestion:hover,

@@ -17,6 +17,8 @@ export type SearchKeywordSuggestionMatchType = 'TEXT_PREFIX' | 'SYLLABLE_PREFIX'
 export interface SearchKeywordSuggestionItem extends SearchRankingItem {
   matchType: SearchKeywordSuggestionMatchType
   matchDescription: string
+  inputToken: string
+  keywordToken: string
 }
 
 const isSearchRankingItem = (data: unknown): data is SearchRankingItem => {
@@ -44,7 +46,11 @@ const isSearchKeywordSuggestionItem = (data: unknown): data is SearchKeywordSugg
   const item = data as Partial<SearchKeywordSuggestionItem>
   return isSearchKeywordSuggestionMatchType(item.matchType) &&
     typeof item.matchDescription === 'string' &&
-    item.matchDescription.trim().length > 0
+    item.matchDescription.trim().length > 0 &&
+    typeof item.inputToken === 'string' &&
+    item.inputToken.trim().length > 0 &&
+    typeof item.keywordToken === 'string' &&
+    item.keywordToken.trim().length > 0
 }
 
 const isSearchSourceRankingItem = (data: unknown): data is SearchSourceRankingItem => {
@@ -134,8 +140,9 @@ export const searchRankingService = {
       },
     })
 
-    // 추천어는 랭킹 keyword/score에 더해 matchType과 matchDescription을 함께 내려온다.
+    // 추천어는 랭킹 keyword/score에 더해 matchType, 설명, 입력/저장 토큰을 함께 내려온다.
     // matchDescription은 서버의 실제 prefix 판정 로직 옆에서 만든 문구라 화면별 설명 불일치를 줄인다.
+    // inputToken/keywordToken은 "ㅋㅗ"가 어떤 저장 검색어 토큰과 prefix 비교됐는지 보여 주는 학습용 계약이다.
     if (!Array.isArray(response.data) || !response.data.every(isSearchKeywordSuggestionItem)) {
       throw new Error('Invalid search ranking response')
     }
