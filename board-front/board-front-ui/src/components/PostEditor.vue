@@ -190,8 +190,10 @@ const uploadImage = async (file: File): Promise<string> => {
 
 // Insert image URL as Markdown
 const insertImageMarkdown = (url: string) => {
-  const markdownImage = `![alt text](${url})`;
-  bodyText.value += `\n${markdownImage}\n`;
+  const imageNumber = imageUrls.value.length + 1;
+  const markdownImage = `![첨부 이미지 ${imageNumber}](${url})`;
+  const separator = bodyText.value.length === 0 || bodyText.value.endsWith('\n') ? '' : '\n';
+  bodyText.value += `${separator}${markdownImage}\n`;
   imageUrls.value = [...imageUrls.value, url];
   imageUploadMessage.value = '';
 };
@@ -203,10 +205,9 @@ const addImageUrl = () => {
     return;
   }
 
-  // 업로드 API가 없어도 이미지 URL을 먼저 배열로 관리하면,
-  // 블로그처럼 본문 아래에 여러 이미지를 순서대로 이어붙이는 저장 계약을 연습할 수 있다.
-  imageUrls.value = [...imageUrls.value, imageUrl];
-  imageUploadMessage.value = '';
+  // 수동 URL도 붙여넣기 업로드와 같은 Markdown 삽입 경로를 탄다.
+  // 이렇게 해야 "본문 중간에 이미지가 들어가는 글"과 "게시글 이미지 URL 배열"을 같은 순서로 공부할 수 있다.
+  insertImageMarkdown(imageUrl);
   imageUrlInput.value = '';
 };
 

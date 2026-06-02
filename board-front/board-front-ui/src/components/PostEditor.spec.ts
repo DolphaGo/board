@@ -33,11 +33,14 @@ describe('# Post editor component', () => {
     mockedPostService.createPost.mockReset()
   })
 
-  it('should add image URLs in order and submit them with the post body', async () => {
+  it('should append image URL markdown in order and submit them with the post body', async () => {
     mockedPostService.createPost.mockResolvedValue({
       id: 77,
       title: '이미지 글쓰기',
-      content: '본문과 이미지 URL을 함께 저장한다',
+      content:
+        '본문과 이미지 URL을 함께 저장한다\n' +
+        '![첨부 이미지 1](https://cdn.example.com/first.png)\n' +
+        '![첨부 이미지 2](https://cdn.example.com/second.png)\n',
       imageUrls: ['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'],
       viewCount: 0,
       display: true,
@@ -57,7 +60,10 @@ describe('# Post editor component', () => {
     expect(wrapper.findAll('.image-url-item')).toHaveLength(2)
     expect(mockedPostService.createPost).toBeCalledWith({
       title: '이미지 글쓰기',
-      content: '본문과 이미지 URL을 함께 저장한다',
+      content:
+        '본문과 이미지 URL을 함께 저장한다\n' +
+        '![첨부 이미지 1](https://cdn.example.com/first.png)\n' +
+        '![첨부 이미지 2](https://cdn.example.com/second.png)\n',
       imageUrls: ['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'],
     })
     expect(push).toBeCalledWith('/post/77')
@@ -100,7 +106,7 @@ describe('# Post editor component', () => {
     expect(mockedRequest.postForm).toBeCalledWith('/images', expect.any(FormData))
     expect(mockedPostService.createPost).toBeCalledWith({
       title: '붙여넣기 이미지',
-      content: '본문\n![alt text](/api/images/stored.png)\n',
+      content: '본문\n![첨부 이미지 1](/api/images/stored.png)\n',
       imageUrls: ['/api/images/stored.png'],
     })
     expect(push).toBeCalledWith('/post/88')
@@ -175,7 +181,7 @@ describe('# Post editor component', () => {
     expect(wrapper.text()).not.toContain('이미지 업로드 중입니다.')
     expect(wrapper.get('#issue-body').element).toHaveProperty(
       'value',
-      '\n![alt text](/api/images/uploading.png)\n',
+      '![첨부 이미지 1](/api/images/uploading.png)\n',
     )
   })
 
