@@ -18,6 +18,15 @@
             loading="lazy"
           />
         </div>
+        <ol v-if="postImageFlowRows.length > 0" class="post-image-flow" data-testid="post-image-flow">
+          <li
+            v-for="row in postImageFlowRows"
+            :key="row.url"
+            data-testid="post-image-flow-row"
+          >
+            <strong>{{ row.index }}. {{ row.stateLabel }}</strong>: {{ row.description }}
+          </li>
+        </ol>
         <p class="post-meta">
           <span v-if="post.authorNickname">{{ post.authorNickname }}</span>
           <span v-if="post.createdAt">{{ formatCreatedAt(post.createdAt) }}</span>
@@ -129,6 +138,8 @@ const isAdminViewer = computed(() => props.authorRole === 'admin');
 const detailCommentCount = computed(() => post.value?.commentCount ?? comments.value.length);
 const detailRecommendCount = computed(() => post.value?.recommendCount ?? 0);
 
+const isImageUrlInBody = (imageUrl: string) => post.value?.content.includes(`](${imageUrl})`) ?? false;
+
 const renderedPostContent = computed(() => {
   if (!post.value?.display) {
     return '';
@@ -146,7 +157,28 @@ const fallbackImageUrls = computed(() => {
 
   // imageUrls는 검색 색인과 첨부 관리용 배열이고, Markdown 본문은 독자가 실제로 보는 이미지 위치다.
   // 본문에 이미 들어간 이미지를 하단 첨부 목록에 다시 그리면 같은 사진이 두 번 보여서 블로그형 글 흐름이 깨진다.
-  return post.value.imageUrls.filter(imageUrl => !post.value?.content.includes(`](${imageUrl})`));
+  return post.value.imageUrls.filter(imageUrl => !isImageUrlInBody(imageUrl));
+});
+
+const postImageFlowRows = computed(() => {
+  if (!post.value?.display) {
+    return [];
+  }
+
+  return post.value.imageUrls.map((imageUrl, index) => {
+    const includedInBody = isImageUrlInBody(imageUrl);
+
+    return {
+      index: index + 1,
+      url: imageUrl,
+      stateLabel: includedInBody ? '본문 Markdown' : '하단 첨부',
+      // 상세 화면은 글쓰기에서 저장된 Markdown 본문과 imageUrls 배열을 같이 받는다.
+      // Markdown 안에 있는 이미지는 정확한 문단 위치를 보존하고, 배열에만 남은 이미지는 누락되지 않도록 하단에 보인다.
+      description: includedInBody
+        ? `첨부 이미지 ${index + 1}은 글 흐름 위치에 렌더링되어 하단 첨부 목록에서 숨깁니다.`
+        : `첨부 이미지 ${index + 1}은 Markdown 본문에 없어 하단 첨부 이미지로 보여줍니다.`,
+    };
+  });
 });
 
 const postId = computed(() => {
@@ -352,6 +384,20 @@ const restorePost = async () => {
 .post-image-list img {
   border: 1px solid #d8d8d8;
   max-width: 100%;
+}
+
+.post-image-flow {
+  background: #f7f9fb;
+  border: 1px solid #d8e1ea;
+  color: #333333;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 12px 0;
+  padding: 10px 12px 10px 28px;
+}
+
+.post-image-flow li + li {
+  margin-top: 4px;
 }
 
 .hidden-post {
