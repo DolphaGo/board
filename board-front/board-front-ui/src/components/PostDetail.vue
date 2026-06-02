@@ -22,7 +22,7 @@
           <span v-if="post.authorNickname">{{ post.authorNickname }}</span>
           <span v-if="post.createdAt">{{ formatCreatedAt(post.createdAt) }}</span>
           <span>조회수 {{ post.viewCount }}</span>
-          <span>댓글 {{ comments.length }}</span>
+          <span>댓글 {{ detailCommentCount }}</span>
           <span>추천 {{ detailRecommendCount }}</span>
         </p>
 
@@ -126,6 +126,7 @@ const actionError = ref('');
 const comments = ref<CommentResponse[]>([]);
 
 const isAdminViewer = computed(() => props.authorRole === 'admin');
+const detailCommentCount = computed(() => post.value?.commentCount ?? comments.value.length);
 const detailRecommendCount = computed(() => post.value?.recommendCount ?? 0);
 
 const renderedPostContent = computed(() => {
@@ -215,6 +216,14 @@ const submitComment = async () => {
     // 서버 목록은 id 오름차순으로 내려오므로 새 댓글을 뒤에 추가하면 같은 읽기 순서를 유지할 수 있다.
     const comment = await postService.createComment(id, { content });
     comments.value = [...comments.value, comment];
+    if (post.value) {
+      // 상세 API의 commentCount는 목록과 같은 서버 집계 기준이다.
+      // 댓글 작성 직후에는 전체 상세를 다시 읽지 않고 현재 기준값만 1 올려 메타 수치를 즉시 맞춘다.
+      post.value = {
+        ...post.value,
+        commentCount: detailCommentCount.value + 1,
+      };
+    }
     commentContent.value = '';
     commentMessage.value = '댓글이 저장되었습니다.';
   } catch (err) {

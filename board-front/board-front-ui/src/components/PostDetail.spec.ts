@@ -45,7 +45,7 @@ describe('# Post detail component', () => {
       notice: true,
       authorNickname: 'writer',
       createdAt: '2026-06-02T04:00:00',
-      commentCount: 1,
+      commentCount: 7,
       recommendCount: 1,
     })
     mockedPostService.listComments.mockResolvedValue([
@@ -96,7 +96,7 @@ describe('# Post detail component', () => {
     expect(wrapper.findAll('.post-image-list img')[1].attributes('src')).toBe('https://cdn.example.com/second.png')
     expect(wrapper.get('.post-meta').text()).toContain('writer')
     expect(wrapper.get('.post-meta').text()).toContain('2026.06.02')
-    expect(wrapper.get('.post-meta').text()).toContain('댓글 2')
+    expect(wrapper.get('.post-meta').text()).toContain('댓글 8')
     expect(wrapper.get('.post-meta').text()).toContain('추천 2')
     expect(wrapper.get('[data-testid="comment-content"]').element).toHaveProperty('value', '')
     expect(wrapper.get('[data-testid="recommend-button"]').text()).toBe('추천 완료')
