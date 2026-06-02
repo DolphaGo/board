@@ -5,8 +5,16 @@ describe('# Search ranking fixture', function () {
     const rankings = createSearchRankingFixture(2)
 
     expect(rankings).toEqual([
-      { keyword: 'kotlin spring', score: 12 },
-      { keyword: 'elasticsearch nori', score: 8 },
+      {
+        keyword: 'kotlin spring',
+        score: 12,
+        scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+      },
+      {
+        keyword: 'elasticsearch nori',
+        score: 8,
+        scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+      },
     ])
   })
 })

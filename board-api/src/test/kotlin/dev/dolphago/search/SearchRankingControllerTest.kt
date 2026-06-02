@@ -12,7 +12,14 @@ class SearchRankingControllerTest {
 
     @Test
     fun `검색어 순위 조회는 기본 10개를 반환한다`() {
-        val rankings = listOf(SearchRankingItem(keyword = "kotlin", score = 5))
+        val rankings =
+            listOf(
+                SearchRankingItem(
+                    keyword = "kotlin",
+                    score = 5,
+                    scoreDescription = "Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.",
+                ),
+            )
         every { searchRankingService.getTopKeywords(10) } returns rankings
 
         val response = controller.getTopKeywords()

@@ -9,8 +9,16 @@ describe('# Search ranking service', function () {
   it('should request top 10 search rankings by default', async function () {
     mockedAxios.get.mockResolvedValue({
       data: [
-        { keyword: 'kotlin', score: 7 },
-        { keyword: 'spring boot', score: 3 },
+        {
+          keyword: 'kotlin',
+          score: 7,
+          scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+        },
+        {
+          keyword: 'spring boot',
+          score: 3,
+          scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+        },
       ],
     })
 
@@ -20,8 +28,16 @@ describe('# Search ranking service', function () {
       params: { limit: 10 },
     })
     expect(rankings).toEqual([
-      { keyword: 'kotlin', score: 7 },
-      { keyword: 'spring boot', score: 3 },
+      {
+        keyword: 'kotlin',
+        score: 7,
+        scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+      },
+      {
+        keyword: 'spring boot',
+        score: 3,
+        scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+      },
     ])
   })
 
@@ -117,6 +133,16 @@ describe('# Search ranking service', function () {
     mockedAxios.get.mockResolvedValue({
       data: [
         { keyword: 'kotlin', score: '7' },
+      ],
+    })
+
+    await expect(searchRankingService.getRankings()).rejects.toThrow('Invalid search ranking response')
+  })
+
+  it('should reject ranking arrays without score descriptions', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        { keyword: 'kotlin', score: 7 },
       ],
     })
 

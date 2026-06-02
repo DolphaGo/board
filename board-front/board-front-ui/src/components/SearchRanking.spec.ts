@@ -5,7 +5,7 @@ const fetchRankings = jest.fn()
 const routerPush = jest.fn()
 const unsubscribeSearchRankingChanged = jest.fn()
 let mockSearchRankingChangedListener: (() => void) | undefined
-let mockRankings: Array<{ keyword: string; score: number }> = []
+let mockRankings: Array<{ keyword: string; score: number; scoreDescription: string }> = []
 
 jest.mock('vue-router', () => ({
   useRouter: () => ({
@@ -74,13 +74,20 @@ describe('# Search ranking component', function () {
 
   it('should label ranking scores as search counts', function () {
     mockRankings = [
-      { keyword: 'kotlin spring', score: 7 },
+      {
+        keyword: 'kotlin spring',
+        score: 7,
+        scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+      },
     ]
 
     const wrapper = mount(SearchRanking)
 
     expect(wrapper.get('.rank-keyword').text()).toBe('kotlin spring')
-    expect(wrapper.get('.rank-score').text()).toBe('검색 7회')
+    expect(wrapper.get('[data-testid="rank-score-count"]').text()).toBe('검색 7회')
+    expect(wrapper.get('[data-testid="rank-score-description"]').text()).toBe(
+      'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.'
+    )
 
     wrapper.unmount()
   })
@@ -103,7 +110,11 @@ describe('# Search ranking component', function () {
 
   it('should search with the clicked ranked keyword', async function () {
     mockRankings = [
-      { keyword: 'kotlin spring', score: 7 },
+      {
+        keyword: 'kotlin spring',
+        score: 7,
+        scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+      },
     ]
     const wrapper = mount(SearchRanking)
 

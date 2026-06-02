@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 data class SearchRankingItem(
     val keyword: String,
     val score: Long,
+    val scoreDescription: String,
 )
 
 data class SearchKeywordSuggestionItem(
@@ -103,6 +104,9 @@ class SearchRankingService(
                 SearchRankingItem(
                     keyword = keyword,
                     score = tuple.score?.toLong() ?: 0L,
+                    // 검색어 랭킹의 score는 ES BM25 점수가 아니라 Redis ZSET 집계 점수다.
+                    // 둘 다 "점수"라는 단어를 쓰기 때문에 응답에 설명을 함께 담아 검색 관련도 점수와 랭킹 점수를 구분해 둔다.
+                    scoreDescription = KEYWORD_SCORE_DESCRIPTION,
                 )
             }
     }
@@ -227,5 +231,6 @@ class SearchRankingService(
     companion object {
         const val RANKING_KEY = "board:search:keyword-ranking"
         const val SOURCE_RANKING_KEY = "board:search:source-ranking"
+        private const val KEYWORD_SCORE_DESCRIPTION = "Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다."
     }
 }

@@ -45,7 +45,10 @@
         >
           {{ item.keyword }}
         </button>
-        <span class="rank-score">검색 {{ item.score }}회</span>
+        <span class="rank-score">
+          <span data-testid="rank-score-count">검색 {{ item.score }}회</span>
+          <small data-testid="rank-score-description">{{ item.scoreDescription }}</small>
+        </span>
       </li>
     </ol>
     <p v-if="lastUpdatedLabel" class="ranking-updated-at">마지막 갱신 {{ lastUpdatedLabel }}</p>
@@ -264,6 +267,15 @@ onUnmounted(() => {
 
 .rank-score {
   color: #757575;
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+
+.rank-score small {
+  color: #8a8a8a;
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 .ranking-updated-at {

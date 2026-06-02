@@ -88,8 +88,16 @@ class SearchRankingServiceTest {
 
         assertEquals(
             listOf(
-                SearchRankingItem(keyword = "kotlin", score = 5),
-                SearchRankingItem(keyword = "spring boot", score = 3),
+                SearchRankingItem(
+                    keyword = "kotlin",
+                    score = 5,
+                    scoreDescription = "Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.",
+                ),
+                SearchRankingItem(
+                    keyword = "spring boot",
+                    score = 3,
+                    scoreDescription = "Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.",
+                ),
             ),
             result,
         )

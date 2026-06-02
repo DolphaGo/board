@@ -1,10 +1,12 @@
 import type { SearchRankingItem } from './searchRankingService'
 
+const scoreDescription = 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.'
+
 const baseRankings: SearchRankingItem[] = [
-  { keyword: 'kotlin spring', score: 12 },
-  { keyword: 'elasticsearch nori', score: 8 },
-  { keyword: '실시간 검색어', score: 5 },
-  { keyword: '게시판 채팅', score: 3 },
+  { keyword: 'kotlin spring', score: 12, scoreDescription },
+  { keyword: 'elasticsearch nori', score: 8, scoreDescription },
+  { keyword: '실시간 검색어', score: 5, scoreDescription },
+  { keyword: '게시판 채팅', score: 3, scoreDescription },
 ]
 
 export const createSearchRankingFixture = (limit: number): SearchRankingItem[] => {
