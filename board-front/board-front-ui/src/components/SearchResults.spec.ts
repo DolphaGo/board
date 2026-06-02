@@ -612,6 +612,18 @@ describe('# Search results component', () => {
     expect(mockedPostSearchService.search).toBeCalledWith('kotlin spring')
   })
 
+  it('should explain that hidden posts are excluded when a searched keyword has no results', async () => {
+    mockedPostSearchService.search.mockResolvedValue([])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('검색 결과가 없습니다.')
+    expect(wrapper.get('[data-testid="search-empty-study-note"]').text()).toBe(
+      '검색어는 실시간 랭킹에 기록되지만, 관리자 숨김 또는 삭제 처리된 게시글은 display=true 필터 때문에 결과에서 제외됩니다.'
+    )
+  })
+
   it('should keep the latest keyword results when an older search resolves later', async () => {
     const kotlinSearch = createDeferred<Awaited<ReturnType<typeof postSearchService.search>>>()
     const javaSearch = createDeferred<Awaited<ReturnType<typeof postSearchService.search>>>()

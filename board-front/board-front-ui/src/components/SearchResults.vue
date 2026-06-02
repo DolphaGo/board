@@ -9,7 +9,12 @@
       <p v-if="loading" class="search-message">검색 중...</p>
       <p v-else-if="error" class="search-message">검색 결과를 불러오지 못했습니다.</p>
       <p v-else-if="searchKeyword.length === 0" class="search-message">검색어를 입력해 주세요.</p>
-      <p v-else-if="results.length === 0" class="search-message">검색 결과가 없습니다.</p>
+      <div v-else-if="results.length === 0" class="search-empty-state">
+        <p class="search-message">검색 결과가 없습니다.</p>
+        <p class="search-empty-study-note" data-testid="search-empty-study-note">
+          검색어는 실시간 랭킹에 기록되지만, 관리자 숨김 또는 삭제 처리된 게시글은 display=true 필터 때문에 결과에서 제외됩니다.
+        </p>
+      </div>
 
       <dl
         v-if="searchTokenAnalysisRows.length > 0"
@@ -316,6 +321,16 @@ watch(
   margin: 18px 0 0;
   color: #757575;
   font-size: 13px;
+}
+
+.search-empty-study-note {
+  margin: 8px 0 0;
+  border: 1px solid #d8e6ef;
+  background: #f8fbfd;
+  padding: 9px 10px;
+  color: #333333;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .search-token-analysis {
