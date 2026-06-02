@@ -76,4 +76,26 @@ class SearchRankingServiceTest {
             zSetOperations.reverseRangeWithScores(SearchRankingService.RANKING_KEY, 0, -1)
         }
     }
+
+    @Test
+    fun `검색어 추천은 초성 입력으로 시작하는 한글 인기 검색어도 반환한다`() {
+        val first = mockk<ZSetOperations.TypedTuple<String>>()
+        val second = mockk<ZSetOperations.TypedTuple<String>>()
+        val third = mockk<ZSetOperations.TypedTuple<String>>()
+
+        every { first.value } returns "코프링 검색"
+        every { first.score } returns 9.0
+        every { second.value } returns "코틀린 게시판"
+        every { second.score } returns 7.0
+        every { third.value } returns "스프링 검색"
+        every { third.score } returns 4.0
+        every { redisTemplate.opsForZSet() } returns zSetOperations
+        every {
+            zSetOperations.reverseRangeWithScores(SearchRankingService.RANKING_KEY, 0, -1)
+        } returns linkedSetOf(first, second, third)
+
+        val result = searchRankingService.suggest(rawKeyword = "ㅋㅍ", limit = 2)
+
+        assertEquals(listOf(SearchRankingItem(keyword = "코프링 검색", score = 9)), result)
+    }
 }

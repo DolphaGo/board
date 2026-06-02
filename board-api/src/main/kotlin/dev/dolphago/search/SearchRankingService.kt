@@ -44,6 +44,7 @@ class SearchRankingService(
         require(limit > 0) { "추천 개수는 1 이상이어야 합니다." }
 
         val prefix = SearchKeyword.from(rawKeyword).value
+        val initialPrefix = KoreanSyllableTokenizer.tokenizeInitials(prefix)
 
         return redisTemplate
             .opsForZSet()
@@ -54,7 +55,7 @@ class SearchRankingService(
             .asSequence()
             .mapNotNull { tuple ->
                 val keyword = tuple.value ?: return@mapNotNull null
-                if (!keyword.startsWith(prefix)) {
+                if (!matchesSuggestionKeyword(keyword, prefix, initialPrefix)) {
                     return@mapNotNull null
                 }
                 SearchRankingItem(
@@ -64,6 +65,20 @@ class SearchRankingService(
             }
             .take(limit.toInt())
             .toList()
+    }
+
+    private fun matchesSuggestionKeyword(
+        keyword: String,
+        prefix: String,
+        initialPrefix: String,
+    ): Boolean {
+        if (keyword.startsWith(prefix)) {
+            return true
+        }
+
+        // 랭킹 ZSET에는 사용자가 실제 검색한 원문을 저장한다.
+        // 자동완성에서 "ㅋㅍ" 같은 초성 입력까지 지원하려면 저장된 원문을 초성 토큰으로 바꿔 같은 prefix 규칙으로 비교한다.
+        return KoreanSyllableTokenizer.tokenizeInitials(keyword).startsWith(initialPrefix)
     }
 
     companion object {
