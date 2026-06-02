@@ -173,6 +173,24 @@ describe('# Search results component', () => {
     ])
   })
 
+  it('should explain direct URL searches without a source query', async () => {
+    mockRoute.query = {
+      keyword: 'kotlin',
+    }
+    mockedPostSearchService.search.mockResolvedValue([])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    const sourceRows = wrapper
+      .findAll('[data-testid="search-source-analysis-row"]')
+      .map(row => row.text())
+    expect(sourceRows).toEqual([
+      '유입 경로: 직접 URL 또는 북마크',
+      '랭킹 기록: 검색 결과 API가 성공하면 서버가 같은 검색어를 랭킹 이벤트로 기록',
+    ])
+  })
+
   it('should explain highlights as matched snippets instead of score contribution', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {

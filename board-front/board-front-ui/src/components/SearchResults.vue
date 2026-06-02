@@ -240,7 +240,16 @@ const searchSourceAnalysisRows = computed(() => {
     ]
   }
 
-  return []
+  return [
+    {
+      label: '유입 경로',
+      description: '직접 URL 또는 북마크',
+    },
+    {
+      label: '랭킹 기록',
+      description: '검색 결과 API가 성공하면 서버가 같은 검색어를 랭킹 이벤트로 기록',
+    },
+  ]
 })
 
 const highlightCount = (result: PostSearchResult): number =>
