@@ -162,6 +162,18 @@ describe('# Chat room component', () => {
     expect(wrapper.get('[data-testid="chat-room-participant-list"]').text()).toBe('참여자: 방장, 참가자')
   })
 
+  it('should render the room participants as a side roster', async () => {
+    const wrapper = mountChatRoom()
+
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="chat-room-roster-title"]').text()).toBe('참여자 목록')
+    expect(wrapper.findAll('[data-testid="chat-room-roster-participant"]').map(item => item.text())).toEqual([
+      '방장',
+      '참가자',
+    ])
+  })
+
   it('should keep chat usable when room metadata fetch fails', async () => {
     const error = jest.spyOn(console, 'error').mockImplementation()
     mockedChatService.getRoom.mockRejectedValue(new Error('room failed'))

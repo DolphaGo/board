@@ -44,17 +44,38 @@
         <video ref="remoteVideo" autoplay></video>
       </div>
       
-      <div class="message-container" ref="messageContainer">
-        <p v-if="messages.length === 0" class="empty-messages" data-testid="chat-empty-messages">
-          아직 메시지가 없습니다. ENTER/TALK/LEAVE 메시지가 /topic/chat/{{ roomId }} 구독으로 도착하면 이 영역에 시간순으로 쌓입니다.
-        </p>
-        <div v-for="(message, index) in messages" :key="index" :class="['message', message.sender === username ? 'sent' : 'received']">
-          <div class="message-content">
-            <span class="sender">{{ message.sender }}</span>
-            <p>{{ message.content }}</p>
-            <span class="timestamp">{{ formatTime(message.timestamp) }}</span>
+      <div class="chat-room-body">
+        <div class="message-container" ref="messageContainer">
+          <p v-if="messages.length === 0" class="empty-messages" data-testid="chat-empty-messages">
+            아직 메시지가 없습니다. ENTER/TALK/LEAVE 메시지가 /topic/chat/{{ roomId }} 구독으로 도착하면 이 영역에 시간순으로 쌓입니다.
+          </p>
+          <div v-for="(message, index) in messages" :key="index" :class="['message', message.sender === username ? 'sent' : 'received']">
+            <div class="message-content">
+              <span class="sender">{{ message.sender }}</span>
+              <p>{{ message.content }}</p>
+              <span class="timestamp">{{ formatTime(message.timestamp) }}</span>
+            </div>
           </div>
         </div>
+
+        <aside v-if="room" class="chat-room-roster" data-testid="chat-room-roster">
+          <h3 data-testid="chat-room-roster-title">참여자 목록</h3>
+          <p class="chat-room-roster-meta">
+            {{ room.participantCount }}/{{ room.maxParticipants }}명
+          </p>
+          <ul v-if="room.participants.length > 0">
+            <li
+              v-for="participant in room.participants"
+              :key="participant.id"
+              data-testid="chat-room-roster-participant"
+            >
+              {{ participant.nickname || `#${participant.id}` }}
+            </li>
+          </ul>
+          <p v-else class="chat-room-roster-empty">
+            아직 REST 상세에 표시할 참가자가 없습니다.
+          </p>
+        </aside>
       </div>
     </div>
 
@@ -567,10 +588,53 @@ export default defineComponent({
   border-radius: 4px;
 }
 
-.message-container {
+.chat-room-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  min-height: 0;
   flex: 1;
+}
+
+.message-container {
   overflow-y: auto;
   padding: 1rem;
+}
+
+.chat-room-roster {
+  border-left: 1px solid #e5edf7;
+  background: #f8fbff;
+  padding: 16px;
+}
+
+.chat-room-roster h3 {
+  color: #263548;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.chat-room-roster-meta {
+  color: #55708f;
+  font-size: 0.82rem;
+  margin: 4px 0 12px 0;
+}
+
+.chat-room-roster ul {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.chat-room-roster li,
+.chat-room-roster-empty {
+  border: 1px solid #dbe8f6;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #263548;
+  font-size: 0.9rem;
+  margin: 0;
+  padding: 8px 10px;
 }
 
 .empty-messages {
@@ -668,5 +732,16 @@ export default defineComponent({
 
 .message-input button:hover {
   background: #357abd;
+}
+
+@media (max-width: 720px) {
+  .chat-room-body {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-room-roster {
+    border-left: 0;
+    border-top: 1px solid #e5edf7;
+  }
 }
 </style> 
