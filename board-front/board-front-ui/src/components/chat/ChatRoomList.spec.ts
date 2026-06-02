@@ -91,6 +91,19 @@ describe('# Chat room list component', () => {
     expect(mockedChatService.createRoom).not.toHaveBeenCalled()
   })
 
+  it('should explain how to start when the room list is empty', async () => {
+    const wrapper = mount(ChatRoomList)
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="chat-empty-state"]').text()).toContain('생성된 채팅방이 없습니다.')
+    expect(wrapper.get('[data-testid="chat-empty-state"]').text()).toContain(
+      '새 채팅방 버튼으로 방을 만들면 생성 후 바로 입장합니다.'
+    )
+    expect(wrapper.get('[data-testid="chat-empty-state"]').text()).toContain(
+      '목록에서 방을 선택하면 join API로 정원을 다시 확인한 뒤 채팅 화면으로 이동합니다.'
+    )
+  })
+
   it('should enter the room with the Enter key from a room item', async () => {
     mockedChatService.getRoomList.mockResolvedValue([
       chatRoomFixture(),

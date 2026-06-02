@@ -19,8 +19,10 @@
     </div>
 
     <div v-else class="room-list">
-      <div v-if="rooms.length === 0" class="empty-state">
-        생성된 채팅방이 없습니다.
+      <div v-if="rooms.length === 0" class="empty-state" data-testid="chat-empty-state">
+        <p>생성된 채팅방이 없습니다.</p>
+        <p>새 채팅방 버튼으로 방을 만들면 생성 후 바로 입장합니다.</p>
+        <p>목록에서 방을 선택하면 join API로 정원을 다시 확인한 뒤 채팅 화면으로 이동합니다.</p>
       </div>
       <div
         v-for="room in rooms"
@@ -259,6 +261,17 @@ export default defineComponent({
   text-align: center;
   padding: 40px;
   color: #666;
+}
+
+.empty-state p {
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.empty-state p:last-child {
+  margin-bottom: 0;
+  color: #777;
+  font-size: 0.9em;
 }
 
 .action-feedback,
