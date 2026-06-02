@@ -57,3 +57,11 @@ describe('# Router post detail props', () => {
     })
   })
 })
+
+describe('# Router admin hidden posts', () => {
+  it('should expose the admin hidden post list route', () => {
+    const route = router.getRoutes().find(route => route.path === '/admin/hidden-posts')
+
+    expect(route).toBeDefined()
+  })
+})

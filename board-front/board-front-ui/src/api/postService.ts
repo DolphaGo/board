@@ -129,6 +129,26 @@ export const postService = {
     return response.data.filter(post => post.display)
   },
 
+  listHiddenPosts: async (): Promise<PostListItemResponse[]> => {
+    const response = await axios.get<PostListItemResponse[]>('/api/posts/hidden', {
+      params: {
+        // 숨김 목록은 운영자만 봐야 하는 데이터라 백엔드 권한 검사용 actorMemberId를 함께 보낸다.
+        // 로그인 세션을 배우기 전 단계에서는 학습용 관리자 계정 id를 고정값으로 사용한다.
+        actorMemberId: STUDY_MEMBER_ID,
+      },
+    })
+
+    // 관리자 목록도 API 경계에서 DTO를 검증한다.
+    // 프론트 컴포넌트가 깨진 응답을 게시글처럼 렌더링하지 않게 만드는 최소 안전장치다.
+    if (!Array.isArray(response.data) || !response.data.every(isPostListItemResponse)) {
+      throw new Error('Invalid hidden post list response')
+    }
+
+    // 숨김 목록 API는 원칙적으로 display=false만 내려주지만, 복구 직후 캐시가 섞일 수 있다.
+    // 프론트에서도 한 번 더 거르면 관리자 복구 대기 목록의 의미가 흐려지지 않는다.
+    return response.data.filter(post => !post.display)
+  },
+
   listComments: async (postId: number): Promise<CommentResponse[]> => {
     const response = await axios.get<CommentResponse[]>(`/api/posts/${postId}/comments`)
 

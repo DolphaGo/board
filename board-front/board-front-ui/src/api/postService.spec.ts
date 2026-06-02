@@ -92,6 +92,74 @@ describe('# Post service', function () {
     expect(posts[0].title).toBe('보이는 게시글')
   })
 
+  it('should fetch hidden posts with the study admin member id', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          id: 10,
+          title: '숨김 게시글',
+          content: '관리자가 복구할 대상',
+          imageUrls: [],
+          viewCount: 3,
+          display: false,
+          notice: false,
+          authorNickname: 'writer',
+          createdAt: '2026-06-02T04:00:00',
+          commentCount: 2,
+          recommendCount: 5,
+        },
+      ],
+    })
+
+    const posts = await postService.listHiddenPosts()
+
+    expect(mockedAxios.get).toBeCalledWith('/api/posts/hidden', {
+      params: {
+        actorMemberId: 1,
+      },
+    })
+    expect(posts).toHaveLength(1)
+    expect(posts[0].display).toBe(false)
+  })
+
+  it('should ignore visible posts when the hidden list API returns mixed display states', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          id: 10,
+          title: '숨김 게시글',
+          content: '관리자가 복구할 대상',
+          imageUrls: [],
+          viewCount: 3,
+          display: false,
+          notice: false,
+          authorNickname: 'writer',
+          createdAt: '2026-06-02T04:00:00',
+          commentCount: 2,
+          recommendCount: 5,
+        },
+        {
+          id: 11,
+          title: '복구된 게시글',
+          content: '숨김 목록에는 보이면 안 된다',
+          imageUrls: [],
+          viewCount: 1,
+          display: true,
+          notice: false,
+          authorNickname: 'admin',
+          createdAt: '2026-06-02T05:00:00',
+          commentCount: 0,
+          recommendCount: 0,
+        },
+      ],
+    })
+
+    const posts = await postService.listHiddenPosts()
+
+    expect(posts).toHaveLength(1)
+    expect(posts[0].title).toBe('숨김 게시글')
+  })
+
   it('should create a post with the study member id', async function () {
     mockedAxios.post.mockResolvedValue({
       data: {
@@ -261,6 +329,19 @@ describe('# Post service', function () {
     })
 
     await expect(postService.listPosts()).rejects.toThrow('Invalid post list response')
+  })
+
+  it('should reject malformed hidden post list responses', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          id: 10,
+          title: '작성자와 날짜가 없는 숨김 게시글',
+        },
+      ],
+    })
+
+    await expect(postService.listHiddenPosts()).rejects.toThrow('Invalid hidden post list response')
   })
 
   it('should reject malformed list comment responses', async function () {
