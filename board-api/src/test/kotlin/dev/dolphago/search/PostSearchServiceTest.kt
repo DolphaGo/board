@@ -2,6 +2,10 @@ package dev.dolphago.search
 
 import co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode
 import co.elastic.clients.elasticsearch._types.query_dsl.FunctionScoreMode
+import dev.dolphago.mysql.Authority
+import dev.dolphago.mysql.Member
+import dev.dolphago.mysql.Post
+import dev.dolphago.post.repository.PostRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -12,6 +16,7 @@ import org.springframework.data.elasticsearch.core.SearchHit
 import org.springframework.data.elasticsearch.core.SearchHitsImpl
 import org.springframework.data.elasticsearch.core.TotalHitsRelation
 import java.time.Duration
+import java.util.Optional
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -19,7 +24,8 @@ import kotlin.test.assertTrue
 
 class PostSearchServiceTest {
     private val elasticsearchOperations = mockk<ElasticsearchOperations>()
-    private val postSearchService = PostSearchService(elasticsearchOperations)
+    private val postRepository = mockk<PostRepository>()
+    private val postSearchService = PostSearchService(elasticsearchOperations, postRepository)
 
     @Test
     fun `게시글 검색은 ES 검색 점수와 하이라이트를 응답으로 변환한다`() {
@@ -209,7 +215,25 @@ class PostSearchServiceTest {
     }
 
     @Test
-    fun `관련 게시글 추천은 같은 검색 스코어링을 쓰되 현재 게시글은 제외한다`() {
+    fun `관련 게시글 추천은 현재 게시글 본문으로 검색 스코어링을 만들고 현재 게시글은 제외한다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        every { postRepository.findById(10L) } returns
+            Optional.of(
+                Post(
+                    id = 10L,
+                    member = author,
+                    title = "코틀린 검색",
+                    content = "BM25와 초성 검색을 함께 설명하는 게시글",
+                    viewCount = 5,
+                    display = true,
+                ),
+            )
         every {
             elasticsearchOperations.search(any<NativeQuery>(), PostSearchDocument::class.java)
         } returns
@@ -287,7 +311,7 @@ class PostSearchServiceTest {
                 null,
             )
 
-        val results = postSearchService.recommendRelated("코틀린 검색", currentPostId = 10L, size = 1)
+        val results = postSearchService.recommendRelated(currentPostId = 10L, size = 1)
 
         assertEquals(listOf(11L), results.map { it.postId })
         assertEquals("코틀린 BM25", results.single().title)
@@ -295,6 +319,7 @@ class PostSearchServiceTest {
             results.single().scoreExplanation.description.contains("BM25 기반 텍스트 관련도"),
             "관련 글 추천도 일반 검색과 같은 점수 설명을 유지해야 학습용 UI에서 왜 추천됐는지 설명할 수 있다.",
         )
+        verify(exactly = 1) { postRepository.findById(10L) }
     }
 
     @Test

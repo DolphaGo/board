@@ -2,6 +2,7 @@ package dev.dolphago.search
 
 import co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode
 import co.elastic.clients.elasticsearch._types.query_dsl.FunctionScoreMode
+import dev.dolphago.post.repository.PostRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.elasticsearch.client.elc.NativeQuery
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations
@@ -55,18 +56,29 @@ data class PostSearchScoreSignal(
 @Service
 class PostSearchService(
     private val elasticsearchOperations: ElasticsearchOperations,
+    private val postRepository: PostRepository,
 ) {
     fun recommendRelated(
-        rawKeyword: String,
         currentPostId: Long,
         size: Int,
     ): List<PostSearchResult> {
         val safeSize = size.coerceIn(1, MAX_SEARCH_SIZE)
+        val currentPost =
+            postRepository.findById(currentPostId).orElseThrow {
+                IllegalArgumentException("관련 글 추천 기준 게시글을 찾을 수 없습니다: $currentPostId")
+            }
+
+        if (!currentPost.display) {
+            // 숨김 글은 사용자 상세 화면에서 추천 기준으로 쓰지 않는다.
+            // 검색 색인도 display=true 중심으로 운영되므로 숨김 원문으로 관련 글을 찾으면 운영 정책과 어긋난다.
+            return emptyList()
+        }
+        val relatedKeyword = createRelatedKeyword(currentPost.title, currentPost.content)
 
         // 관련 글 추천은 별도 개인화 모델을 만들기 전 단계의 학습용 추천이다.
-        // 현재 글 제목/키워드를 일반 검색과 같은 BM25 + 음절/초성 recall 쿼리에 넣고,
+        // 현재 글 제목과 본문을 일반 검색과 같은 BM25 + 음절/초성 recall 쿼리에 넣고,
         // 지금 읽는 글만 제외하면 "검색 스코어링이 추천으로도 확장되는 흐름"을 작게 확인할 수 있다.
-        return search(rawKeyword, (safeSize + 1).coerceAtMost(MAX_SEARCH_SIZE))
+        return search(relatedKeyword, (safeSize + 1).coerceAtMost(MAX_SEARCH_SIZE))
             .filter { it.postId != currentPostId }
             .take(safeSize)
     }
@@ -346,6 +358,16 @@ class PostSearchService(
             snippets.map(::createDisplayText)
         }
 
+    private fun createRelatedKeyword(
+        title: String,
+        content: String,
+    ): String =
+        createDisplayText("$title $content")
+            // 게시글 본문 전체를 검색어로 넣으면 ES query가 과하게 길어질 수 있다.
+            // 추천에서는 제목과 앞부분 본문만으로도 주제 단어가 대부분 잡히므로 학습용 예제는 짧게 제한한다.
+            .take(RELATED_KEYWORD_LENGTH)
+            .trim()
+
     private fun createScoringHighlightQuery(): HighlightQuery =
         HighlightQuery(
             Highlight(
@@ -388,6 +410,7 @@ class PostSearchService(
         private val MARKDOWN_LINK_PATTERN = Regex("(?<!!)\\[([^\\]]+)]\\(([^)]+)\\)")
         private val WHITESPACE_PATTERN = Regex("\\s+")
         private const val MAX_SEARCH_SIZE = 50
+        private const val RELATED_KEYWORD_LENGTH = 240
         private const val CONTENT_PREVIEW_LENGTH = 120
         private const val HIGHLIGHT_FRAGMENT_SIZE = 80
         private const val HIGHLIGHT_FRAGMENT_COUNT = 2

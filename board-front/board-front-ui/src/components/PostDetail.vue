@@ -260,9 +260,9 @@ watch(
 
       if (postResponse.display) {
         try {
-          // 관련 글은 현재 글 제목을 검색어로 삼는 첫 추천 단계다.
-          // 검색 결과와 같은 scoreExplanation을 받아오므로 상세 화면에서도 BM25/음절/초성 신호가 추천에 어떻게 쓰였는지 볼 수 있다.
-          relatedPosts.value = await postSearchService.recommendRelatedPosts(postResponse.id, postResponse.title, { size: 3 });
+          // 관련 글 추천 기준은 백엔드가 원본 게시글 제목/본문에서 만든다.
+          // 프론트는 postId만 넘기고, 검색 결과와 같은 scoreExplanation을 받아 추천 이유를 화면에 보여준다.
+          relatedPosts.value = await postSearchService.recommendRelatedPosts(postResponse.id, { size: 3 });
         } catch (relatedErr) {
           // 추천은 상세 본문을 보조하는 영역이다.
           // ES 장애나 색인 지연이 있어도 본문/댓글 읽기 자체를 실패 처리하지 않고 관련 글 영역만 비운다.

@@ -91,7 +91,7 @@ describe('# Post search service', function () {
     })
   })
 
-  it('should request related post recommendations with current post id and keyword', async function () {
+  it('should request related post recommendations with current post id only', async function () {
     mockedAxios.get.mockResolvedValue({
       data: [
         {
@@ -127,11 +127,10 @@ describe('# Post search service', function () {
       ],
     })
 
-    const results = await postSearchService.recommendRelatedPosts(10, '코틀린 검색', { size: 4 })
+    const results = await postSearchService.recommendRelatedPosts(10, { size: 4 })
 
     expect(mockedAxios.get).toBeCalledWith('/api/search/posts/10/related', {
       params: {
-        keyword: '코틀린 검색',
         size: 4,
       },
     })

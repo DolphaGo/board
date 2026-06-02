@@ -140,13 +140,11 @@ export const postSearchService = {
 
   recommendRelatedPosts: async (
     postId: number,
-    keyword: string,
     options: RelatedPostSearchOptions = {}
   ): Promise<PostSearchResult[]> => {
     const size = options.size ?? 3
     const response = await axios.get<PostSearchResult[]>(`/api/search/posts/${postId}/related`, {
       params: {
-        keyword,
         size,
       },
     })

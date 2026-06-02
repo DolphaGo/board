@@ -44,7 +44,7 @@ class PostSearchControllerTest {
     }
 
     @Test
-    fun `관련 게시글 추천은 현재 글 id와 검색어를 서비스에 전달하고 검색 랭킹은 기록하지 않는다`() {
+    fun `관련 게시글 추천은 현재 글 id를 서비스에 전달하고 검색 랭킹은 기록하지 않는다`() {
         val results =
             listOf(
                 PostSearchResult(
@@ -65,12 +65,12 @@ class PostSearchControllerTest {
                         ),
                 ),
             )
-        every { postSearchService.recommendRelated("Kotlin 검색", currentPostId = 10L, size = 4) } returns results
+        every { postSearchService.recommendRelated(currentPostId = 10L, size = 4) } returns results
 
-        val response = controller.recommendRelated(postId = 10L, keyword = "Kotlin 검색", size = 4)
+        val response = controller.recommendRelated(postId = 10L, size = 4)
 
         assertEquals(results, response.body)
-        verify(exactly = 1) { postSearchService.recommendRelated("Kotlin 검색", currentPostId = 10L, size = 4) }
+        verify(exactly = 1) { postSearchService.recommendRelated(currentPostId = 10L, size = 4) }
         verify(exactly = 0) { searchRankingService.record(any(), any()) }
     }
 }

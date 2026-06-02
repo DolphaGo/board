@@ -189,7 +189,7 @@ describe('# Post detail component', () => {
     const wrapper = mount(PostDetail)
     await flushPromises()
 
-    expect(mockedPostSearchService.recommendRelatedPosts).toBeCalledWith(10, '코틀린 검색', { size: 3 })
+    expect(mockedPostSearchService.recommendRelatedPosts).toBeCalledWith(10, { size: 3 })
     expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('관련 글')
     expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('코틀린 BM25 추천')
     expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('score 8.50')
