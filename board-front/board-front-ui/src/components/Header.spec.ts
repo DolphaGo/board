@@ -112,6 +112,21 @@ describe('# Header component', () => {
     expect(noticeWriteLink.text()).toBe('공지 작성')
   })
 
+  it('should expose a Korean navigation link to chat rooms', () => {
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    const chatLink = wrapper.find('[data-to="/chat/rooms"]')
+
+    expect(chatLink.exists()).toBe(true)
+    expect(chatLink.text()).toBe('채팅')
+  })
+
   it('should render ranked keyword suggestions while typing in the search input', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
       {
