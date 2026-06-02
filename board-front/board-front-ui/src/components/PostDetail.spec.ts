@@ -94,6 +94,7 @@ describe('# Post detail component', () => {
     expect(wrapper.findAll('.post-image-list img')[1].attributes('src')).toBe('https://cdn.example.com/second.png')
     expect(wrapper.get('.post-meta').text()).toContain('writer')
     expect(wrapper.get('.post-meta').text()).toContain('2026.06.02')
+    expect(wrapper.get('.post-meta').text()).toContain('댓글 2')
     expect(wrapper.get('[data-testid="comment-content"]').element).toHaveProperty('value', '')
     expect(wrapper.text()).toContain('이미 저장된 댓글')
     expect(wrapper.text()).toContain('검색 스코어링 설명이 좋아요')

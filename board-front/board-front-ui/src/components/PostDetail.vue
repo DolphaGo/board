@@ -22,6 +22,7 @@
           <span v-if="post.authorNickname">{{ post.authorNickname }}</span>
           <span v-if="post.createdAt">{{ formatCreatedAt(post.createdAt) }}</span>
           <span>조회수 {{ post.viewCount }}</span>
+          <span>댓글 {{ comments.length }}</span>
         </p>
 
         <div class="post-actions" aria-label="게시글 액션">
