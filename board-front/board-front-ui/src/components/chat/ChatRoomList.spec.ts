@@ -27,6 +27,7 @@ const chatRoomFixture = (overrides: Partial<ChatRoom> = {}): ChatRoom => ({
   id: 'room-1',
   name: '스터디 채팅방',
   participantCount: 3,
+  maxParticipants: 20,
   createdAt: '2026-06-01T09:00:00.000Z',
   ...overrides,
 })
@@ -110,6 +111,20 @@ describe('# Chat room list component', () => {
       path: '/chat/rooms/room-1',
       query: { username: 'study-user' },
     })
+  })
+
+  it('should render current and maximum participants for each room', async () => {
+    mockedChatService.getRoomList.mockResolvedValue([
+      chatRoomFixture({
+        participantCount: 3,
+        maxParticipants: 20,
+      }),
+    ])
+
+    const wrapper = mount(ChatRoomList)
+    await flushPromises()
+
+    expect(wrapper.get('.participant-count').text()).toBe('참여자: 3/20명')
   })
 
   it('should enter the room with the Space key from a room item', async () => {

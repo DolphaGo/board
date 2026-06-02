@@ -34,7 +34,7 @@
       >
         <div class="room-info">
           <h3>{{ room.name }}</h3>
-          <p class="participant-count">참여자: {{ room.participantCount }}명</p>
+          <p class="participant-count">참여자: {{ room.participantCount }}/{{ room.maxParticipants }}명</p>
           <p class="created-at">{{ formatDate(room.createdAt) }}</p>
         </div>
         <div class="room-action">

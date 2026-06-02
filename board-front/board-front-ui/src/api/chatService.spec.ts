@@ -17,6 +17,7 @@ describe('# Chat service', function () {
           id: 'room-1',
           name: '코프링 채팅방',
           createdAt: '2026-06-01T17:00:00',
+          maxParticipants: 20,
           participants: [1, 2, 3],
         },
       ],
@@ -31,6 +32,7 @@ describe('# Chat service', function () {
         name: '코프링 채팅방',
         createdAt: '2026-06-01T17:00:00',
         participantCount: 3,
+        maxParticipants: 20,
       },
     ])
   })
@@ -41,6 +43,7 @@ describe('# Chat service', function () {
         id: 'room-1',
         name: '새 채팅방',
         createdAt: '2026-06-01T17:00:00',
+        maxParticipants: 100,
         participants: [1],
       },
     })
@@ -61,6 +64,7 @@ describe('# Chat service', function () {
         id: 'room-1',
         name: '스터디 채팅방',
         createdAt: '2026-06-01T17:00:00',
+        maxParticipants: 20,
         participants: [1],
       },
     })
