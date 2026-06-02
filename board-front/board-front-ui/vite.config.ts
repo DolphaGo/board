@@ -3,8 +3,11 @@ import vue from '@vitejs/plugin-vue'
 import {resolve} from "path";
 import analyzer from "rollup-plugin-analyzer";
 import {
+  createLocalHiddenPostsFixture,
+  createLocalNoticePostsFixture,
   createLocalPostCommentsFixture,
   createLocalPostFixture,
+  createLocalPostListPageFixture,
   parseLocalPostRequestPath,
 } from "./src/api/localPostFixture";
 import {createPostSearchFixture} from "./src/api/postSearchFixture";
@@ -63,6 +66,31 @@ export default defineConfig({
         server.middlewares.use('/api/posts', (req, res, next) => {
           if (req.method === 'GET') {
             const localPostRequest = parseLocalPostRequestPath(req.url ?? '')
+
+            if (localPostRequest.kind === 'list') {
+              // 목록 화면은 page DTO를 기대한다.
+              // Vite 단독 실행에서도 게시판 하단 페이지네이션과 목록 검증 로직이 같은 계약으로 동작하게 한다.
+              res.setHeader('Content-Type', 'application/json; charset=utf-8')
+              res.end(JSON.stringify(createLocalPostListPageFixture({
+                page: localPostRequest.page,
+                size: localPostRequest.size,
+              })))
+              return
+            }
+
+            if (localPostRequest.kind === 'notices') {
+              // 공지 탭은 배열 DTO를 기대하므로 상세 객체를 내려주면 postService 경계 검증에서 실패한다.
+              res.setHeader('Content-Type', 'application/json; charset=utf-8')
+              res.end(JSON.stringify(createLocalNoticePostsFixture()))
+              return
+            }
+
+            if (localPostRequest.kind === 'hidden') {
+              // 관리자 숨김 목록도 배열 DTO다. local fixture는 권한 검증 대신 화면 흐름만 재현한다.
+              res.setHeader('Content-Type', 'application/json; charset=utf-8')
+              res.end(JSON.stringify(createLocalHiddenPostsFixture()))
+              return
+            }
 
             if (localPostRequest.kind === 'comments') {
               // 상세 화면은 게시글과 댓글을 Promise.all로 함께 읽는다.
