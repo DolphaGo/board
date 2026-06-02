@@ -1,13 +1,16 @@
 import { mount } from '@vue/test-utils'
+import { useRouter } from 'vue-router'
 import { chatService } from 'src/api/chatService'
 import ChatRoom from './ChatRoom.vue'
 
 const mockPublish = jest.fn()
 const mockSubscribe = jest.fn()
 const mockDeactivate = jest.fn()
+const pushMock = jest.fn()
 let mockConnected = true
 let subscribedMessageHandler: ((message: { body: string }) => void) | undefined
 const mockedChatService = chatService as jest.Mocked<typeof chatService>
+const mockedUseRouter = useRouter as jest.Mock
 
 type MockMediaTrack = {
   enabled: boolean
@@ -39,6 +42,10 @@ jest.mock('src/api/chatService', () => ({
   chatService: {
     leaveRoom: jest.fn(),
   },
+}))
+
+jest.mock('vue-router', () => ({
+  useRouter: jest.fn(),
 }))
 
 const mountChatRoom = (isVideoEnabled = false) =>
@@ -84,8 +91,12 @@ describe('# Chat room component', () => {
     mockPublish.mockClear()
     mockSubscribe.mockClear()
     mockDeactivate.mockClear()
+    pushMock.mockClear()
     mockedChatService.leaveRoom.mockClear()
     mockedChatService.leaveRoom.mockResolvedValue(undefined)
+    mockedUseRouter.mockReturnValue({
+      push: pushMock,
+    })
     mockConnected = true
     subscribedMessageHandler = undefined
   })
@@ -256,6 +267,39 @@ describe('# Chat room component', () => {
     wrapper.unmount()
 
     expect(mockedChatService.leaveRoom).toHaveBeenCalledWith('room-1')
+  })
+
+  it('should leave the room and navigate to the room list when clicking the leave button', async () => {
+    const wrapper = mountChatRoom()
+    mockPublish.mockClear()
+
+    await wrapper.get('.leave-room-btn').trigger('click')
+
+    expect(mockedChatService.leaveRoom).toHaveBeenCalledWith('room-1')
+    expect(mockPublish).toHaveBeenCalledWith({
+      destination: '/app/chat.sendMessage',
+      body: expect.any(String),
+    })
+    expect(JSON.parse(mockPublish.mock.calls[0][0].body)).toMatchObject({
+      type: 'LEAVE',
+      roomId: 'room-1',
+      sender: 'study-user',
+      content: 'study-user님이 퇴장하셨습니다.',
+    })
+    expect(mockDeactivate).toHaveBeenCalledTimes(1)
+    expect(pushMock).toHaveBeenCalledWith('/chat/rooms')
+  })
+
+  it('should not send duplicate leave events when unmounted after clicking the leave button', async () => {
+    const wrapper = mountChatRoom()
+    mockPublish.mockClear()
+
+    await wrapper.get('.leave-room-btn').trigger('click')
+    wrapper.unmount()
+
+    expect(mockedChatService.leaveRoom).toHaveBeenCalledTimes(1)
+    expect(mockPublish).toHaveBeenCalledTimes(1)
+    expect(mockDeactivate).toHaveBeenCalledTimes(1)
   })
 
   it('should skip leave message and deactivate when STOMP is disconnected on unmount', () => {

@@ -2,6 +2,7 @@
   <div class="chat-container">
     <div class="chat-header">
       <h2>채팅방</h2>
+      <button class="leave-room-btn" @click="leaveRoomAndGoToList">나가기</button>
     </div>
     
     <div class="chat-main">
@@ -45,6 +46,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import dayjs from 'dayjs'
@@ -77,11 +79,14 @@ export default defineComponent({
     }
   },
   setup(props) {
+    const router = useRouter()
     const stompClient = ref<Client | null>(null)
     const messages = ref<ChatMessage[]>([])
     const newMessage = ref('')
     const messageContainer = ref<HTMLElement | null>(null)
     let isUnmounted = false
+    let hasLeftRoom = false
+    let hasClosedRealtimeConnection = false
     
     // WebRTC 관련 상태
     const localVideo = ref<HTMLVideoElement | null>(null)
@@ -207,6 +212,39 @@ export default defineComponent({
       return dayjs(timestamp).format('HH:mm')
     }
 
+    const leaveRoomOnce = async () => {
+      if (hasLeftRoom) {
+        return
+      }
+
+      hasLeftRoom = true
+      try {
+        await chatService.leaveRoom(props.roomId)
+      } catch (error) {
+        console.error('채팅방 나가기 실패:', error)
+      }
+    }
+
+    const closeRealtimeConnection = () => {
+      if (hasClosedRealtimeConnection) {
+        return
+      }
+
+      hasClosedRealtimeConnection = true
+      if (stompClient.value?.connected) {
+        sendMessage('LEAVE')
+        stompClient.value.deactivate()
+      }
+    }
+
+    const leaveRoomAndGoToList = async () => {
+      // 버튼으로 나갈 때는 REST 참가자 목록 정리를 먼저 시도하고 목록으로 이동한다.
+      // 라우터 이동 뒤 unmount가 다시 실행되므로 leaveRoomOnce()가 중복 REST 요청을 막는다.
+      await leaveRoomOnce()
+      closeRealtimeConnection()
+      await router.push('/chat/rooms')
+    }
+
     // WebRTC 관련 함수들
     const stopMediaStream = (stream: MediaStream) => {
       stream.getTracks().forEach(track => track.stop())
@@ -284,14 +322,9 @@ export default defineComponent({
 
       // STOMP 퇴장 메시지는 채팅 로그용이고, REST leaveRoom은 서버의 참가자 목록 정리용이다.
       // 화면을 떠나는 중인 요청이므로 await하지 않고 실패만 기록해 unmount 흐름을 막지 않는다.
-      void chatService.leaveRoom(props.roomId).catch(error => {
-        console.error('채팅방 나가기 실패:', error)
-      })
+      void leaveRoomOnce()
 
-      if (stompClient.value?.connected) {
-        sendMessage('LEAVE')
-        stompClient.value.deactivate()
-      }
+      closeRealtimeConnection()
       
       if (localStream.value) {
         stopMediaStream(localStream.value)
@@ -306,6 +339,7 @@ export default defineComponent({
       messages,
       newMessage,
       sendTalkMessage,
+      leaveRoomAndGoToList,
       messageContainer,
       formatTime,
       localVideo,
@@ -336,6 +370,23 @@ export default defineComponent({
   background: #4a90e2;
   color: white;
   border-radius: 8px 8px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.leave-room-btn {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 4px;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.leave-room-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .chat-main {
