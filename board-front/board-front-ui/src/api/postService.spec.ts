@@ -210,6 +210,27 @@ describe('# Post service', function () {
     expect(post.display).toBe(false)
   })
 
+  it('should restore a post with the study admin member id', async function () {
+    mockedAxios.patch.mockResolvedValue({
+      data: {
+        id: 10,
+        title: '복구 게시글',
+        content: '관리자가 복구한다',
+        imageUrls: [],
+        viewCount: 3,
+        display: true,
+        notice: false,
+      },
+    })
+
+    const post = await postService.restorePost(10)
+
+    expect(mockedAxios.patch).toBeCalledWith('/api/posts/10/restore', {
+      actorMemberId: 1,
+    })
+    expect(post.display).toBe(true)
+  })
+
   it('should reject malformed create post responses', async function () {
     mockedAxios.post.mockResolvedValue({
       data: '<html>vite fallback</html>',
@@ -279,5 +300,13 @@ describe('# Post service', function () {
     })
 
     await expect(postService.hidePost(10)).rejects.toThrow('Invalid post response')
+  })
+
+  it('should reject malformed restore post responses', async function () {
+    mockedAxios.patch.mockResolvedValue({
+      data: '<html>vite fallback</html>',
+    })
+
+    await expect(postService.restorePost(10)).rejects.toThrow('Invalid post response')
   })
 })

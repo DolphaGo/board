@@ -53,7 +53,18 @@
         </form>
       </template>
 
-      <p v-else class="hidden-post" data-testid="hidden-post">숨김 처리된 게시글입니다.</p>
+      <div v-else class="hidden-post" data-testid="hidden-post">
+        <p>숨김 처리된 게시글입니다.</p>
+        <button
+          v-if="isAdminViewer"
+          type="button"
+          class="restore-button"
+          data-testid="restore-post"
+          @click="restorePost"
+        >
+          복구
+        </button>
+      </div>
 
       <p v-if="commentMessage" class="action-message">{{ commentMessage }}</p>
       <p v-if="recommendMessage" class="action-message">{{ recommendMessage }}</p>
@@ -215,6 +226,25 @@ const hidePost = async () => {
     actionError.value = findApiErrorMessage(err);
   }
 };
+
+const restorePost = async () => {
+  const id = postId.value;
+
+  if (id === null || !isAdminViewer.value) {
+    return;
+  }
+
+  try {
+    actionError.value = '';
+    // 복구도 백엔드가 권한과 display=true 상태를 확정한 DTO로 화면을 교체한다.
+    // 성공하면 기존 마스킹 안내가 사라지고 일반 상세 본문/액션 영역이 다시 보인다.
+    post.value = await postService.restorePost(id);
+    moderationMessage.value = '게시글을 복구했습니다.';
+  } catch (err) {
+    console.error('게시글 복구 실패:', err);
+    actionError.value = findApiErrorMessage(err);
+  }
+};
 </script>
 
 <style scoped>
@@ -265,6 +295,10 @@ const hidePost = async () => {
   text-align: center;
 }
 
+.hidden-post p {
+  margin: 0;
+}
+
 .post-actions {
   border-top: 1px solid #e0e0e0;
   margin-top: 16px;
@@ -288,6 +322,18 @@ const hidePost = async () => {
   background: #c62828;
   border-color: #a91f1f;
   margin-left: 8px;
+}
+
+.restore-button {
+  background: #057dbc;
+  border: 1px solid #04699d;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 10px;
+  min-height: 32px;
+  padding: 0 12px;
 }
 
 .comment-form {

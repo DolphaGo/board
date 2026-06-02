@@ -204,4 +204,18 @@ export const postService = {
 
     return response.data
   },
+
+  restorePost: async (postId: number): Promise<PostResponse> => {
+    const response = await axios.patch<PostResponse>(`/api/posts/${postId}/restore`, {
+      // 복구도 숨김과 같은 관리자 운영 액션이다.
+      // 로그인 전 샘플 UI에서는 같은 학습용 관리자 id로 백엔드 권한 검사를 통과시킨다.
+      actorMemberId: STUDY_MEMBER_ID,
+    })
+
+    if (!isPostResponse(response.data)) {
+      throw new Error('Invalid post response')
+    }
+
+    return response.data
+  },
 }
