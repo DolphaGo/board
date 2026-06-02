@@ -41,6 +41,19 @@ export interface PostListItemResponse extends PostResponse {
   recommendCount: number
 }
 
+export interface PostListPageResponse {
+  items: PostListItemResponse[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+export interface PostListOptions {
+  page?: number
+  size?: number
+}
+
 export interface CommentResponse {
   id: number
   postId: number
@@ -91,6 +104,26 @@ const isPostListItemResponse = (data: unknown): data is PostListItemResponse => 
     typeof post.recommendCount === 'number'
 }
 
+const isNonNegativeInteger = (data: unknown): data is number =>
+  typeof data === 'number' && Number.isInteger(data) && data >= 0
+
+const isPositiveInteger = (data: unknown): data is number =>
+  typeof data === 'number' && Number.isInteger(data) && data > 0
+
+const isPostListPageResponse = (data: unknown): data is PostListPageResponse => {
+  if (typeof data !== 'object' || data === null) {
+    return false
+  }
+
+  const page = data as Partial<PostListPageResponse>
+  return Array.isArray(page.items) &&
+    page.items.every(isPostListItemResponse) &&
+    isNonNegativeInteger(page.page) &&
+    isPositiveInteger(page.size) &&
+    isNonNegativeInteger(page.totalElements) &&
+    isNonNegativeInteger(page.totalPages)
+}
+
 const isCommentResponse = (data: unknown): data is CommentResponse => {
   if (typeof data !== 'object' || data === null) {
     return false
@@ -130,18 +163,28 @@ export const postService = {
     return response.data
   },
 
-  listPosts: async (): Promise<PostListItemResponse[]> => {
-    const response = await axios.get<PostListItemResponse[]>('/api/posts')
+  listPosts: async (options: PostListOptions = {}): Promise<PostListPageResponse> => {
+    const page = Number.isInteger(options.page) && (options.page ?? 0) >= 0 ? options.page ?? 0 : 0
+    const size = Number.isInteger(options.size) && (options.size ?? 10) > 0 ? options.size ?? 10 : 10
+    const response = await axios.get<PostListPageResponse>('/api/posts', {
+      params: {
+        page,
+        size,
+      },
+    })
 
     // 백엔드가 꺼진 Vite 단독 실행에서는 index.html 문자열이 내려올 수 있다.
-    // 목록 화면은 배열 DTO만 렌더링하도록 경계에서 계약을 확인한다.
-    if (!Array.isArray(response.data) || !response.data.every(isPostListItemResponse)) {
+    // 서버 페이지네이션 계약은 items뿐 아니라 page/size/totalElements/totalPages가 있어야 하단 페이지 버튼을 안정적으로 그릴 수 있다.
+    if (!isPostListPageResponse(response.data)) {
       throw new Error('Invalid post list response')
     }
 
     // 목록 API는 원칙적으로 display=true만 내려주지만, 프론트 경계에서도 한 번 더 거른다.
     // 관리자 숨김 직후 오래된 캐시나 잘못된 목업 응답이 섞여도 사용자 목록에는 숨김 글이 보이지 않는다.
-    return response.data.filter(post => post.display)
+    return {
+      ...response.data,
+      items: response.data.items.filter(post => post.display),
+    }
   },
 
   listNoticePosts: async (): Promise<PostListItemResponse[]> => {

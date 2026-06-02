@@ -5,6 +5,7 @@ import dev.dolphago.mysql.Post
 import dev.dolphago.mysql.PostRecommend
 import dev.dolphago.service.PostDetailItem
 import dev.dolphago.service.PostListItem
+import dev.dolphago.service.PostListPage
 import dev.dolphago.service.PostService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -23,8 +24,17 @@ class PostController(
     private val postService: PostService,
 ) {
     @GetMapping
-    fun listPosts(): ResponseEntity<List<PostListItemResponse>> =
-        ResponseEntity.ok(postService.listPosts().map { it.toListItemResponse() })
+    fun listPosts(
+        @RequestParam(defaultValue = "0") page: Int = 0,
+        @RequestParam(defaultValue = "10") size: Int = 10,
+    ): ResponseEntity<PostListPageResponse> {
+        val safePage = page.coerceAtLeast(0)
+        val safeSize = size.coerceIn(1, MAX_POST_LIST_PAGE_SIZE)
+
+        // 게시판 목록은 데이터가 커질수록 전체 배열을 내려주면 느려진다.
+        // 컨트롤러에서 HTTP page/size를 작은 안전 범위로 정규화하고, 서비스는 그 값으로 DB Page를 조회한다.
+        return ResponseEntity.ok(postService.listPosts(page = safePage, size = safeSize).toPageResponse())
+    }
 
     @GetMapping("/notices")
     fun listNoticePosts(): ResponseEntity<List<PostListItemResponse>> {
@@ -193,6 +203,14 @@ data class PostListItemResponse(
     val recommendCount: Long,
 )
 
+data class PostListPageResponse(
+    val items: List<PostListItemResponse>,
+    val page: Int,
+    val size: Int,
+    val totalElements: Long,
+    val totalPages: Int,
+)
+
 data class CommentResponse(
     val id: Long?,
     val postId: Long?,
@@ -239,6 +257,15 @@ private fun PostListItem.toListItemResponse(): PostListItemResponse =
         recommendCount = recommendCount,
     )
 
+private fun PostListPage.toPageResponse(): PostListPageResponse =
+    PostListPageResponse(
+        items = items.map { it.toListItemResponse() },
+        page = page,
+        size = size,
+        totalElements = totalElements,
+        totalPages = totalPages,
+    )
+
 private fun PostDetailItem.toResponse(): PostResponse =
     PostResponse(
         id = post.id,
@@ -273,3 +300,5 @@ private fun PostRecommend.toResponse(): PostRecommendResponse =
         display = display,
         createdAt = createDate,
     )
+
+private const val MAX_POST_LIST_PAGE_SIZE = 50

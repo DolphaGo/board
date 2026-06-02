@@ -7,6 +7,7 @@ import dev.dolphago.mysql.Post
 import dev.dolphago.mysql.PostRecommend
 import dev.dolphago.service.PostDetailItem
 import dev.dolphago.service.PostListItem
+import dev.dolphago.service.PostListPage
 import dev.dolphago.service.PostService
 import io.mockk.every
 import io.mockk.mockk
@@ -500,36 +501,105 @@ class PostControllerTest {
                 viewCount = 3,
                 display = true,
             )
-        every { postService.listPosts() } returns
-            listOf(
-                PostListItem(
-                    post = post,
-                    commentCount = 2,
-                    recommendCount = 5,
-                ),
+        every { postService.listPosts(page = 1, size = 10) } returns
+            PostListPage(
+                items =
+                    listOf(
+                        PostListItem(
+                            post = post,
+                            commentCount = 2,
+                            recommendCount = 5,
+                        ),
+                    ),
+                page = 1,
+                size = 10,
+                totalElements = 11,
+                totalPages = 2,
             )
 
-        val response = controller.listPosts()
+        val response = controller.listPosts(page = 1, size = 10)
 
         assertEquals(
-            listOf(
-                PostListItemResponse(
-                    id = 10L,
-                    title = "코프링 게시판 검색",
-                    content = "목록에서 보여줄 본문",
-                    imageUrls = emptyList(),
-                    viewCount = 3,
-                    display = true,
-                    notice = false,
-                    authorNickname = "writer",
-                    createdAt = post.createDate,
-                    commentCount = 2,
-                    recommendCount = 5,
-                ),
+            PostListPageResponse(
+                items =
+                    listOf(
+                        PostListItemResponse(
+                            id = 10L,
+                            title = "코프링 게시판 검색",
+                            content = "목록에서 보여줄 본문",
+                            imageUrls = emptyList(),
+                            viewCount = 3,
+                            display = true,
+                            notice = false,
+                            authorNickname = "writer",
+                            createdAt = post.createDate,
+                            commentCount = 2,
+                            recommendCount = 5,
+                        ),
+                    ),
+                page = 1,
+                size = 10,
+                totalElements = 11,
+                totalPages = 2,
             ),
             response.body,
         )
-        verify(exactly = 1) { postService.listPosts() }
+        verify(exactly = 1) { postService.listPosts(page = 1, size = 10) }
+    }
+
+    @Test
+    fun `게시글 목록 조회는 페이지 번호와 크기를 기본값으로 사용한다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "코프링 게시판 검색",
+                content = "목록에서 보여줄 본문",
+                viewCount = 3,
+                display = true,
+            )
+        every { postService.listPosts(page = 0, size = 10) } returns
+            PostListPage(
+                items =
+                    listOf(
+                        PostListItem(
+                            post = post,
+                            commentCount = 2,
+                            recommendCount = 5,
+                        ),
+                    ),
+                page = 0,
+                size = 10,
+                totalElements = 1,
+                totalPages = 1,
+            )
+
+        controller.listPosts()
+
+        verify(exactly = 1) { postService.listPosts(page = 0, size = 10) }
+    }
+
+    @Test
+    fun `게시글 목록 조회 크기가 너무 크면 서비스 호출 전에 최대 크기로 줄인다`() {
+        every { postService.listPosts(page = 0, size = 50) } returns
+            PostListPage(
+                items = emptyList(),
+                page = 0,
+                size = 50,
+                totalElements = 0,
+                totalPages = 0,
+            )
+
+        controller.listPosts(page = -1, size = 999)
+
+        verify(exactly = 1) { postService.listPosts(page = 0, size = 50) }
     }
 
     @Test

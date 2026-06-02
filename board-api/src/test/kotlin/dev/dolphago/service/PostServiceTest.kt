@@ -15,6 +15,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import java.util.Optional
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -569,7 +571,7 @@ class PostServiceTest {
     }
 
     @Test
-    fun `목록 조회는 공지를 먼저 읽고 같은 그룹에서는 최신순으로 읽는다`() {
+    fun `목록 조회는 서버 페이지 단위로 공지를 먼저 읽고 같은 그룹에서는 최신순으로 읽는다`() {
         val author =
             Member(
                 id = 1L,
@@ -596,20 +598,26 @@ class PostServiceTest {
                 display = true,
                 notice = true,
             )
-        every { postRepository.findByDisplayTrueOrderByNoticeDescIdDesc() } returns listOf(notice, post)
+        val pageRequest = PageRequest.of(1, 10)
+        every { postRepository.findByDisplayTrueOrderByNoticeDescIdDesc(pageRequest) } returns
+            PageImpl(listOf(notice, post), pageRequest, 12)
         every { commentRepository.countByPostIdAndDisplayTrue(9L) } returns 0L
         every { commentRepository.countByPostIdAndDisplayTrue(10L) } returns 2L
         every { postRecommendRepository.countByPostIdAndDisplayTrue(9L) } returns 0L
         every { postRecommendRepository.countByPostIdAndDisplayTrue(10L) } returns 5L
 
-        val posts = postService.listPosts()
+        val page = postService.listPosts(page = 1, size = 10)
 
-        assertEquals(listOf(notice, post), posts.map { it.post })
-        assertEquals(0L, posts[0].commentCount)
-        assertEquals(2L, posts[1].commentCount)
-        assertEquals(5L, posts[1].recommendCount)
+        assertEquals(listOf(notice, post), page.items.map { it.post })
+        assertEquals(0L, page.items[0].commentCount)
+        assertEquals(2L, page.items[1].commentCount)
+        assertEquals(5L, page.items[1].recommendCount)
+        assertEquals(1, page.page)
+        assertEquals(10, page.size)
+        assertEquals(12L, page.totalElements)
+        assertEquals(2, page.totalPages)
         assertEquals(3L, post.viewCount)
-        verify(exactly = 1) { postRepository.findByDisplayTrueOrderByNoticeDescIdDesc() }
+        verify(exactly = 1) { postRepository.findByDisplayTrueOrderByNoticeDescIdDesc(pageRequest) }
         verify(exactly = 1) { commentRepository.countByPostIdAndDisplayTrue(9L) }
         verify(exactly = 1) { commentRepository.countByPostIdAndDisplayTrue(10L) }
         verify(exactly = 1) { postRecommendRepository.countByPostIdAndDisplayTrue(9L) }

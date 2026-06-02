@@ -10,7 +10,7 @@
     <p v-else-if="posts.length === 0" class="board-message">게시글이 없습니다.</p>
 
     <div v-else class="board-rows">
-      <article v-for="post in pagedPosts" :key="post.id" class="board-row">
+      <article v-for="post in posts" :key="post.id" class="board-row">
         <router-link class="board-title-link" :to="`/post/${post.id}`">
           <span v-if="post.notice" class="notice-badge">공지</span>
           <span class="board-title-text">{{ post.title }}</span>
@@ -63,24 +63,26 @@ const posts = ref<PostListItemResponse[]>([])
 const loading = ref(false)
 const error = ref(false)
 const currentPage = ref(1)
+const totalElements = ref(0)
+const serverTotalPages = ref(1)
 const PAGE_SIZE = 10
 
-const totalPages = computed(() => Math.max(1, Math.ceil(posts.value.length / PAGE_SIZE)))
-
-const pagedPosts = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE
-
-  return posts.value.slice(start, start + PAGE_SIZE)
-})
+const totalPages = computed(() => Math.max(1, serverTotalPages.value))
 
 const boardSummary = computed(() =>
-  posts.value.length > 0
-    ? `최신순 ${posts.value.length}건 · ${currentPage.value}/${totalPages.value}페이지`
+  totalElements.value > 0
+    ? `최신순 ${totalElements.value}건 · ${currentPage.value}/${totalPages.value}페이지`
     : '최신순 0건'
 )
 
-const movePage = (amount: number) => {
-  currentPage.value = Math.min(totalPages.value, Math.max(1, currentPage.value + amount))
+const movePage = async (amount: number) => {
+  const nextPage = Math.min(totalPages.value, Math.max(1, currentPage.value + amount))
+
+  if (nextPage === currentPage.value) {
+    return
+  }
+
+  await fetchPosts(nextPage)
 }
 
 const formatCreatedAt = (createdAt: string) => {
@@ -89,18 +91,23 @@ const formatCreatedAt = (createdAt: string) => {
   return createdAt.slice(0, 10).replaceAll('-', '.')
 }
 
-const fetchPosts = async () => {
+const fetchPosts = async (page = 1) => {
   try {
     loading.value = true
     error.value = false
     // 홈 목록은 게시글 작성/검색 학습 흐름의 출발점이다.
-    // 백엔드 페이지 계약이 붙기 전까지는 전체 목록을 받아 프론트에서 10개씩 잘라 보여준다.
-    // 이렇게 해두면 사용자는 실제 게시판처럼 하단 페이지 이동을 먼저 체험하고, 이후 서버 페이지네이션으로 자연스럽게 교체할 수 있다.
-    posts.value = await postService.listPosts()
-    currentPage.value = 1
+    // 서버 page는 0부터 시작하고, 화면 page는 사용자가 읽기 쉬운 1부터 시작한다.
+    // 이 경계 변환을 컴포넌트에 모아두면 버튼 UI는 1/2페이지처럼 자연스럽게 보이고 API 계약은 Spring PageRequest와 맞는다.
+    const response = await postService.listPosts({ page: page - 1, size: PAGE_SIZE })
+    posts.value = response.items
+    totalElements.value = response.totalElements
+    serverTotalPages.value = response.totalPages
+    currentPage.value = response.page + 1
   } catch (err) {
     console.error('게시글 목록 조회 실패:', err)
     posts.value = []
+    totalElements.value = 0
+    serverTotalPages.value = 1
     error.value = true
   } finally {
     loading.value = false

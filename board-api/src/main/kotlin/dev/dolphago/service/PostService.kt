@@ -9,6 +9,7 @@ import dev.dolphago.mysql.PostRecommend
 import dev.dolphago.post.repository.PostRepository
 import dev.dolphago.recommend.repository.PostRecommendRepository
 import dev.dolphago.search.PostSearchIndexService
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -49,21 +50,37 @@ class PostService(
         )
     }
 
-    fun listPosts(): List<PostListItem> {
+    fun listPosts(
+        page: Int,
+        size: Int,
+    ): PostListPage {
         // 목록은 게시판 첫 화면을 빠르게 그리는 용도다.
         // 상세 조회와 달리 "읽었다"는 사용자 행위가 아니므로 조회수를 올리지 않는다.
         // 공지글은 일반 글보다 운영상 우선 노출되어야 하므로 notice desc로 먼저 묶고,
         // 같은 그룹 안에서는 id desc를 써서 최신 글이 위로 오게 한다.
-        return postRepository.findByDisplayTrueOrderByNoticeDescIdDesc().map { post ->
-            PostListItem(
-                post = post,
-                // 댓글은 display=true인 것만 사용자에게 노출된다.
-                // 목록 댓글 수 역시 실제로 보이는 댓글 기준으로 맞춰야 UX와 DB 상태가 어긋나지 않는다.
-                commentCount = post.id?.let(commentRepository::countByPostIdAndDisplayTrue) ?: 0,
-                // 추천 취소/숨김이 가능하도록 display=true인 추천만 목록 수치에 포함한다.
-                recommendCount = post.id?.let(postRecommendRepository::countByPostIdAndDisplayTrue) ?: 0,
-            )
-        }
+        val pageRequest = PageRequest.of(page, size)
+        val postPage = postRepository.findByDisplayTrueOrderByNoticeDescIdDesc(pageRequest)
+        val items =
+            postPage.content.map { post ->
+                PostListItem(
+                    post = post,
+                    // 댓글은 display=true인 것만 사용자에게 노출된다.
+                    // 목록 댓글 수 역시 실제로 보이는 댓글 기준으로 맞춰야 UX와 DB 상태가 어긋나지 않는다.
+                    commentCount = post.id?.let(commentRepository::countByPostIdAndDisplayTrue) ?: 0,
+                    // 추천 취소/숨김이 가능하도록 display=true인 추천만 목록 수치에 포함한다.
+                    recommendCount = post.id?.let(postRecommendRepository::countByPostIdAndDisplayTrue) ?: 0,
+                )
+            }
+
+        // Page는 현재 페이지 항목과 전체 개수를 함께 담는다.
+        // 프론트가 "다음" 버튼을 누를 때 전체 목록을 다시 받아 자르는 대신 page/size만 바꿔 요청하도록 이 메타를 내려준다.
+        return PostListPage(
+            items = items,
+            page = postPage.number,
+            size = postPage.size,
+            totalElements = postPage.totalElements,
+            totalPages = postPage.totalPages,
+        )
     }
 
     fun listNoticePosts(): List<PostListItem> {
@@ -265,6 +282,14 @@ data class PostListItem(
     val post: Post,
     val commentCount: Long,
     val recommendCount: Long,
+)
+
+data class PostListPage(
+    val items: List<PostListItem>,
+    val page: Int,
+    val size: Int,
+    val totalElements: Long,
+    val totalPages: Int,
 )
 
 data class PostDetailItem(

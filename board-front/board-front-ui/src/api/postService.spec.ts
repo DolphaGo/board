@@ -27,40 +27,97 @@ describe('# Post service', function () {
 
   it('should fetch visible posts as a list', async function () {
     mockedAxios.get.mockResolvedValue({
-      data: [
-        {
-          id: 10,
-          title: '코프링 게시글',
-          content: 'Elasticsearch 색인까지 연결한다',
-          imageUrls: [],
-          viewCount: 3,
-          display: true,
-          notice: true,
-          authorNickname: 'writer',
-          createdAt: '2026-06-02T04:00:00',
-          commentCount: 2,
-          recommendCount: 1,
-        },
-      ],
+      data: {
+        items: [
+          {
+            id: 10,
+            title: '코프링 게시글',
+            content: 'Elasticsearch 색인까지 연결한다',
+            imageUrls: [],
+            viewCount: 3,
+            display: true,
+            notice: true,
+            authorNickname: 'writer',
+            createdAt: '2026-06-02T04:00:00',
+            commentCount: 2,
+            recommendCount: 1,
+          },
+        ],
+        page: 1,
+        size: 10,
+        totalElements: 11,
+        totalPages: 2,
+      },
     })
 
-    const posts = await postService.listPosts()
+    const page = await postService.listPosts({ page: 1, size: 10 })
 
-    expect(mockedAxios.get).toBeCalledWith('/api/posts')
-    expect(posts).toHaveLength(1)
-    expect(posts[0].title).toBe('코프링 게시글')
-    expect(posts[0].notice).toBe(true)
-    expect(posts[0].authorNickname).toBe('writer')
-    expect(posts[0].commentCount).toBe(2)
+    expect(mockedAxios.get).toBeCalledWith('/api/posts', {
+      params: {
+        page: 1,
+        size: 10,
+      },
+    })
+    expect(page.items).toHaveLength(1)
+    expect(page.items[0].title).toBe('코프링 게시글')
+    expect(page.items[0].notice).toBe(true)
+    expect(page.items[0].authorNickname).toBe('writer')
+    expect(page.items[0].commentCount).toBe(2)
+    expect(page.totalElements).toBe(11)
+    expect(page.totalPages).toBe(2)
   })
 
   it('should ignore hidden posts when the list API returns mixed display states', async function () {
     mockedAxios.get.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: 10,
+            title: '보이는 게시글',
+            content: '목록에 남아야 한다',
+            imageUrls: [],
+            viewCount: 3,
+            display: true,
+            notice: false,
+            authorNickname: 'writer',
+            createdAt: '2026-06-02T04:00:00',
+            commentCount: 2,
+            recommendCount: 1,
+          },
+          {
+            id: 11,
+            title: '숨김 게시글',
+            content: '목록에서 가려야 한다',
+            imageUrls: [],
+            viewCount: 1,
+            display: false,
+            notice: false,
+            authorNickname: 'admin',
+            createdAt: '2026-06-02T05:00:00',
+            commentCount: 0,
+            recommendCount: 0,
+          },
+        ],
+        page: 0,
+        size: 10,
+        totalElements: 2,
+        totalPages: 1,
+      },
+    })
+
+    const page = await postService.listPosts()
+
+    expect(page.items).toHaveLength(1)
+    expect(page.items[0].title).toBe('보이는 게시글')
+  })
+
+  it('should reject malformed post page responses', async function () {
+    mockedAxios.get.mockResolvedValue({
       data: [
         {
           id: 10,
-          title: '보이는 게시글',
-          content: '목록에 남아야 한다',
+          title: '배열 응답은 오래된 계약',
+          content: 'page metadata가 없다',
           imageUrls: [],
           viewCount: 3,
           display: true,
@@ -70,26 +127,10 @@ describe('# Post service', function () {
           commentCount: 2,
           recommendCount: 1,
         },
-        {
-          id: 11,
-          title: '숨김 게시글',
-          content: '목록에서 가려야 한다',
-          imageUrls: [],
-          viewCount: 1,
-          display: false,
-          notice: false,
-          authorNickname: 'admin',
-          createdAt: '2026-06-02T05:00:00',
-          commentCount: 0,
-          recommendCount: 0,
-        },
       ],
     })
 
-    const posts = await postService.listPosts()
-
-    expect(posts).toHaveLength(1)
-    expect(posts[0].title).toBe('보이는 게시글')
+    await expect(postService.listPosts()).rejects.toThrow('Invalid post list response')
   })
 
   it('should fetch visible notice posts from the post list API', async function () {
