@@ -323,6 +323,58 @@ class PostSearchServiceTest {
     }
 
     @Test
+    fun `관련 게시글 추천은 ES 쿼리에서 현재 게시글을 제외한다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val querySlot = slot<NativeQuery>()
+        every { postRepository.findById(10L) } returns
+            Optional.of(
+                Post(
+                    id = 10L,
+                    member = author,
+                    title = "코틀린 검색",
+                    content = "BM25와 초성 검색을 함께 설명하는 게시글",
+                    viewCount = 5,
+                    display = true,
+                ),
+            )
+        every {
+            elasticsearchOperations.search(capture(querySlot), PostSearchDocument::class.java)
+        } returns
+            SearchHitsImpl(
+                0,
+                TotalHitsRelation.EQUAL_TO,
+                0.0f,
+                Duration.ZERO,
+                null,
+                null,
+                emptyList(),
+                null,
+                null,
+                null,
+            )
+
+        postSearchService.recommendRelated(currentPostId = 10L, size = 3)
+
+        val baseQuery = requireNotNull(requireNotNull(querySlot.captured.query).functionScore().query())
+        val excludedPostIds =
+            baseQuery
+                .bool()
+                .mustNot()
+                .filter { it.isTerm() }
+                .map { it.term() }
+                .filter { it.field() == "id" }
+                .map { it.value().longValue() }
+
+        assertEquals(listOf(10L), excludedPostIds)
+    }
+
+    @Test
     fun `게시글 검색 점수 설명은 적용 signal 수가 전체 signal 수보다 클 수 없다`() {
         assertFailsWith<IllegalArgumentException> {
             PostSearchScoreExplanation(

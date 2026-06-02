@@ -78,7 +78,11 @@ class PostSearchService(
         // 관련 글 추천은 별도 개인화 모델을 만들기 전 단계의 학습용 추천이다.
         // 현재 글 제목과 본문을 일반 검색과 같은 BM25 + 음절/초성 recall 쿼리에 넣고,
         // 지금 읽는 글만 제외하면 "검색 스코어링이 추천으로도 확장되는 흐름"을 작게 확인할 수 있다.
-        return search(relatedKeyword, (safeSize + 1).coerceAtMost(MAX_SEARCH_SIZE))
+        return search(
+            rawKeyword = relatedKeyword,
+            size = safeSize,
+            excludedPostId = currentPostId,
+        )
             .filter { it.postId != currentPostId }
             .take(safeSize)
     }
@@ -86,6 +90,7 @@ class PostSearchService(
     fun search(
         rawKeyword: String,
         size: Int,
+        excludedPostId: Long? = null,
     ): List<PostSearchResult> {
         val keyword = SearchKeyword.from(rawKeyword)
         val syllableKeyword = KoreanSyllableTokenizer.tokenize(keyword.value)
@@ -153,6 +158,17 @@ class PostSearchService(
                                                     .field("contentInitials")
                                                     .query(initialKeyword)
                                                     .boost(CONTENT_INITIAL_BOOST)
+                                            }
+                                        }.apply {
+                                            if (excludedPostId != null) {
+                                                // 관련 글 추천에서는 지금 읽는 글이 다시 추천 카드로 나오면 품질이 떨어진다.
+                                                // 애플리케이션에서 결과를 받은 뒤 거르는 것보다 ES bool query의 must_not에 넣어
+                                                // 같은 size 안에서 실제 후보를 더 많이 받을 수 있게 한다.
+                                                mustNot { mn ->
+                                                    mn.term { t ->
+                                                        t.field("id").value(excludedPostId)
+                                                    }
+                                                }
                                             }
                                         }.filter { f ->
                                             f.term { t ->
