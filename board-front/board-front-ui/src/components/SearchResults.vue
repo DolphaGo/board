@@ -36,8 +36,13 @@
         data-testid="search-scoring-study-guide"
         aria-label="검색 점수 학습 요약"
       >
-        <p v-for="guide in scoringStudyGuideRows" :key="guide.category">
+        <p
+          v-for="guide in scoringStudyGuideRows"
+          :key="guide.category"
+          data-testid="search-scoring-study-guide-row"
+        >
           <strong>{{ guide.label }}</strong>: {{ guide.description }}
+          <span class="search-scoring-study-guide-state">· {{ guide.statusLabel }}</span>
         </p>
       </section>
 
@@ -266,7 +271,18 @@ const showScoringStudyGuide = computed(() =>
   !loading.value && !error.value && searchKeyword.value.length > 0 && results.value.length > 0
 )
 
-const scoringStudyGuideRows = [
+interface ScoringStudyGuideDefinition {
+  category: string
+  label: string
+  description: string
+}
+
+interface ScoringStudyGuideRow extends ScoringStudyGuideDefinition {
+  presentInResponse: boolean
+  statusLabel: string
+}
+
+const scoringStudyGuideDefinitions: ScoringStudyGuideDefinition[] = [
   {
     category: 'BM25_TEXT',
     label: '원문/BM25',
@@ -288,6 +304,34 @@ const scoringStudyGuideRows = [
     description: 'function_score는 공지 같은 운영 신호를 작은 가산점으로 더합니다.',
   },
 ]
+
+const scoringStudyGuideRows = computed<ScoringStudyGuideRow[]>(() => {
+  const categoriesInResponse = new Set(
+    results.value.flatMap(result => result.scoringSignals.map(signal => signal.category))
+  )
+
+  return scoringStudyGuideDefinitions
+    .map((guide, index) => {
+      const presentInResponse = categoriesInResponse.has(guide.category)
+
+      return {
+        ...guide,
+        index,
+        presentInResponse,
+        // 같은 학습 설명이라도 현재 응답에 실제 query plan으로 내려온 category인지 구분해야 한다.
+        // "응답 포함"은 이번 검색에서 서버가 반환한 scoringSignals에 있었던 계열이고,
+        // "보조 전략"은 게시판 검색에서 자주 쓰지만 이번 응답에는 직접 등장하지 않은 참고 계열이다.
+        statusLabel: presentInResponse ? '응답 포함' : '보조 전략',
+      }
+    })
+    .sort((left, right) => {
+      if (left.presentInResponse !== right.presentInResponse) {
+        return left.presentInResponse ? -1 : 1
+      }
+
+      return left.index - right.index
+    })
+})
 
 // scoringSignals는 Elasticsearch explain API의 원문이 아니라, 우리가 구성한 query plan을 학습용으로 풀어낸 값이다.
 // 실제 점수는 BM25, field length, term frequency, function_score가 합쳐져 계산되므로 화면에는 "어떤 신호가 쓰였는지"만 보여준다.
@@ -397,6 +441,11 @@ watch(
 
 .search-token-analysis dd {
   margin: 0;
+}
+
+.search-scoring-study-guide-state {
+  color: #057dbc;
+  font-weight: 700;
 }
 
 .result-list {

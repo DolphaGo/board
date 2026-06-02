@@ -151,6 +151,52 @@ describe('# Search results component', () => {
     expect(guide).toContain('function_score는 공지 같은 운영 신호를 작은 가산점으로 더합니다.')
   })
 
+  it('should prioritize scoring study guide rows that are present in the current response', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: '실제 응답에 포함된 점수 category를 먼저 설명한다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [
+          {
+            field: 'notice',
+            category: 'FUNCTION_SCORE',
+            label: '공지 가산점',
+            boost: 2,
+            keyword: 'notice=true',
+            description: '공지글은 function_score sum 모드로 관련도 점수에 작은 운영 가산점을 더한다.',
+            applied: true,
+          },
+          {
+            field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
+            boost: 3,
+            keyword: '코프링',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    const guideRows = wrapper
+      .findAll('[data-testid="search-scoring-study-guide-row"]')
+      .map(row => row.text())
+    expect(guideRows).toEqual([
+      '원문/BM25: BM25는 제목/본문 원문 일치의 기본 관련도입니다. · 응답 포함',
+      'function_score: function_score는 공지 같은 운영 신호를 작은 가산점으로 더합니다. · 응답 포함',
+      '음절 recall: 음절 recall은 ㅋㅗ처럼 자모로 쪼갠 입력을 보조합니다. · 보조 전략',
+      '초성 recall: 초성 recall은 ㅋㅍㄹ처럼 빠르게 입력한 초성 검색을 보조합니다. · 보조 전략',
+    ])
+  })
+
   it('should summarize applied scoring signals so users can learn why a result ranked', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {
