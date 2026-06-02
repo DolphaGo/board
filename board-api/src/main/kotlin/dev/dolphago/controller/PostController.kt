@@ -104,6 +104,22 @@ class PostController(
 
         return ResponseEntity.ok(post.toResponse())
     }
+
+    @PatchMapping("/{id}/restore")
+    fun restorePost(
+        @PathVariable id: Long,
+        @RequestBody request: RestorePostRequest,
+    ): ResponseEntity<PostResponse> {
+        // 숨김 복구는 관리자 운영 화면에서 쓰일 액션이다.
+        // 컨트롤러는 actorMemberId만 서비스에 넘기고 권한/색인 정책은 서비스가 일관되게 처리한다.
+        val post =
+            postService.restorePost(
+                postId = id,
+                actorMemberId = request.actorMemberId,
+            )
+
+        return ResponseEntity.ok(post.toResponse())
+    }
 }
 
 data class CreatePostRequest(
@@ -124,6 +140,10 @@ data class CreateRecommendRequest(
 )
 
 data class HidePostRequest(
+    val actorMemberId: Long,
+)
+
+data class RestorePostRequest(
     val actorMemberId: Long,
 )
 

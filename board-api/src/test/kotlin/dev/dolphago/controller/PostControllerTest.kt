@@ -414,6 +414,57 @@ class PostControllerTest {
     }
 
     @Test
+    fun `게시글 복구 요청은 서비스를 호출하고 복구 응답 DTO를 반환한다`() {
+        val author =
+            Member(
+                id = 2L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val restoredPost =
+            Post(
+                id = 10L,
+                member = author,
+                title = "복구 게시글",
+                content = "관리자가 목록과 검색에 다시 노출한다",
+                viewCount = 3,
+                display = true,
+            )
+        every {
+            postService.restorePost(
+                postId = 10L,
+                actorMemberId = 1L,
+            )
+        } returns restoredPost
+
+        val response =
+            controller.restorePost(
+                id = 10L,
+                request = RestorePostRequest(actorMemberId = 1L),
+            )
+
+        assertEquals(
+            PostResponse(
+                id = 10L,
+                title = "복구 게시글",
+                content = "관리자가 목록과 검색에 다시 노출한다",
+                imageUrls = emptyList(),
+                viewCount = 3,
+                display = true,
+                notice = false,
+            ),
+            response.body,
+        )
+        verify(exactly = 1) {
+            postService.restorePost(
+                postId = 10L,
+                actorMemberId = 1L,
+            )
+        }
+    }
+
+    @Test
     fun `게시글 목록 조회는 게시판 메타를 포함한 응답 DTO를 반환한다`() {
         val author =
             Member(

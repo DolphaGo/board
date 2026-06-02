@@ -212,6 +212,77 @@ class PostServiceTest {
     }
 
     @Test
+    fun `관리자는 숨김 게시글을 복구하고 검색 문서를 다시 색인한다`() {
+        val admin =
+            Member(
+                id = 1L,
+                email = "admin@example.com",
+                nickname = "admin",
+                role = Authority.ROLE_ADMIN,
+            )
+        val author =
+            Member(
+                id = 2L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "복구할 게시글",
+                content = "관리자가 다시 목록과 검색에 노출한다",
+                viewCount = 3,
+                display = false,
+            )
+
+        every { memberRepository.findById(1L) } returns Optional.of(admin)
+        every { postRepository.findById(10L) } returns Optional.of(post)
+        every { postSearchIndexService.index(post) } returns
+            PostSearchDocument(
+                id = 10L,
+                title = "복구할 게시글",
+                content = "관리자가 다시 목록과 검색에 노출한다",
+                display = true,
+            )
+
+        val restoredPost =
+            postService.restorePost(
+                postId = 10L,
+                actorMemberId = 1L,
+            )
+
+        assertEquals(true, restoredPost.display)
+        verify(exactly = 1) { postSearchIndexService.index(post) }
+    }
+
+    @Test
+    fun `일반 사용자는 게시글을 복구할 수 없다`() {
+        val user =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+
+        every { memberRepository.findById(1L) } returns Optional.of(user)
+
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                postService.restorePost(
+                    postId = 10L,
+                    actorMemberId = 1L,
+                )
+            }
+
+        assertEquals("게시글 복구는 관리자만 할 수 있습니다.", exception.message)
+        verify(exactly = 0) { postRepository.findById(any()) }
+        verify(exactly = 0) { postSearchIndexService.index(any()) }
+    }
+
+    @Test
     fun `게시글 댓글을 저장한다`() {
         val author =
             Member(

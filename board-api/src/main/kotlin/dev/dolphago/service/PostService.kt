@@ -150,6 +150,34 @@ class PostService(
         return post
     }
 
+    fun restorePost(
+        postId: Long,
+        actorMemberId: Long,
+    ): Post {
+        val actor =
+            memberRepository.findById(actorMemberId).orElseThrow {
+                IllegalArgumentException("사용자를 찾을 수 없습니다: $actorMemberId")
+            }
+
+        if (actor.role != Authority.ROLE_ADMIN) {
+            // 복구도 목록/검색 노출 정책을 바꾸는 운영 액션이다.
+            // 숨김과 같은 권한 경계로 묶어야 일반 사용자가 임의로 노출 상태를 바꾸지 못한다.
+            throw IllegalArgumentException("게시글 복구는 관리자만 할 수 있습니다.")
+        }
+
+        val post =
+            postRepository.findById(postId).orElseThrow {
+                IllegalArgumentException("게시글을 찾을 수 없습니다: $postId")
+            }
+
+        post.restore()
+
+        // 복구 직후 ES 문서를 다시 색인해야 display=true 필터를 통과해 검색 결과에 재노출된다.
+        postSearchIndexService.index(post)
+
+        return post
+    }
+
     fun createRecommend(
         postId: Long,
         memberId: Long,
