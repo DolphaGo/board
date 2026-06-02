@@ -1,70 +1,99 @@
 <template>
-  <div class="issue-container">
-    <h2 class="title">Let's Write!</h2>
-    <input
-        id="issue-title"
-        v-model="title"
-        type="text"
-        class="form-control title-input"
-        placeholder="Title"
-    />
-    <div class="role-switch" aria-label="작성 권한">
-      <button
-          type="button"
-          class="role-switch-button"
-          :class="{ active: selectedAuthorRole === 'user' }"
-          data-testid="role-user"
-          @click="selectAuthorRole('user')"
-      >
-        일반
-      </button>
-      <button
-          type="button"
-          class="role-switch-button"
-          :class="{ active: selectedAuthorRole === 'admin' }"
-          data-testid="role-admin"
-          @click="selectAuthorRole('admin')"
-      >
-        관리자
-      </button>
-    </div>
-    <div class="tabs">
-      <button
-          :class="{ active: activeTab === 'write' }"
-          @click="activeTab = 'write'"
-      >
-        쓰기 모드
-      </button>
-      <button
-          :class="{ active: activeTab === 'preview' }"
-          @click="activeTab = 'preview'"
-      >
-        읽기 모드
-      </button>
-    </div>
-    <div v-if="activeTab === 'write'" class="form-group">
-      <textarea
-          id="issue-body"
-          ref="bodyTextarea"
-          v-model="bodyText"
-          class="form-control body-input"
-          placeholder="Leave a comment"
-          rows="8"
-          @paste="handlePaste"
-      ></textarea>
-    </div>
-    <label v-if="isAdminEditor" class="notice-option">
-      <input
-          :checked="notice"
-          type="checkbox"
-          data-testid="notice-checkbox"
-          @change="toggleNotice"
-      />
-      공지로 등록
-    </label>
-    <div class="image-url-panel">
-      <label for="image-url-input">이미지 URL</label>
-      <div class="image-url-controls">
+  <div class="post-editor-shell" data-testid="post-editor-shell">
+    <header class="post-editor-hero">
+      <div>
+        <p class="post-editor-kicker">Board Composer</p>
+        <h2 class="title" data-testid="post-editor-title">새 글 작성</h2>
+        <p class="post-editor-helper" data-testid="post-editor-helper">
+          본문 흐름에 이미지를 배치하고, 미리보기에서 저장될 Markdown 순서를 확인합니다.
+        </p>
+      </div>
+      <div class="role-switch" aria-label="작성 권한">
+        <button
+            type="button"
+            class="role-switch-button"
+            :class="{ active: selectedAuthorRole === 'user' }"
+            data-testid="role-user"
+            @click="selectAuthorRole('user')"
+        >
+          일반
+        </button>
+        <button
+            type="button"
+            class="role-switch-button"
+            :class="{ active: selectedAuthorRole === 'admin' }"
+            data-testid="role-admin"
+            @click="selectAuthorRole('admin')"
+        >
+          관리자
+        </button>
+      </div>
+    </header>
+
+    <div class="post-editor-grid">
+      <section class="post-editor-main">
+        <input
+            id="issue-title"
+            v-model="title"
+            type="text"
+            class="form-control title-input"
+            placeholder="제목을 입력하세요"
+        />
+        <div class="tabs">
+          <button
+              :class="{ active: activeTab === 'write' }"
+              @click="activeTab = 'write'"
+          >
+            쓰기 모드
+          </button>
+          <button
+              :class="{ active: activeTab === 'preview' }"
+              @click="activeTab = 'preview'"
+          >
+            읽기 모드
+          </button>
+        </div>
+        <div v-if="activeTab === 'write'" class="form-group">
+          <textarea
+              id="issue-body"
+              ref="bodyTextarea"
+              v-model="bodyText"
+              class="form-control body-input"
+              placeholder="본문을 작성하고 원하는 위치에 이미지를 추가하세요"
+              rows="8"
+              @paste="handlePaste"
+          ></textarea>
+        </div>
+        <div v-if="activeTab === 'preview'" class="markdown-preview">
+          <p class="markdown-preview-guide" data-testid="markdown-preview-guide">
+            미리보기는 본문 Markdown 기준입니다. imageUrls 배열은 서버 저장/검색 색인용이고, 글에서 보이는 위치는 Markdown 순서가 결정합니다.
+          </p>
+          <ol v-if="markdownImageFlowRows.length > 0" class="markdown-image-flow" data-testid="markdown-image-flow">
+            <li
+                v-for="row in markdownImageFlowRows"
+                :key="row.url"
+                data-testid="markdown-image-flow-row"
+            >
+              <strong>{{ row.index }}. {{ row.stateLabel }}</strong>: {{ row.description }}
+            </li>
+          </ol>
+          <div v-html="markdownPreview"></div>
+        </div>
+      </section>
+
+      <aside class="post-editor-side">
+        <label v-if="isAdminEditor" class="notice-option">
+          <input
+              :checked="notice"
+              type="checkbox"
+              data-testid="notice-checkbox"
+              @change="toggleNotice"
+          />
+          공지로 등록
+        </label>
+        <div class="image-url-panel" data-testid="post-editor-image-panel">
+          <label for="image-url-input">이미지 URL</label>
+          <div class="image-url-controls">
         <input
             id="image-url-input"
             v-model="imageUrlInput"
@@ -81,78 +110,68 @@
         >
           추가
         </button>
-      </div>
-      <ol v-if="imageUrls.length > 0" class="image-url-list" aria-label="본문 이미지 URL">
-        <li v-for="(imageUrl, index) in imageUrls" :key="`${imageUrl}:${index}`" class="image-url-item">
-          <img
-              class="image-url-thumbnail"
-              data-testid="image-url-thumbnail"
-              :src="imageUrl"
-              :alt="`첨부 이미지 ${index + 1} 미리보기`"
-              loading="lazy"
-          />
-          <span>{{ index + 1 }}. {{ imageUrl }}</span>
-          <span
-              class="image-url-body-state"
-              data-testid="image-url-body-state"
+          </div>
+          <ol v-if="imageUrls.length > 0" class="image-url-list" aria-label="본문 이미지 URL">
+            <li v-for="(imageUrl, index) in imageUrls" :key="`${imageUrl}:${index}`" class="image-url-item">
+              <img
+                  class="image-url-thumbnail"
+                  data-testid="image-url-thumbnail"
+                  :src="imageUrl"
+                  :alt="`첨부 이미지 ${index + 1} 미리보기`"
+                  loading="lazy"
+              />
+              <span>{{ index + 1 }}. {{ imageUrl }}</span>
+              <span
+                  class="image-url-body-state"
+                  data-testid="image-url-body-state"
+              >
+                {{ imageUrlBodyStateLabel(imageUrl) }}
+              </span>
+              <button
+                  type="button"
+                  class="btn-image-move"
+                  data-testid="move-image-up"
+                  :disabled="index === 0"
+                  @click="moveImageUrl(index, -1)"
+              >
+                위
+              </button>
+              <button
+                  type="button"
+                  class="btn-image-move"
+                  data-testid="move-image-down"
+                  :disabled="index === imageUrls.length - 1"
+                  @click="moveImageUrl(index, 1)"
+              >
+                아래
+              </button>
+              <button
+                  type="button"
+                  class="btn-image-remove"
+                  data-testid="remove-image-url"
+                  @click="removeImageUrl(index)"
+              >
+                삭제
+              </button>
+            </li>
+          </ol>
+          <p
+              v-if="imageUploadMessage"
+              class="image-upload-message"
+              data-testid="image-upload-message"
           >
-            {{ imageUrlBodyStateLabel(imageUrl) }}
-          </span>
-          <button
-              type="button"
-              class="btn-image-move"
-              data-testid="move-image-up"
-              :disabled="index === 0"
-              @click="moveImageUrl(index, -1)"
-          >
-            위
+            {{ imageUploadMessage }}
+          </p>
+        </div>
+        <div class="post-editor-action-rail" data-testid="post-editor-action-rail">
+          <span class="post-editor-action-copy">저장 전 미리보기로 이미지 흐름을 확인하세요.</span>
+          <button data-testid="post-submit" @click="submit" class="btn-submit" :disabled="submitting">
+            {{ submitting ? '저장 중...' : '작성하기' }}
           </button>
-          <button
-              type="button"
-              class="btn-image-move"
-              data-testid="move-image-down"
-              :disabled="index === imageUrls.length - 1"
-              @click="moveImageUrl(index, 1)"
-          >
-            아래
-          </button>
-          <button
-              type="button"
-              class="btn-image-remove"
-              data-testid="remove-image-url"
-              @click="removeImageUrl(index)"
-          >
-            삭제
-          </button>
-        </li>
-      </ol>
-      <p
-          v-if="imageUploadMessage"
-          class="image-upload-message"
-          data-testid="image-upload-message"
-      >
-        {{ imageUploadMessage }}
-      </p>
+        </div>
+        <p v-if="submitMessage" class="submit-message" data-testid="submit-message">{{ submitMessage }}</p>
+      </aside>
     </div>
-    <div v-if="activeTab === 'preview'" class="markdown-preview">
-      <p class="markdown-preview-guide" data-testid="markdown-preview-guide">
-        미리보기는 본문 Markdown 기준입니다. imageUrls 배열은 서버 저장/검색 색인용이고, 글에서 보이는 위치는 Markdown 순서가 결정합니다.
-      </p>
-      <ol v-if="markdownImageFlowRows.length > 0" class="markdown-image-flow" data-testid="markdown-image-flow">
-        <li
-            v-for="row in markdownImageFlowRows"
-            :key="row.url"
-            data-testid="markdown-image-flow-row"
-        >
-          <strong>{{ row.index }}. {{ row.stateLabel }}</strong>: {{ row.description }}
-        </li>
-      </ol>
-      <div v-html="markdownPreview"></div>
-    </div>
-    <button data-testid="post-submit" @click="submit" class="btn-submit" :disabled="submitting">
-      {{ submitting ? '저장 중...' : '작성하기' }}
-    </button>
-    <p v-if="submitMessage" class="submit-message" data-testid="submit-message">{{ submitMessage }}</p>
   </div>
 </template>
 
@@ -538,40 +557,98 @@ const submit = async () => {
 </script>
 
 <style>
-.issue-container {
-  max-width: 900px;
+.post-editor-shell {
+  max-width: 1180px;
   margin: 20px auto;
-  padding: 20px;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  background-color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 0;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2933;
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.post-editor-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #d9e1e8;
+  background:
+    linear-gradient(180deg, #f8fbfd 0%, #ffffff 100%);
+}
+
+.post-editor-kicker {
+  margin: 0 0 6px;
+  color: #057dbc;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
+  margin: 0;
+  color: #111827;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.post-editor-helper {
+  max-width: 620px;
+  margin: 8px 0 0;
+  color: #53606c;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.post-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 0;
+}
+
+.post-editor-main {
+  min-width: 0;
+  padding: 22px 24px 24px;
+}
+
+.post-editor-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-left: 1px solid #e5ebf0;
+  background: #fbfcfd;
+  padding: 22px 18px;
 }
 
 .tabs {
-  margin-bottom: 15px;
+  display: inline-flex;
+  gap: 2px;
+  margin: 0 0 14px;
+  border: 1px solid #cfd7de;
+  background: #f4f6f8;
+  padding: 3px;
 }
 
 .tabs button {
-  padding: 8px 16px;
-  margin-right: 5px;
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+  color: #53606c;
   font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  background-color: #f6f8fa;
-  border: 1px solid #d1d5da;
-  border-radius: 6px;
+  padding: 0 14px;
 }
 
 .tabs button.active {
-  background-color: #0366d6;
-  color: white;
-  border-color: #0366d6;
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
 .form-group {
@@ -580,26 +657,34 @@ const submit = async () => {
 
 .form-control {
   width: 100%;
-  padding: 8px;
+  padding: 10px 12px;
   font-size: 14px;
-  border: 1px solid #d1d5da;
-  border-radius: 6px;
-  box-shadow: inset 0 1px 2px rgba(27,31,35,0.075);
+  border: 1px solid #cfd7de;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: none;
 }
 
 .title-input {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  min-height: 46px;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 800;
 }
 
 .role-switch {
   display: inline-flex;
   gap: 4px;
-  margin: 0 0 14px;
+  margin: 0;
+  border: 1px solid #cfd7de;
+  background: #ffffff;
+  padding: 3px;
 }
 
 .role-switch-button {
-  background: #f6f8fa;
-  border: 1px solid #d1d5da;
+  background: transparent;
+  border: 0;
   color: #333333;
   cursor: pointer;
   font-size: 13px;
@@ -610,17 +695,18 @@ const submit = async () => {
 
 .role-switch-button.active {
   background: #222222;
-  border-color: #222222;
   color: #ffffff;
 }
 
 .body-input {
-  margin-top: 10px;
-  padding: 15px;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  min-height: 180px;
-  font-family: 'Arial', sans-serif;
+  padding: 16px;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  min-height: 430px;
+  color: #1f2933;
+  font-family: Arial, sans-serif;
+  line-height: 1.65;
+  resize: vertical;
 }
 
 .notice-option {
@@ -635,8 +721,11 @@ const submit = async () => {
 
 .image-url-panel {
   display: grid;
-  gap: 8px;
-  margin: 0 0 16px;
+  gap: 10px;
+  margin: 0;
+  border: 1px solid #e5ebf0;
+  background: #ffffff;
+  padding: 14px;
 }
 
 .image-url-panel label {
@@ -646,7 +735,7 @@ const submit = async () => {
 
 .image-url-controls {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 
@@ -667,16 +756,20 @@ const submit = async () => {
 
 .image-url-list {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 0;
   color: #555555;
   font-size: 12px;
+  list-style: none;
 }
 
 .image-url-item {
-  align-items: center;
+  align-items: flex-start;
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  margin: 4px 0;
+  margin: 8px 0 0;
+  border-top: 1px solid #edf1f4;
+  padding-top: 8px;
 }
 
 .image-url-thumbnail {
@@ -727,13 +820,13 @@ const submit = async () => {
 }
 
 .markdown-preview {
-  margin-top: 10px;
-  padding: 15px;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  background-color: #f6f8fa;
-  min-height: 180px;
-  font-family: 'Arial', sans-serif;
+  padding: 18px;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  background: #ffffff;
+  min-height: 430px;
+  font-family: Arial, sans-serif;
+  line-height: 1.65;
 }
 
 .markdown-preview-guide {
@@ -778,24 +871,56 @@ const submit = async () => {
 }
 
 .btn-submit {
-  display: inline-block;
-  margin-top: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+  width: 100%;
   padding: 10px 16px;
   font-size: 14px;
   color: #ffffff;
-  background-color: #2ea44f;
-  border: none;
-  border-radius: 6px;
+  background-color: #111827;
+  border: 1px solid #111827;
+  border-radius: 8px;
   cursor: pointer;
+  font-weight: 800;
+  min-height: 42px;
 }
 
 .btn-submit:hover {
-  background-color: #2c974b;
+  background-color: #057dbc;
+  border-color: #057dbc;
+}
+
+.post-editor-action-rail {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #d9e1e8;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.post-editor-action-copy {
+  color: #53606c;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .submit-message {
   margin: 12px 0 0;
   color: #555555;
   font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .post-editor-hero,
+  .post-editor-grid {
+    display: block;
+  }
+
+  .post-editor-side {
+    border-left: 0;
+    border-top: 1px solid #e5ebf0;
+  }
 }
 </style>

@@ -34,6 +34,16 @@ describe('# Post editor component', () => {
     mockedPostService.createPost.mockReset()
   })
 
+  it('should render the editor as a modern writing workspace with a visible publishing rail', () => {
+    const wrapper = mount(PostEditor)
+
+    expect(wrapper.get('[data-testid="post-editor-shell"]').classes()).toContain('post-editor-shell')
+    expect(wrapper.get('[data-testid="post-editor-title"]').text()).toBe('새 글 작성')
+    expect(wrapper.get('[data-testid="post-editor-helper"]').text()).toContain('본문 흐름에 이미지를 배치')
+    expect(wrapper.get('[data-testid="post-editor-action-rail"]').text()).toContain('작성하기')
+    expect(wrapper.get('[data-testid="post-editor-image-panel"]').text()).toContain('이미지 URL')
+  })
+
   it('should append image URL markdown in order and submit them with the post body', async () => {
     mockedPostService.createPost.mockResolvedValue({
       id: 77,

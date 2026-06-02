@@ -11,6 +11,20 @@ jest.mock('src/api/postService', () => ({
 const mockedPostService = postService as jest.Mocked<typeof postService>
 
 describe('# Post list component', () => {
+  const createPost = (id: number) => ({
+    id,
+    title: `게시글 ${id}`,
+    content: `본문 ${id}`,
+    imageUrls: [],
+    viewCount: id,
+    display: true,
+    notice: false,
+    authorNickname: 'writer',
+    createdAt: '2026-06-02T04:00:00',
+    commentCount: 0,
+    recommendCount: 0,
+  })
+
   it('should render posts loaded from post service as dense board rows', async () => {
     mockedPostService.listPosts.mockResolvedValue([
       {
@@ -66,5 +80,38 @@ describe('# Post list component', () => {
     expect(rows[0].get('.meta-row').text()).toContain('조회 3')
     expect(rows[0].get('.meta-row').text()).toContain('댓글 2')
     expect(rows[0].get('.meta-row').text()).toContain('추천 1')
+  })
+
+  it('should render bottom pagination and move between board pages', async () => {
+    mockedPostService.listPosts.mockResolvedValue(
+      Array.from({ length: 13 }, (_, index) => createPost(index + 1))
+    )
+
+    const wrapper = mount(PostList, {
+      global: {
+        stubs: {
+          RouterLink: {
+            template: '<a><slot /></a>',
+          },
+        },
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.findAll('.board-row')).toHaveLength(10)
+    expect(wrapper.get('[data-testid="board-pagination"]').text()).toContain('1 / 2')
+    expect(wrapper.get('[data-testid="board-page-prev"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('.board-summary').text()).toBe('최신순 13건 · 1/2페이지')
+
+    await wrapper.get('[data-testid="board-page-next"]').trigger('click')
+
+    expect(wrapper.findAll('.board-row')).toHaveLength(3)
+    expect(wrapper.get('[data-testid="board-pagination"]').text()).toContain('2 / 2')
+    expect(wrapper.get('[data-testid="board-page-next"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.findAll('.board-title-text').map(title => title.text())).toEqual([
+      '게시글 11',
+      '게시글 12',
+      '게시글 13',
+    ])
   })
 })
