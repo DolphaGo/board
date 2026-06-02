@@ -11,7 +11,18 @@
       <p v-else-if="searchKeyword.length === 0" class="search-message">검색어를 입력해 주세요.</p>
       <p v-else-if="results.length === 0" class="search-message">검색 결과가 없습니다.</p>
 
-      <ol v-else class="result-list">
+      <dl
+        v-if="searchTokenAnalysisRows.length > 0"
+        class="search-token-analysis"
+        data-testid="search-token-analysis"
+      >
+        <template v-for="row in searchTokenAnalysisRows" :key="row.label">
+          <dt>{{ row.label }}</dt>
+          <dd>: {{ row.keyword }}</dd>
+        </template>
+      </dl>
+
+      <ol v-if="!loading && !error && searchKeyword.length > 0 && results.length > 0" class="result-list">
         <li v-for="result in results" :key="result.postId" class="result-item">
           <router-link :to="`/post/${result.postId}`" class="result-title">{{ result.title }}</router-link>
           <p class="result-preview">{{ result.contentPreview }}</p>
@@ -111,6 +122,23 @@ const scoringCategorySummary = (result: PostSearchResult): string => {
   return `카테고리: ${summary.length > 0 ? summary : '없음'}`
 }
 
+const findSignalKeyword = (category: string): string | undefined =>
+  results.value
+    .flatMap(result => result.scoringSignals)
+    .find(signal => signal.category === category)?.keyword
+
+const searchTokenAnalysisRows = computed(() => {
+  const rows = [
+    { label: '원문/BM25', keyword: findSignalKeyword('BM25_TEXT') },
+    { label: '음절 토큰', keyword: findSignalKeyword('SYLLABLE_RECALL') },
+    { label: '초성 토큰', keyword: findSignalKeyword('INITIAL_RECALL') },
+  ].filter((row): row is { label: string; keyword: string } => Boolean(row.keyword))
+
+  // 이 요약은 ES가 실제로 받은 "원문 query + 음절 보조 query + 초성 보조 query"를 한눈에 보여주는 학습용 패널이다.
+  // 결과별 signal 목록은 자세한 query plan이고, 여기서는 검색어가 어떤 recall 계열로 확장됐는지만 압축한다.
+  return rows
+})
+
 // scoringSignals는 Elasticsearch explain API의 원문이 아니라, 우리가 구성한 query plan을 학습용으로 풀어낸 값이다.
 // 실제 점수는 BM25, field length, term frequency, function_score가 합쳐져 계산되므로 화면에는 "어떤 신호가 쓰였는지"만 보여준다.
 
@@ -185,6 +213,27 @@ watch(
   margin: 18px 0 0;
   color: #757575;
   font-size: 13px;
+}
+
+.search-token-analysis {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 8px;
+  margin: 12px 0 4px;
+  padding: 10px 12px;
+  border: 1px solid #d8e6ef;
+  background: #f8fbfd;
+  color: #333333;
+  font-size: 12px;
+}
+
+.search-token-analysis dt {
+  color: #057dbc;
+  font-weight: 700;
+}
+
+.search-token-analysis dd {
+  margin: 0;
 }
 
 .result-list {
