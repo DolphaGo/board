@@ -148,7 +148,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { marked } from 'marked';
 import { request } from 'src';  // 'request' 객체를 사용하여 서버에 요청
@@ -379,6 +379,15 @@ const selectAuthorRole = (role: 'user' | 'admin') => {
     notice.value = false;
   }
 };
+
+watch(
+  () => props.authorRole,
+  role => {
+    // Vue Router는 같은 컴포넌트를 재사용하면서 query만 바꿀 수 있다.
+    // role query가 바뀌어 prop만 갱신되는 경우에도 화면 권한과 notice payload가 이전 상태에 머물지 않게 맞춘다.
+    selectAuthorRole(role);
+  },
+);
 
 const findApiErrorMessage = (error: unknown): string | undefined => {
   if (typeof error !== 'object' || error === null || !('response' in error)) {

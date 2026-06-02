@@ -483,6 +483,37 @@ describe('# Post editor component', () => {
     })
   })
 
+  it('should sync editor role when route props change between admin and user', async () => {
+    mockedPostService.createPost.mockResolvedValue({
+      id: 101,
+      title: '라우트 권한 변경',
+      content: '쿼리가 user로 바뀌면 일반 글로 저장한다',
+      imageUrls: [],
+      viewCount: 0,
+      display: true,
+      notice: false,
+    })
+    const wrapper = mount(PostEditor, {
+      props: {
+        authorRole: 'admin',
+      },
+    })
+
+    await wrapper.get('[data-testid="notice-checkbox"]').setValue(true)
+    await wrapper.setProps({ authorRole: 'user' })
+    await wrapper.get('#issue-title').setValue('라우트 권한 변경')
+    await wrapper.get('#issue-body').setValue('쿼리가 user로 바뀌면 일반 글로 저장한다')
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="notice-checkbox"]').exists()).toBe(false)
+    expect(mockedPostService.createPost).toBeCalledWith({
+      title: '라우트 권한 변경',
+      content: '쿼리가 user로 바뀌면 일반 글로 저장한다',
+      imageUrls: [],
+    })
+  })
+
   it('should show backend permission error when notice creation is rejected', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
     mockedPostService.createPost.mockRejectedValue({
