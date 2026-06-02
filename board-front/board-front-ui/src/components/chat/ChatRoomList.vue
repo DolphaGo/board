@@ -139,6 +139,14 @@ export default defineComponent({
       } catch (err) {
         console.error('채팅방 입장 실패:', err)
         feedbackMessage.value = buildChatRoomActionErrorMessage('enter')
+        try {
+          // 목록은 사용자가 클릭한 순간보다 낡은 스냅샷일 수 있다.
+          // 예를 들어 마지막 자리가 다른 사용자에게 먼저 채워지면 서버가 입장을 거부하므로,
+          // 실패 직후 한 번 더 조회해 정원 마감 배지와 참여자 수를 최신 상태로 맞춘다.
+          rooms.value = await chatService.getRoomList()
+        } catch (refreshError) {
+          console.error('채팅방 목록 갱신 실패:', refreshError)
+        }
       }
     }
 

@@ -193,4 +193,38 @@ describe('# Chat room list component', () => {
     )
     expect(pushMock).not.toHaveBeenCalled()
   })
+
+  it('should refresh room capacity after an enter failure', async () => {
+    mockedChatService.getRoomList
+      .mockResolvedValueOnce([
+        chatRoomFixture({
+          id: 'room-4',
+          name: '마감 직전방',
+          participantCount: 1,
+          maxParticipants: 2,
+        }),
+      ])
+      .mockResolvedValueOnce([
+        chatRoomFixture({
+          id: 'room-4',
+          name: '마감 직전방',
+          participantCount: 2,
+          maxParticipants: 2,
+        }),
+      ])
+    mockedChatService.joinRoom.mockRejectedValue(new Error('room is full'))
+
+    const wrapper = mount(ChatRoomList)
+    await flushPromises()
+
+    await wrapper.get('.room-item').trigger('click')
+    await flushPromises()
+
+    expect(mockedChatService.getRoomList).toHaveBeenCalledTimes(2)
+    expect(wrapper.get('.participant-count').text()).toBe('참여자: 2/2명')
+    expect(wrapper.get('.room-status').text()).toBe('정원 마감')
+    expect(wrapper.get('.action-feedback').text()).toBe(
+      '채팅방 입장에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해주세요.'
+    )
+  })
 })
