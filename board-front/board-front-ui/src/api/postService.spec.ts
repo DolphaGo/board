@@ -151,6 +151,27 @@ describe('# Post service', function () {
     expect(recommend.display).toBe(true)
   })
 
+  it('should hide a post with the study admin member id', async function () {
+    mockedAxios.patch.mockResolvedValue({
+      data: {
+        id: 10,
+        title: '숨김 게시글',
+        content: '관리자가 숨긴다',
+        imageUrls: [],
+        viewCount: 3,
+        display: false,
+        notice: false,
+      },
+    })
+
+    const post = await postService.hidePost(10)
+
+    expect(mockedAxios.patch).toBeCalledWith('/api/posts/10/hide', {
+      actorMemberId: 1,
+    })
+    expect(post.display).toBe(false)
+  })
+
   it('should reject malformed create post responses', async function () {
     mockedAxios.post.mockResolvedValue({
       data: '<html>vite fallback</html>',
@@ -212,5 +233,13 @@ describe('# Post service', function () {
     })
 
     await expect(postService.createRecommend(10)).rejects.toThrow('Invalid recommend response')
+  })
+
+  it('should reject malformed hide post responses', async function () {
+    mockedAxios.patch.mockResolvedValue({
+      data: '<html>vite fallback</html>',
+    })
+
+    await expect(postService.hidePost(10)).rejects.toThrow('Invalid post response')
   })
 })

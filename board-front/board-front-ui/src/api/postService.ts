@@ -188,4 +188,18 @@ export const postService = {
 
     return response.data
   },
+
+  hidePost: async (postId: number): Promise<PostResponse> => {
+    const response = await axios.patch<PostResponse>(`/api/posts/${postId}/hide`, {
+      // 숨김은 관리자 행위라 백엔드 DTO 이름에 맞춰 actorMemberId로 보낸다.
+      // 지금은 학습용 관리자 계정 id를 쓰고, 로그인 세션이 붙으면 현재 관리자 id로 교체한다.
+      actorMemberId: STUDY_MEMBER_ID,
+    })
+
+    if (!isPostResponse(response.data)) {
+      throw new Error('Invalid post response')
+    }
+
+    return response.data
+  },
 }

@@ -43,13 +43,25 @@ export const buildPostEditorRouteProps = (route: {
   }
 }
 
+export const buildPostDetailRouteProps = (route: {
+  query: Record<string, unknown>
+}) => {
+  const role = firstRouteValue(route.query.role)
+
+  // 상세 화면도 로그인 연동 전까지는 role=admin 쿼리로 관리자 전용 액션을 노출한다.
+  // 실제 숨김 권한은 PATCH /api/posts/{id}/hide에서 actorMemberId로 다시 검증된다.
+  return {
+    authorRole: role === 'admin' ? 'admin' : 'user',
+  }
+}
+
 export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: '/', component: Homepage },
     { path: '/search', component: SearchResults },
     { path: '/post/edit', component: PostEditor, props: buildPostEditorRouteProps },
-    { path: '/post/:id', component: PostDetail },
+    { path: '/post/:id', component: PostDetail, props: buildPostDetailRouteProps },
     {
       path: '/chat/rooms',
       // 채팅 화면은 SockJS/STOMP처럼 브라우저 전역에 민감한 의존성을 가진다.

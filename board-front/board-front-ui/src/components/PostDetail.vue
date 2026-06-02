@@ -28,6 +28,15 @@
         >
           추천
         </button>
+        <button
+          v-if="isAdminViewer && post.display"
+          type="button"
+          class="hide-button"
+          data-testid="hide-post"
+          @click="hidePost"
+        >
+          숨김
+        </button>
       </div>
 
       <form class="comment-form" data-testid="comment-submit" @submit.prevent="submitComment">
@@ -44,7 +53,10 @@
 
       <p v-if="commentMessage" class="action-message">{{ commentMessage }}</p>
       <p v-if="recommendMessage" class="action-message">{{ recommendMessage }}</p>
-      <p v-if="actionError" class="action-error">요청을 처리하지 못했습니다.</p>
+      <p v-if="moderationMessage" class="action-message" data-testid="post-action-message">
+        {{ moderationMessage }}
+      </p>
+      <p v-if="actionError" class="action-error" data-testid="post-action-error">{{ actionError }}</p>
 
       <section class="comment-list" aria-label="댓글 목록">
         <p v-if="comments.length === 0" class="comment-empty">댓글이 없습니다.</p>
@@ -63,6 +75,17 @@ import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { postService, type CommentResponse, type PostResponse } from 'src/api/postService';
 
+type AuthorRole = 'user' | 'admin';
+
+const props = withDefaults(
+  defineProps<{
+    authorRole?: AuthorRole
+  }>(),
+  {
+    authorRole: 'user',
+  }
+);
+
 const route = useRoute();
 const post = ref<PostResponse | null>(null);
 const loading = ref(false);
@@ -70,8 +93,11 @@ const error = ref(false);
 const commentContent = ref('');
 const commentMessage = ref('');
 const recommendMessage = ref('');
-const actionError = ref(false);
+const moderationMessage = ref('');
+const actionError = ref('');
 const comments = ref<CommentResponse[]>([]);
+
+const isAdminViewer = computed(() => props.authorRole === 'admin');
 
 const postId = computed(() => {
   const id = Number(route.params.id);
@@ -113,6 +139,19 @@ watch(
 
 const formatCreatedAt = (createdAt: string) => createdAt.slice(0, 10).replaceAll('-', '.');
 
+const findApiErrorMessage = (err: unknown) => {
+  if (typeof err !== 'object' || err === null || !('response' in err)) {
+    return '요청을 처리하지 못했습니다.';
+  }
+
+  const response = (err as { response?: { data?: { message?: unknown } } }).response;
+  const message = response?.data?.message;
+
+  return typeof message === 'string' && message.trim().length > 0
+    ? message
+    : '요청을 처리하지 못했습니다.';
+};
+
 const submitComment = async () => {
   const id = postId.value;
   const content = commentContent.value.trim();
@@ -122,7 +161,7 @@ const submitComment = async () => {
   }
 
   try {
-    actionError.value = false;
+    actionError.value = '';
     // 작성 API가 반환한 댓글을 현재 목록 끝에 붙여 즉시 피드백한다.
     // 서버 목록은 id 오름차순으로 내려오므로 새 댓글을 뒤에 추가하면 같은 읽기 순서를 유지할 수 있다.
     const comment = await postService.createComment(id, { content });
@@ -131,7 +170,7 @@ const submitComment = async () => {
     commentMessage.value = '댓글이 저장되었습니다.';
   } catch (err) {
     console.error('댓글 작성 실패:', err);
-    actionError.value = true;
+    actionError.value = findApiErrorMessage(err);
   }
 };
 
@@ -143,14 +182,33 @@ const submitRecommend = async () => {
   }
 
   try {
-    actionError.value = false;
+    actionError.value = '';
     // 추천 수 증가는 목록 메타 API에서 다시 읽는다.
     // 여기서는 사용자가 클릭 결과를 알 수 있도록 성공 메시지만 표시한다.
     await postService.createRecommend(id);
     recommendMessage.value = '추천을 반영했습니다.';
   } catch (err) {
     console.error('추천 실패:', err);
-    actionError.value = true;
+    actionError.value = findApiErrorMessage(err);
+  }
+};
+
+const hidePost = async () => {
+  const id = postId.value;
+
+  if (id === null || !isAdminViewer.value) {
+    return;
+  }
+
+  try {
+    actionError.value = '';
+    // 숨김 처리 결과는 백엔드가 권한과 display=false 상태를 확정한 뒤 반환한다.
+    // 화면은 반환 DTO로 교체해서 버튼을 즉시 없애고 실제 서버 상태와 맞춘다.
+    post.value = await postService.hidePost(id);
+    moderationMessage.value = '게시글을 숨겼습니다.';
+  } catch (err) {
+    console.error('게시글 숨김 실패:', err);
+    actionError.value = findApiErrorMessage(err);
   }
 };
 </script>
@@ -201,6 +259,7 @@ const submitRecommend = async () => {
 }
 
 .recommend-button,
+.hide-button,
 .comment-form button {
   background: #057dbc;
   border: 1px solid #04699d;
@@ -210,6 +269,12 @@ const submitRecommend = async () => {
   font-weight: 700;
   min-height: 32px;
   padding: 0 12px;
+}
+
+.hide-button {
+  background: #c62828;
+  border-color: #a91f1f;
+  margin-left: 8px;
 }
 
 .comment-form {
