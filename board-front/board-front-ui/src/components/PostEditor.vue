@@ -138,6 +138,15 @@
       <p class="markdown-preview-guide" data-testid="markdown-preview-guide">
         미리보기는 본문 Markdown 기준입니다. imageUrls 배열은 서버 저장/검색 색인용이고, 글에서 보이는 위치는 Markdown 순서가 결정합니다.
       </p>
+      <ol v-if="markdownImageFlowRows.length > 0" class="markdown-image-flow" data-testid="markdown-image-flow">
+        <li
+            v-for="row in markdownImageFlowRows"
+            :key="row.url"
+            data-testid="markdown-image-flow-row"
+        >
+          <strong>{{ row.index }}. {{ row.stateLabel }}</strong>: {{ row.description }}
+        </li>
+      </ol>
       <div v-html="markdownPreview"></div>
     </div>
     <button data-testid="post-submit" @click="submit" class="btn-submit" :disabled="submitting">
@@ -185,6 +194,24 @@ const isAdminEditor = computed(() => selectedAuthorRole.value === 'admin');
 const markdownPreview = computed(() => {
   return sanitizeRenderedMarkdown(marked(bodyText.value, { async: false }) as string);
 });
+
+const markdownImageFlowRows = computed(() =>
+    imageUrls.value.map((imageUrl, index) => {
+      const includedInBody = isImageUrlInBody(imageUrl);
+
+      return {
+        index: index + 1,
+        url: imageUrl,
+        stateLabel: includedInBody ? '본문 포함' : '본문에서 제거됨',
+        // preview는 "Markdown이 실제 글 흐름"이라는 점을 보여주는 학습 화면이다.
+        // imageUrls 배열에 URL이 남아 있어도 Markdown 본문에서 빠지면 저장 직전에 제외되므로,
+        // 사용자는 여기서 블로그형 본문 순서와 저장 payload가 어떻게 맞춰지는지 확인할 수 있다.
+        description: includedInBody
+            ? `첨부 이미지 ${index + 1}은 현재 Markdown 위치에 렌더링되고 저장됩니다.`
+            : `첨부 이미지 ${index + 1}은 Markdown에서 빠져 저장 payload에서도 제외됩니다.`,
+      };
+    }),
+);
 
 // Handle paste event for image upload
 const handlePaste = async (event: ClipboardEvent) => {
@@ -646,6 +673,18 @@ const submit = async () => {
   color: #555555;
   font-size: 12px;
   font-weight: 700;
+}
+
+.markdown-image-flow {
+  margin: 8px 0 12px;
+  padding-left: 18px;
+  color: #333333;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.markdown-image-flow li + li {
+  margin-top: 4px;
 }
 
 .markdown-preview blockquote {

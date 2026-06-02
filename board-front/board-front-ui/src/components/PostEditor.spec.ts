@@ -273,6 +273,27 @@ describe('# Post editor component', () => {
     )
   })
 
+  it('should summarize blog style image flow in preview mode', async () => {
+    const wrapper = mount(PostEditor)
+
+    await wrapper.get('#issue-body').setValue('첫 문단')
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/first.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/second.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.get('#issue-body').setValue(
+      '첫 문단\n' +
+        '![첨부 이미지 2](https://cdn.example.com/second.png)\n' +
+        '둘째 문단',
+    )
+    await wrapper.findAll('.tabs button')[1].trigger('click')
+
+    expect(wrapper.findAll('[data-testid="markdown-image-flow-row"]').map(row => row.text())).toEqual([
+      '1. 본문에서 제거됨: 첨부 이미지 1은 Markdown에서 빠져 저장 payload에서도 제외됩니다.',
+      '2. 본문 포함: 첨부 이미지 2은 현재 Markdown 위치에 렌더링되고 저장됩니다.',
+    ])
+  })
+
   it('should insert pasted image upload markdown at the current body cursor position', async () => {
     mockedRequest.postForm.mockResolvedValue({
       data: {
