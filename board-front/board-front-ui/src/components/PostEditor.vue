@@ -45,6 +45,7 @@
     <div v-if="activeTab === 'write'" class="form-group">
       <textarea
           id="issue-body"
+          ref="bodyTextarea"
           v-model="bodyText"
           class="form-control body-input"
           placeholder="Leave a comment"
@@ -157,6 +158,7 @@ const props = withDefaults(
 const router = useRouter();
 const title = ref('');
 const bodyText = ref('');
+const bodyTextarea = ref<HTMLTextAreaElement | null>(null);
 const imageUrls = ref<string[]>([]);
 const imageUrlInput = ref('');
 const imageUploadMessage = ref('');
@@ -225,8 +227,20 @@ const uploadImage = async (file: File): Promise<string> => {
 const insertImageMarkdown = (url: string) => {
   const imageNumber = imageUrls.value.length + 1;
   const markdownImage = `![첨부 이미지 ${imageNumber}](${url})`;
-  const separator = bodyText.value.length === 0 || bodyText.value.endsWith('\n') ? '' : '\n';
-  bodyText.value += `${separator}${markdownImage}\n`;
+  const selectionStart = bodyTextarea.value?.selectionStart;
+  const selectionEnd = bodyTextarea.value?.selectionEnd;
+  if (typeof selectionStart === 'number' && typeof selectionEnd === 'number') {
+    const beforeSelection = bodyText.value.slice(0, selectionStart);
+    const afterSelection = bodyText.value.slice(selectionEnd);
+    const beforeSeparator = beforeSelection.length === 0 || beforeSelection.endsWith('\n') ? '' : '\n';
+
+    // 블로그형 글쓰기는 이미지를 글 끝에만 몰아넣지 않고 문단 사이에 끼워 넣는 흐름이 중요하다.
+    // textarea selection을 기준으로 Markdown을 삽입하면 "본문 -> 이미지 -> 본문" 순서를 직접 조립하며 배울 수 있다.
+    bodyText.value = `${beforeSelection}${beforeSeparator}${markdownImage}\n${afterSelection}`;
+  } else {
+    const separator = bodyText.value.length === 0 || bodyText.value.endsWith('\n') ? '' : '\n';
+    bodyText.value += `${separator}${markdownImage}\n`;
+  }
   imageUrls.value = [...imageUrls.value, url];
   imageUploadMessage.value = '';
 };
