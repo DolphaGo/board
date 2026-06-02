@@ -243,6 +243,7 @@ const submitSuggestion = async (suggestionKeyword: string) => {
 .header {
   position: fixed;
   top: 0;
+  box-sizing: border-box;
   width: 100%;
   background-color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -350,16 +351,37 @@ const submitSuggestion = async (suggestionKeyword: string) => {
   font-size: 24px;
 }
 
+nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 15px;
+}
+
 nav a {
-  margin-left: 15px;
   text-decoration: none;
   color: #333;
 }
 
 @media (max-width: 720px) {
   .header {
+    position: static;
+    align-items: flex-start;
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .logo {
+    flex: 1 0 100%;
+    font-size: 22px;
+    line-height: 1.2;
+  }
+
+  nav {
+    flex: 1 0 100%;
+    justify-content: flex-start;
+    gap: 6px 14px;
   }
 
   .header-search {

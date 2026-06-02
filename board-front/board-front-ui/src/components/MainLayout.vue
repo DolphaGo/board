@@ -33,4 +33,20 @@ import Sidebar from './Sidebar.vue';
   flex: 1;
   padding: 20px;
 }
+
+@media (max-width: 720px) {
+  #layout {
+    margin-top: 0;
+  }
+
+  .container {
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+  }
+
+  .content {
+    padding: 12px;
+  }
+}
 </style>
