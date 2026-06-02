@@ -45,7 +45,12 @@
             {{ scoringCategorySummary(result) }}
           </p>
           <ul v-if="result.scoringSignals.length > 0" class="scoring-signal-list">
-            <li v-for="signal in result.scoringSignals" :key="`${result.postId}:${signal.field}`">
+            <li
+              v-for="signal in result.scoringSignals"
+              :key="`${result.postId}:${signal.field}`"
+              class="scoring-signal-item"
+              data-testid="scoring-signal-item"
+            >
               <span class="signal-category">{{ signal.category }}</span>
               <span class="signal-field">{{ signal.label }} x{{ signal.boost.toFixed(2) }}</span>
               <span class="signal-state">{{ signal.applied ? '적용' : '대기' }}</span>
@@ -308,7 +313,7 @@ watch(
   list-style: none;
 }
 
-.scoring-signal-list li {
+.scoring-signal-item {
   display: grid;
   grid-template-columns: 120px minmax(92px, auto) 40px minmax(140px, auto) 1fr;
   gap: 8px;
@@ -363,5 +368,27 @@ watch(
 
 .highlight-text {
   word-break: break-word;
+}
+
+@media (max-width: 760px) {
+  .search-token-analysis {
+    grid-template-columns: 1fr;
+  }
+
+  .search-token-analysis dd {
+    overflow-wrap: anywhere;
+  }
+
+  .scoring-signal-item {
+    grid-template-columns: 1fr;
+    gap: 3px;
+    padding: 8px 0;
+  }
+
+  .signal-keyword,
+  .signal-description {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
 }
 </style>

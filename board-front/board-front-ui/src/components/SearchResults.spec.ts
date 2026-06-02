@@ -211,6 +211,48 @@ describe('# Search results component', () => {
     )
   })
 
+  it('should expose each scoring signal as a responsive study item', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: '좁은 화면에서도 검색 점수 근거를 읽을 수 있어야 한다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [
+          {
+            field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
+            boost: 3,
+            keyword: 'kotlin',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+          {
+            field: 'contentInitials',
+            category: 'INITIAL_RECALL',
+            label: '본문 초성',
+            boost: 0.25,
+            keyword: 'ㅋ ㅌ ㄹ',
+            description: '본문 초성 필드는 충돌이 많아 가장 낮은 boost로 둔다.',
+            applied: false,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    const items = wrapper.findAll('[data-testid="scoring-signal-item"]')
+    expect(items).toHaveLength(2)
+    expect(items.every(item => item.classes('scoring-signal-item'))).toBe(true)
+    expect(items.at(0)?.find('.signal-description').text()).toContain('적용 근거:')
+    expect(items.at(1)?.find('.signal-description').text()).toContain('대기 이유:')
+  })
+
   it('should summarize applied scoring signals by category', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {
