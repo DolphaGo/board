@@ -195,19 +195,42 @@ const markdownPreview = computed(() => {
   return sanitizeRenderedMarkdown(marked(bodyText.value, { async: false }) as string);
 });
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const imagePlacementLabel = (imageUrl: string): string => {
+  const markdownPattern = new RegExp(`!\\[첨부 이미지 \\d+\\]\\(${escapeRegExp(imageUrl)}\\)`);
+  const match = markdownPattern.exec(bodyText.value);
+
+  if (!match) {
+    return '본문 밖';
+  }
+
+  const textBeforeImage = bodyText.value.slice(0, match.index);
+  const paragraphCount = textBeforeImage
+      .split(/\n{2,}|\n/)
+      .map(paragraph => paragraph.trim())
+      .filter(paragraph => paragraph.length > 0).length;
+
+  // 블로그형 글쓰기는 이미지가 "첨부 목록 몇 번째"인지보다 "어느 문단 뒤에 놓였는지"가 읽기 흐름에 더 중요하다.
+  // Markdown에서 이미지 태그 앞의 텍스트 문단 수를 세면 별도 에디터 모델 없이도 문단-이미지 배치를 설명할 수 있다.
+  return paragraphCount === 0 ? '글 첫머리' : `${paragraphCount}번째 문단 뒤`;
+};
+
 const markdownImageFlowRows = computed(() =>
     imageUrls.value.map((imageUrl, index) => {
       const includedInBody = isImageUrlInBody(imageUrl);
+      const placementLabel = imagePlacementLabel(imageUrl);
 
       return {
         index: index + 1,
         url: imageUrl,
         stateLabel: includedInBody ? '본문 포함' : '본문에서 제거됨',
+        placementLabel,
         // preview는 "Markdown이 실제 글 흐름"이라는 점을 보여주는 학습 화면이다.
         // imageUrls 배열에 URL이 남아 있어도 Markdown 본문에서 빠지면 저장 직전에 제외되므로,
         // 사용자는 여기서 블로그형 본문 순서와 저장 payload가 어떻게 맞춰지는지 확인할 수 있다.
         description: includedInBody
-            ? `첨부 이미지 ${index + 1}은 현재 Markdown 위치에 렌더링되고 저장됩니다.`
+            ? `첨부 이미지 ${index + 1}은 현재 Markdown 위치에 렌더링되고 저장됩니다. 배치: ${placementLabel}.`
             : `첨부 이미지 ${index + 1}은 Markdown에서 빠져 저장 payload에서도 제외됩니다.`,
       };
     }),
@@ -289,8 +312,6 @@ const insertImageMarkdown = (url: string) => {
   imageUrls.value = [...imageUrls.value, url];
   imageUploadMessage.value = '';
 };
-
-const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const normalizeImageMarkdownNumbers = () => {
   imageUrls.value.forEach((imageUrl, index) => {
