@@ -154,6 +154,25 @@ describe('# Search results component', () => {
     ])
   })
 
+  it('should explain when the search comes from a realtime keyword suggestion', async () => {
+    mockRoute.query = {
+      keyword: 'kotlin spring',
+      source: 'suggestion',
+    }
+    mockedPostSearchService.search.mockResolvedValue([])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    const sourceRows = wrapper
+      .findAll('[data-testid="search-source-analysis-row"]')
+      .map(row => row.text())
+    expect(sourceRows).toEqual([
+      '유입 경로: 실시간 검색어 추천 선택',
+      '랭킹 기록: 추천어는 Redis ZSET에서 prefix/초성/음절로 걸러낸 인기 검색어이고, 선택 후 다시 검색 기록으로 누적',
+    ])
+  })
+
   it('should explain highlights as matched snippets instead of score contribution', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {

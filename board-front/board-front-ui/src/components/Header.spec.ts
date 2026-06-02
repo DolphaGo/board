@@ -292,7 +292,7 @@ describe('# Header component', () => {
       path: '/search',
       query: {
         keyword: 'kotlin spring',
-        source: 'header',
+        source: 'suggestion',
       },
     })
   })
@@ -363,7 +363,7 @@ describe('# Header component', () => {
       path: '/search',
       query: {
         keyword: 'kotlin spring',
-        source: 'header',
+        source: 'suggestion',
       },
     })
   })

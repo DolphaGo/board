@@ -90,6 +90,7 @@ import { createHeaderSearch } from './useHeaderSearch'
 const router = useRouter()
 const suggestions = ref<SearchKeywordSuggestionItem[]>([])
 const highlightedSuggestionIndex = ref(-1)
+const nextSearchSource = ref<'header' | 'suggestion'>('header')
 let suggestionRequestSequence = 0
 let skipNextSuggestionLookup = false
 const { keyword, rankingRecordError, submitSearch } = createHeaderSearch({
@@ -97,7 +98,7 @@ const { keyword, rankingRecordError, submitSearch } = createHeaderSearch({
     path: '/search',
     query: {
       keyword: searchKeyword,
-      source: 'header',
+      source: nextSearchSource.value,
     },
   }),
 })
@@ -228,9 +229,14 @@ const submitSuggestion = async (suggestionKeyword: string) => {
   // 추천어 클릭/키보드 선택은 이미 사용자가 검색어를 확정한 상태다.
   // keyword 변경이 다시 추천 조회를 발생시키면 닫은 드롭다운이 재노출되므로 다음 watcher 1회만 건너뛴다.
   skipNextSuggestionLookup = true
+  nextSearchSource.value = 'suggestion'
   keyword.value = suggestionKeyword
   clearSuggestions()
-  await submitSearch()
+  try {
+    await submitSearch()
+  } finally {
+    nextSearchSource.value = 'header'
+  }
 }
 </script>
 

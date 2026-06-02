@@ -227,6 +227,19 @@ const searchSourceAnalysisRows = computed(() => {
     ]
   }
 
+  if (route.query.source === 'suggestion') {
+    return [
+      {
+        label: '유입 경로',
+        description: '실시간 검색어 추천 선택',
+      },
+      {
+        label: '랭킹 기록',
+        description: '추천어는 Redis ZSET에서 prefix/초성/음절로 걸러낸 인기 검색어이고, 선택 후 다시 검색 기록으로 누적',
+      },
+    ]
+  }
+
   return []
 })
 
