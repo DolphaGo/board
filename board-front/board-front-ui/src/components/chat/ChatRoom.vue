@@ -143,6 +143,12 @@ export default defineComponent({
           }
 
           messages.value.push(chatMessage)
+          if (chatMessage.type === 'ENTER' || chatMessage.type === 'LEAVE') {
+            // 채팅 로그와 참가자 목록은 서로 다른 경로로 갱신된다.
+            // ENTER/LEAVE 메시지를 받았을 때 REST 상세를 다시 읽으면 다른 사용자의 입퇴장이
+            // 현재 화면의 참여자 닉네임 목록에도 바로 반영된다.
+            void fetchRoomDetail()
+          }
           scrollToBottom()
         })
 

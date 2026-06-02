@@ -222,6 +222,111 @@ describe('# Chat room component', () => {
     expect(wrapper.get('.message.received .timestamp').text()).toBe('18:29')
   })
 
+  it('should refresh room participants when an enter message arrives', async () => {
+    mockedChatService.getRoom
+      .mockResolvedValueOnce({
+        id: 'room-1',
+        name: '코프링 채팅방',
+        createdAt: '2026-06-01T17:00:00',
+        participants: [
+          { id: 1, nickname: '방장' },
+          { id: 2, nickname: '참가자' },
+        ],
+        participantCount: 2,
+        maxParticipants: 20,
+      })
+      .mockResolvedValueOnce({
+        id: 'room-1',
+        name: '코프링 채팅방',
+        createdAt: '2026-06-01T17:00:00',
+        participants: [
+          { id: 1, nickname: '방장' },
+          { id: 2, nickname: '참가자' },
+          { id: 3, nickname: '새참가자' },
+        ],
+        participantCount: 3,
+        maxParticipants: 20,
+      })
+    const wrapper = mountChatRoom()
+    await flushPromises()
+
+    subscribedMessageHandler?.({
+      body: JSON.stringify({
+        type: 'ENTER',
+        roomId: 'room-1',
+        sender: 'new-user',
+        content: 'new-user님이 입장하셨습니다.',
+        timestamp: '2026-06-01T18:35:00',
+      }),
+    })
+    await flushPromises()
+
+    expect(mockedChatService.getRoom).toHaveBeenCalledTimes(2)
+    expect(wrapper.get('[data-testid="chat-room-participants"]').text()).toBe('참여자: 3/20명')
+    expect(wrapper.get('[data-testid="chat-room-participant-list"]').text()).toBe('참여자: 방장, 참가자, 새참가자')
+  })
+
+  it('should refresh room participants when a leave message arrives', async () => {
+    mockedChatService.getRoom
+      .mockResolvedValueOnce({
+        id: 'room-1',
+        name: '코프링 채팅방',
+        createdAt: '2026-06-01T17:00:00',
+        participants: [
+          { id: 1, nickname: '방장' },
+          { id: 2, nickname: '참가자' },
+        ],
+        participantCount: 2,
+        maxParticipants: 20,
+      })
+      .mockResolvedValueOnce({
+        id: 'room-1',
+        name: '코프링 채팅방',
+        createdAt: '2026-06-01T17:00:00',
+        participants: [
+          { id: 1, nickname: '방장' },
+        ],
+        participantCount: 1,
+        maxParticipants: 20,
+      })
+    const wrapper = mountChatRoom()
+    await flushPromises()
+
+    subscribedMessageHandler?.({
+      body: JSON.stringify({
+        type: 'LEAVE',
+        roomId: 'room-1',
+        sender: 'participant',
+        content: 'participant님이 퇴장하셨습니다.',
+        timestamp: '2026-06-01T18:40:00',
+      }),
+    })
+    await flushPromises()
+
+    expect(mockedChatService.getRoom).toHaveBeenCalledTimes(2)
+    expect(wrapper.get('[data-testid="chat-room-participants"]').text()).toBe('참여자: 1/20명')
+    expect(wrapper.get('[data-testid="chat-room-participant-list"]').text()).toBe('참여자: 방장')
+  })
+
+  it('should not refresh room participants when a talk message arrives', async () => {
+    const wrapper = mountChatRoom()
+    await flushPromises()
+
+    subscribedMessageHandler?.({
+      body: JSON.stringify({
+        type: 'TALK',
+        roomId: 'room-1',
+        sender: 'other-user',
+        content: '일반 메시지',
+        timestamp: '2026-06-01T18:45:00',
+      }),
+    })
+    await flushPromises()
+
+    expect(mockedChatService.getRoom).toHaveBeenCalledTimes(1)
+    expect(wrapper.get('[data-testid="chat-room-participant-list"]').text()).toBe('참여자: 방장, 참가자')
+  })
+
   it('should subscribe to the current room topic', () => {
     mountChatRoom()
 
