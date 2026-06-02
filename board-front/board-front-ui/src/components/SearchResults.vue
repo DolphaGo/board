@@ -44,6 +44,19 @@
           >
             {{ scoringCategorySummary(result) }}
           </p>
+          <ul
+            v-if="scoreFamilyComparisonRows(result).length > 0"
+            class="score-family-comparison"
+            data-testid="score-family-comparison"
+          >
+            <li
+              v-for="row in scoreFamilyComparisonRows(result)"
+              :key="`${result.postId}:${row.category}`"
+              data-testid="score-family-comparison-row"
+            >
+              {{ scoreFamilyComparisonText(row) }}
+            </li>
+          </ul>
           <div
             v-if="result.scoreExplanation"
             class="score-explanation"
@@ -150,6 +163,44 @@ const scoringCategorySummary = (result: PostSearchResult): string => {
   // 같은 적용 신호라도 어느 계열의 검색 전략이 먹혔는지 묶어 보면 점수 튜닝 방향을 잡기 쉽다.
   return `카테고리: ${summary.length > 0 ? summary : '없음'}`
 }
+
+interface ScoreFamilyComparisonRow {
+  category: string
+  appliedCount: number
+  totalCount: number
+  appliedBoost: number
+}
+
+const scoreFamilyComparisonRows = (result: PostSearchResult): ScoreFamilyComparisonRow[] => {
+  const rowsByCategory = result.scoringSignals.reduce<Record<string, ScoreFamilyComparisonRow>>(
+    (rows, signal) => {
+      const row = rows[signal.category] ?? {
+        category: signal.category,
+        appliedCount: 0,
+        totalCount: 0,
+        appliedBoost: 0,
+      }
+
+      row.totalCount += 1
+      if (signal.applied) {
+        row.appliedCount += 1
+        row.appliedBoost += signal.boost
+      }
+
+      rows[signal.category] = row
+
+      return rows
+    },
+    {}
+  )
+
+  // boost는 "이 signal이 걸렸을 때 어느 정도 가중치를 주는지"를 설명하는 학습용 숫자다.
+  // 실제 ES 최종 점수는 BM25 세부 계산까지 포함하지만, 계열별 적용 boost 합계를 보면 튜닝 방향을 빠르게 비교할 수 있다.
+  return Object.values(rowsByCategory)
+}
+
+const scoreFamilyComparisonText = (row: ScoreFamilyComparisonRow): string =>
+  `${row.category} 적용 ${row.appliedCount}/${row.totalCount}개 · 적용 boost ${row.appliedBoost.toFixed(2)}`
 
 const scoreExplanationSummary = (result: PostSearchResult): string => {
   const explanation = result.scoreExplanation
@@ -331,6 +382,23 @@ watch(
   margin: 4px 0 0;
   color: #555555;
   font-size: 12px;
+}
+
+.score-family-comparison {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 4px 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  color: #333333;
+  font-size: 12px;
+  list-style: none;
+}
+
+.score-family-comparison li {
+  padding: 5px 7px;
+  border: 1px solid #e1e1e1;
+  background: #fafafa;
 }
 
 .score-explanation {
