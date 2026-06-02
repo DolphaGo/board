@@ -9,6 +9,13 @@
         <p v-if="room?.description" class="chat-room-description" data-testid="chat-room-description">
           {{ room.description }}
         </p>
+        <p
+          v-if="room && room.participants.length > 0"
+          class="chat-room-participant-list"
+          data-testid="chat-room-participant-list"
+        >
+          참여자 ID: {{ formatParticipantIds(room.participants) }}
+        </p>
         <p v-if="roomDetailFeedback" class="chat-room-detail-feedback" data-testid="chat-room-detail-feedback">
           {{ roomDetailFeedback }}
         </p>
@@ -268,6 +275,12 @@ export default defineComponent({
       return dayjs(timestamp).format('HH:mm')
     }
 
+    const formatParticipantIds = (participants: number[]) => {
+      // 지금 백엔드 ChatRoom은 참가자를 Member id Set으로 내려준다.
+      // 학습 단계에서는 이 id를 그대로 보여줘 REST join/leave 결과가 화면에 반영되는지 추적한다.
+      return participants.map(participantId => `#${participantId}`).join(', ')
+    }
+
     const leaveRoomOnce = async () => {
       if (hasLeftRoom) {
         return
@@ -403,6 +416,7 @@ export default defineComponent({
       leaveRoomAndGoToList,
       messageContainer,
       formatTime,
+      formatParticipantIds,
       localVideo,
       remoteVideo,
       isVideoOn,
@@ -447,6 +461,7 @@ export default defineComponent({
 
 .chat-room-meta,
 .chat-room-description,
+.chat-room-participant-list,
 .chat-room-detail-feedback {
   margin: 4px 0 0 0;
   font-size: 0.85rem;

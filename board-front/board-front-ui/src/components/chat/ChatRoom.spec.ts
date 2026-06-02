@@ -104,6 +104,7 @@ describe('# Chat room component', () => {
       name: '코프링 채팅방',
       description: '검색과 채팅 기능을 같이 실습한다',
       createdAt: '2026-06-01T17:00:00',
+      participants: [1, 2],
       participantCount: 2,
       maxParticipants: 20,
     })
@@ -136,6 +137,7 @@ describe('# Chat room component', () => {
     expect(wrapper.get('[data-testid="chat-room-title"]').text()).toBe('코프링 채팅방')
     expect(wrapper.get('[data-testid="chat-room-participants"]').text()).toBe('참여자: 2/20명')
     expect(wrapper.get('[data-testid="chat-room-description"]').text()).toBe('검색과 채팅 기능을 같이 실습한다')
+    expect(wrapper.get('[data-testid="chat-room-participant-list"]').text()).toBe('참여자 ID: #1, #2')
   })
 
   it('should keep chat usable when room metadata fetch fails', async () => {

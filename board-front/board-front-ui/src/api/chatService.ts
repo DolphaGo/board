@@ -16,6 +16,7 @@ export interface ChatRoom {
   id: string
   name: string
   description?: string | null
+  participants: number[]
   participantCount: number
   maxParticipants: number
   createdAt: string
@@ -31,7 +32,9 @@ const toChatRoom = (room: ChatRoomResponse): ChatRoom => {
     id: room.id,
     name: room.name,
     // 백엔드는 참가자 id Set을 내려준다.
-    // 화면은 인원수만 필요하므로 API 경계에서 UI가 쓰기 좋은 값으로 변환한다.
+    // 현재 학습용 UI는 회원 프로필 API가 붙기 전이라 id 목록과 인원수를 함께 보존한다.
+    // 나중에 MemberSimpleInfo DTO를 내려주면 이 배열을 닉네임 목록으로 치환하면 된다.
+    participants: room.participants ?? [],
     participantCount: room.participants?.length ?? 0,
     // 입장 제한 로직과 같은 숫자를 목록에도 보여주면, 사용자가 방에 들어가기 전 정원 상태를 판단할 수 있다.
     maxParticipants: room.maxParticipants,

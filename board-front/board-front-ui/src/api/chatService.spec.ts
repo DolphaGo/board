@@ -31,6 +31,7 @@ describe('# Chat service', function () {
         id: 'room-1',
         name: '코프링 채팅방',
         createdAt: '2026-06-01T17:00:00',
+        participants: [1, 2, 3],
         participantCount: 3,
         maxParticipants: 20,
       },
@@ -57,6 +58,7 @@ describe('# Chat service', function () {
       name: '코프링 채팅방',
       description: '검색과 채팅 기능을 같이 실습한다',
       createdAt: '2026-06-01T17:00:00',
+      participants: [1, 2],
       participantCount: 2,
       maxParticipants: 20,
     })
@@ -80,7 +82,10 @@ describe('# Chat service', function () {
       description: null,
       createdBy: 1,
     })
-    expect(room.participantCount).toBe(1)
+    expect(room).toMatchObject({
+      participantCount: 1,
+      participants: [1],
+    })
   })
 
   it('should create a chat room with description and max participants', async function () {
@@ -144,6 +149,7 @@ describe('# Chat service', function () {
   ])('should ignore blank room id for %s', async function (_, action) {
     await action()
 
+    expect(mockedAxios.get).not.toBeCalled()
     expect(mockedAxios.post).not.toBeCalled()
   })
 })
