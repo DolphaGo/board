@@ -11,6 +11,7 @@
         :aria-expanded="suggestions.length > 0"
         aria-autocomplete="list"
         aria-controls="header-search-suggestions"
+        :aria-activedescendant="activeSuggestionId"
         @keydown="handleSearchKeydown"
       >
       <button type="submit" class="header-search-button">검색</button>
@@ -26,6 +27,7 @@
         <li v-for="(suggestion, index) in suggestions" :key="suggestion.keyword">
           <button
             type="button"
+            :id="suggestionOptionId(index)"
             class="search-suggestion"
             :class="{ active: index === highlightedSuggestionIndex }"
             data-testid="search-suggestion"
@@ -51,7 +53,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { searchRankingService, type SearchRankingItem } from 'src/api/searchRankingService'
 import { normalizeSearchKeyword } from 'src/search/normalizeSearchKeyword'
@@ -69,6 +71,16 @@ const { keyword, submitSearch } = createHeaderSearch({
       keyword: searchKeyword,
     },
   }),
+})
+
+const suggestionOptionId = (index: number) => `header-search-suggestion-${index}`
+
+const activeSuggestionId = computed(() => {
+  // combobox/listbox 패턴에서는 input focus를 유지한 채 현재 option id를 aria-activedescendant로 알려준다.
+  // 이렇게 해야 ArrowDown으로 이동한 추천어를 화면리더가 "현재 선택"으로 따라 읽을 수 있다.
+  return suggestions.value[highlightedSuggestionIndex.value]
+    ? suggestionOptionId(highlightedSuggestionIndex.value)
+    : undefined
 })
 
 watch(keyword, async currentKeyword => {

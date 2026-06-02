@@ -195,6 +195,37 @@ describe('# Header component', () => {
     })
   })
 
+  it('should connect the highlighted suggestion to the search input for screen readers', async () => {
+    mockedSearchRankingService.suggestKeywords.mockResolvedValue([
+      { keyword: 'kotlin spring', score: 7 },
+      { keyword: 'kotlin elasticsearch', score: 5 },
+    ])
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    await wrapper.get('.header-search-input').setValue('kotlin')
+    await flushPromises()
+    await wrapper.get('.header-search-input').trigger('keydown', { key: 'ArrowDown' })
+
+    expect(wrapper.get('.header-search-input').attributes('aria-activedescendant')).toBe(
+      'header-search-suggestion-0'
+    )
+    expect(wrapper.findAll('[data-testid="search-suggestion"]')[0].attributes('id')).toBe(
+      'header-search-suggestion-0'
+    )
+
+    await wrapper.get('.header-search-input').trigger('keydown', { key: 'ArrowDown' })
+
+    expect(wrapper.get('.header-search-input').attributes('aria-activedescendant')).toBe(
+      'header-search-suggestion-1'
+    )
+  })
+
   it('should close keyword suggestions with escape', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
       { keyword: 'kotlin spring', score: 7 },
