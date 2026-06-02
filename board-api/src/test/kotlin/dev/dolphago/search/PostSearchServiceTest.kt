@@ -190,6 +190,58 @@ class PostSearchServiceTest {
     }
 
     @Test
+    fun `게시글 검색 highlight는 이미지 Markdown URL 대신 이미지 설명만 남긴다`() {
+        every {
+            elasticsearchOperations.search(any<NativeQuery>(), PostSearchDocument::class.java)
+        } returns
+            SearchHitsImpl(
+                1,
+                TotalHitsRelation.EQUAL_TO,
+                7.0f,
+                Duration.ofMillis(7),
+                null,
+                null,
+                listOf(
+                    SearchHit(
+                        "board-posts",
+                        "3",
+                        null,
+                        7.0f,
+                        emptyArray(),
+                        mapOf(
+                            "content" to
+                                listOf(
+                                    "첫 문단 ![첨부 이미지 1](https://cdn.example.com/body.png) <em>검색어</em>",
+                                ),
+                        ),
+                        emptyMap(),
+                        null,
+                        null,
+                        emptyMap(),
+                        PostSearchDocument(
+                            id = 3L,
+                            title = "이미지 highlight 글",
+                            content = "첫 문단 ![첨부 이미지 1](https://cdn.example.com/body.png) 검색어",
+                            viewCount = 1,
+                            display = true,
+                            notice = false,
+                        ),
+                    ),
+                ),
+                null,
+                null,
+                null,
+            )
+
+        val result = postSearchService.search("검색어", 10).single()
+
+        assertEquals(
+            mapOf("content" to listOf("첫 문단 [이미지: 첨부 이미지 1] <em>검색어</em>")),
+            result.highlights,
+        )
+    }
+
+    @Test
     fun `게시글 검색은 공지 게시글에 ES 점수 가산점을 더한다`() {
         val querySlot = slot<NativeQuery>()
         every {

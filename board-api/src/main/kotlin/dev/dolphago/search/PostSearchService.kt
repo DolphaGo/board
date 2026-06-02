@@ -139,7 +139,7 @@ class PostSearchService(
                     contentPreview = createContentPreview(document.content),
                     display = document.display,
                     score = hit.score,
-                    highlights = hit.highlightFields,
+                    highlights = createDisplayHighlights(hit.highlightFields),
                     scoringSignals =
                         createScoringSignals(
                             keyword = keyword,
@@ -226,6 +226,15 @@ class PostSearchService(
         )
 
     private fun createContentPreview(content: String): String =
+        createDisplayText(content)
+            .take(CONTENT_PREVIEW_LENGTH)
+
+    private fun createDisplayHighlights(highlights: Map<String, List<String>>): Map<String, List<String>> =
+        highlights.mapValues { (_, snippets) ->
+            snippets.map(::createDisplayText)
+        }
+
+    private fun createDisplayText(content: String): String =
         content
             .replace(MARKDOWN_IMAGE_PATTERN) { matchResult ->
                 val altText = matchResult.groupValues[1].trim().ifEmpty { "첨부 이미지" }
@@ -234,7 +243,6 @@ class PostSearchService(
                 matchResult.groupValues[1]
             }.replace(WHITESPACE_PATTERN, " ")
             .trim()
-            .take(CONTENT_PREVIEW_LENGTH)
 
     companion object {
         private val MARKDOWN_IMAGE_PATTERN = Regex("!\\[([^\\]]*)]\\(([^)]+)\\)")
