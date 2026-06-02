@@ -18,7 +18,12 @@ describe('# Chat service', function () {
           name: '코프링 채팅방',
           createdAt: '2026-06-01T17:00:00',
           maxParticipants: 20,
-          participants: [1, 2, 3],
+          currentParticipants: 3,
+          participants: [
+            { id: 1, nickname: '방장', email: 'creator@example.com' },
+            { id: 2, nickname: '참가자', email: 'participant@example.com' },
+            { id: 3, nickname: '검색러', email: 'searcher@example.com' },
+          ],
         },
       ],
     })
@@ -31,7 +36,11 @@ describe('# Chat service', function () {
         id: 'room-1',
         name: '코프링 채팅방',
         createdAt: '2026-06-01T17:00:00',
-        participants: [1, 2, 3],
+        participants: [
+          { id: 1, nickname: '방장' },
+          { id: 2, nickname: '참가자' },
+          { id: 3, nickname: '검색러' },
+        ],
         participantCount: 3,
         maxParticipants: 20,
       },
@@ -46,7 +55,11 @@ describe('# Chat service', function () {
         description: '검색과 채팅 기능을 같이 실습한다',
         createdAt: '2026-06-01T17:00:00',
         maxParticipants: 20,
-        participants: [1, 2],
+        currentParticipants: 2,
+        participants: [
+          { id: 1, nickname: '방장', email: 'creator@example.com' },
+          { id: 2, nickname: '참가자', email: 'participant@example.com' },
+        ],
       },
     })
 
@@ -58,7 +71,10 @@ describe('# Chat service', function () {
       name: '코프링 채팅방',
       description: '검색과 채팅 기능을 같이 실습한다',
       createdAt: '2026-06-01T17:00:00',
-      participants: [1, 2],
+      participants: [
+        { id: 1, nickname: '방장' },
+        { id: 2, nickname: '참가자' },
+      ],
       participantCount: 2,
       maxParticipants: 20,
     })
@@ -71,7 +87,8 @@ describe('# Chat service', function () {
         name: '새 채팅방',
         createdAt: '2026-06-01T17:00:00',
         maxParticipants: 100,
-        participants: [1],
+        currentParticipants: 1,
+        participants: [{ id: 1, nickname: '방장', email: 'creator@example.com' }],
       },
     })
 
@@ -84,7 +101,7 @@ describe('# Chat service', function () {
     })
     expect(room).toMatchObject({
       participantCount: 1,
-      participants: [1],
+      participants: [{ id: 1, nickname: '방장' }],
     })
   })
 
@@ -95,7 +112,8 @@ describe('# Chat service', function () {
         name: '스터디 채팅방',
         createdAt: '2026-06-01T17:00:00',
         maxParticipants: 20,
-        participants: [1],
+        currentParticipants: 1,
+        participants: [{ id: 1, nickname: '방장', email: 'creator@example.com' }],
       },
     })
 

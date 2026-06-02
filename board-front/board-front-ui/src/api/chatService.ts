@@ -3,20 +3,32 @@ import axios from 'axios'
 const BASE_URL = '/api'
 const STUDY_MEMBER_ID = 1
 
+interface ChatParticipantResponse {
+  id: number
+  nickname: string
+  email?: string
+}
+
 interface ChatRoomResponse {
   id: string
   name: string
   description?: string | null
   createdAt: string
   maxParticipants: number
-  participants?: number[]
+  currentParticipants?: number
+  participants?: ChatParticipantResponse[]
+}
+
+export interface ChatParticipant {
+  id: number
+  nickname: string
 }
 
 export interface ChatRoom {
   id: string
   name: string
   description?: string | null
-  participants: number[]
+  participants: ChatParticipant[]
   participantCount: number
   maxParticipants: number
   createdAt: string
@@ -31,11 +43,10 @@ const toChatRoom = (room: ChatRoomResponse): ChatRoom => {
   const chatRoom: ChatRoom = {
     id: room.id,
     name: room.name,
-    // 백엔드는 참가자 id Set을 내려준다.
-    // 현재 학습용 UI는 회원 프로필 API가 붙기 전이라 id 목록과 인원수를 함께 보존한다.
-    // 나중에 MemberSimpleInfo DTO를 내려주면 이 배열을 닉네임 목록으로 치환하면 된다.
-    participants: room.participants ?? [],
-    participantCount: room.participants?.length ?? 0,
+    // 백엔드는 MongoDB ChatRoom의 참가자 id를 MySQL MemberSimpleInfo로 풀어서 내려준다.
+    // 프론트는 화면에 필요한 id/nickname만 보존하고 email은 버린다.
+    participants: room.participants?.map(toChatParticipant) ?? [],
+    participantCount: room.currentParticipants ?? room.participants?.length ?? 0,
     // 입장 제한 로직과 같은 숫자를 목록에도 보여주면, 사용자가 방에 들어가기 전 정원 상태를 판단할 수 있다.
     maxParticipants: room.maxParticipants,
     createdAt: room.createdAt,
@@ -59,9 +70,24 @@ const isChatRoomResponse = (room: unknown): room is ChatRoomResponse => {
     typeof candidate.name === 'string' &&
     typeof candidate.createdAt === 'string' &&
     typeof candidate.maxParticipants === 'number' &&
-    (candidate.participants === undefined || Array.isArray(candidate.participants))
+    (candidate.currentParticipants === undefined || typeof candidate.currentParticipants === 'number') &&
+    (candidate.participants === undefined || candidate.participants.every(isChatParticipantResponse))
   )
 }
+
+const isChatParticipantResponse = (participant: unknown): participant is ChatParticipantResponse => {
+  if (typeof participant !== 'object' || participant === null) {
+    return false
+  }
+
+  const candidate = participant as Partial<ChatParticipantResponse>
+  return typeof candidate.id === 'number' && typeof candidate.nickname === 'string'
+}
+
+const toChatParticipant = (participant: ChatParticipantResponse): ChatParticipant => ({
+  id: participant.id,
+  nickname: participant.nickname,
+})
 
 const parseChatRoom = (room: unknown): ChatRoom => {
   // Vite dev fallback HTML이나 백엔드 에러 payload가 정상 DTO처럼 흘러오면

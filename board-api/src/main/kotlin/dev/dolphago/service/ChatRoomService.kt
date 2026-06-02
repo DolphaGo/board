@@ -2,7 +2,9 @@ package dev.dolphago.service
 
 import dev.dolphago.domain.chat.ChatRoom
 import dev.dolphago.domain.chat.ChatRoomRepository
+import dev.dolphago.domain.chat.dto.ChatRoomResponse
 import dev.dolphago.member.repository.MemberRepository
+import dev.dolphago.mysql.Member
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -16,10 +18,16 @@ class ChatRoomService(
     fun getAllChatRooms(): List<ChatRoom> = chatRoomRepository.findAll()
 
     @Transactional(readOnly = true)
+    fun getAllChatRoomResponses(): List<ChatRoomResponse> = chatRoomRepository.findAll().map { toResponse(it) }
+
+    @Transactional(readOnly = true)
     fun getChatRoomById(roomId: String): ChatRoom =
         chatRoomRepository.findById(roomId).orElseThrow {
             throw IllegalArgumentException("채팅방을 찾을 수 없습니다: $roomId")
         }
+
+    @Transactional(readOnly = true)
+    fun getChatRoomResponseById(roomId: String): ChatRoomResponse = toResponse(getChatRoomById(roomId))
 
     fun createChatRoom(
         name: String,
@@ -44,6 +52,13 @@ class ChatRoomService(
 
         return chatRoomRepository.save(chatRoom)
     }
+
+    fun createChatRoomResponse(
+        name: String,
+        description: String?,
+        createdBy: Long,
+        maxParticipants: Int = 100,
+    ): ChatRoomResponse = toResponse(createChatRoom(name, description, createdBy, maxParticipants))
 
     fun joinChatRoom(
         roomId: String,
@@ -71,6 +86,11 @@ class ChatRoomService(
         return chatRoomRepository.save(chatRoom)
     }
 
+    fun joinChatRoomResponse(
+        roomId: String,
+        memberId: Long,
+    ): ChatRoomResponse = toResponse(joinChatRoom(roomId, memberId))
+
     fun leaveChatRoom(
         roomId: String,
         memberId: Long,
@@ -88,6 +108,38 @@ class ChatRoomService(
         return chatRoomRepository.save(chatRoom)
     }
 
+    fun leaveChatRoomResponse(
+        roomId: String,
+        memberId: Long,
+    ): ChatRoomResponse = toResponse(leaveChatRoom(roomId, memberId))
+
     @Transactional(readOnly = true)
     fun getMemberChatRooms(memberId: Long): List<ChatRoom> = chatRoomRepository.findByParticipantsContaining(memberId)
+
+    @Transactional(readOnly = true)
+    fun getMemberChatRoomResponses(memberId: Long): List<ChatRoomResponse> =
+        chatRoomRepository.findByParticipantsContaining(memberId).map { toResponse(it) }
+
+    private fun toResponse(chatRoom: ChatRoom): ChatRoomResponse {
+        val creator =
+            memberRepository.findById(chatRoom.creatorId).orElseThrow {
+                IllegalArgumentException("채팅방 생성자를 찾을 수 없습니다: ${chatRoom.creatorId}")
+            }
+        val participants = findMembersInChatOrder(chatRoom.participants.toList())
+
+        return ChatRoomResponse.from(chatRoom, creator, participants)
+    }
+
+    private fun findMembersInChatOrder(memberIds: List<Long>): List<Member> {
+        if (memberIds.isEmpty()) {
+            return emptyList()
+        }
+
+        val membersById = memberRepository.findAllById(memberIds).associateBy { it.id }
+
+        // MongoDB ChatRoom에는 참가자 id만 저장한다.
+        // 응답 DTO를 만들 때 MySQL Member를 다시 조회하는 이유는 화면이 id 대신 닉네임을 보여주기 위해서다.
+        // 저장된 id 순서를 기준으로 다시 정렬하면 REST 응답이 매번 흔들리지 않아 테스트와 UI가 예측 가능해진다.
+        return memberIds.mapNotNull { memberId -> membersById[memberId] }
+    }
 }

@@ -26,7 +26,11 @@ const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0))
 const chatRoomFixture = (overrides: Partial<ChatRoom> = {}): ChatRoom => ({
   id: 'room-1',
   name: '스터디 채팅방',
-  participants: [1, 2, 3],
+  participants: [
+    { id: 1, nickname: '방장' },
+    { id: 2, nickname: '참가자' },
+    { id: 3, nickname: '검색러' },
+  ],
   participantCount: 3,
   maxParticipants: 20,
   createdAt: '2026-06-01T09:00:00.000Z',

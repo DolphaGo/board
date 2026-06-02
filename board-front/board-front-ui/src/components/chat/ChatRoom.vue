@@ -14,7 +14,7 @@
           class="chat-room-participant-list"
           data-testid="chat-room-participant-list"
         >
-          참여자 ID: {{ formatParticipantIds(room.participants) }}
+          참여자: {{ formatParticipants(room.participants) }}
         </p>
         <p v-if="roomDetailFeedback" class="chat-room-detail-feedback" data-testid="chat-room-detail-feedback">
           {{ roomDetailFeedback }}
@@ -74,7 +74,7 @@ import { useRouter } from 'vue-router'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import dayjs from 'dayjs'
-import { chatService, type ChatRoom } from 'src/api/chatService'
+import { chatService, type ChatParticipant, type ChatRoom } from 'src/api/chatService'
 
 interface ChatMessage {
   type: 'ENTER' | 'TALK' | 'LEAVE' | 'SIGNAL'
@@ -275,10 +275,10 @@ export default defineComponent({
       return dayjs(timestamp).format('HH:mm')
     }
 
-    const formatParticipantIds = (participants: number[]) => {
-      // 지금 백엔드 ChatRoom은 참가자를 Member id Set으로 내려준다.
-      // 학습 단계에서는 이 id를 그대로 보여줘 REST join/leave 결과가 화면에 반영되는지 추적한다.
-      return participants.map(participantId => `#${participantId}`).join(', ')
+    const formatParticipants = (participants: ChatParticipant[]) => {
+      // 채팅방 엔티티는 참가자 id만 저장하지만 REST 응답은 Member nickname까지 풀어서 내려준다.
+      // 화면은 닉네임을 기본으로 보여주고, 닉네임이 비어 있는 비정상 데이터만 id로 보정한다.
+      return participants.map(participant => participant.nickname || `#${participant.id}`).join(', ')
     }
 
     const leaveRoomOnce = async () => {
@@ -416,7 +416,7 @@ export default defineComponent({
       leaveRoomAndGoToList,
       messageContainer,
       formatTime,
-      formatParticipantIds,
+      formatParticipants,
       localVideo,
       remoteVideo,
       isVideoOn,

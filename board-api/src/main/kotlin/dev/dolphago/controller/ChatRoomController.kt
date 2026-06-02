@@ -1,6 +1,6 @@
 package dev.dolphago.controller
 
-import dev.dolphago.domain.chat.ChatRoom
+import dev.dolphago.domain.chat.dto.ChatRoomResponse
 import dev.dolphago.service.ChatRoomService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -16,17 +16,17 @@ class ChatRoomController(
     private val chatRoomService: ChatRoomService,
 ) {
     @GetMapping
-    fun getAllChatRooms(): ResponseEntity<List<ChatRoom>> = ResponseEntity.ok(chatRoomService.getAllChatRooms())
+    fun getAllChatRooms(): ResponseEntity<List<ChatRoomResponse>> = ResponseEntity.ok(chatRoomService.getAllChatRoomResponses())
 
     @GetMapping("/{id}")
     fun getChatRoomById(
         @PathVariable id: String,
-    ): ResponseEntity<ChatRoom> = ResponseEntity.ok(chatRoomService.getChatRoomById(id))
+    ): ResponseEntity<ChatRoomResponse> = ResponseEntity.ok(chatRoomService.getChatRoomResponseById(id))
 
     @PostMapping
     fun createChatRoom(
         @RequestBody request: CreateChatRoomRequest,
-    ): ResponseEntity<ChatRoom> {
+    ): ResponseEntity<ChatRoomResponse> {
         // 채팅방 이름은 목록과 입장 화면에서 방을 식별하는 최소 정보다.
         // 공백뿐인 이름은 저장해도 사용자가 구분할 수 없으므로 HTTP 입력 단계에서 400으로 거부한다.
         if (request.name.isBlank()) {
@@ -39,7 +39,7 @@ class ChatRoomController(
         }
 
         val chatRoom =
-            chatRoomService.createChatRoom(
+            chatRoomService.createChatRoomResponse(
                 name = request.name,
                 description = request.description,
                 createdBy = request.createdBy,
@@ -52,33 +52,33 @@ class ChatRoomController(
     fun joinChatRoom(
         @PathVariable id: String,
         @RequestBody request: JoinChatRoomRequest,
-    ): ResponseEntity<ChatRoom> {
+    ): ResponseEntity<ChatRoomResponse> {
         // URL path의 방 id가 비어 있으면 어떤 방에 입장하는 요청인지 알 수 없다.
         // 이런 HTTP 입력 오류는 서비스까지 넘기지 않고 컨트롤러에서 400으로 끝낸다.
         if (id.isBlank()) {
             return ResponseEntity.badRequest().build()
         }
 
-        return ResponseEntity.ok(chatRoomService.joinChatRoom(id, request.memberId))
+        return ResponseEntity.ok(chatRoomService.joinChatRoomResponse(id, request.memberId))
     }
 
     @PostMapping("/{id}/leave")
     fun leaveChatRoom(
         @PathVariable id: String,
         @RequestBody request: LeaveChatRoomRequest,
-    ): ResponseEntity<ChatRoom> {
+    ): ResponseEntity<ChatRoomResponse> {
         // 입장과 같은 이유로 방 id가 없으면 나가기 요청도 API 계약상 잘못된 요청이다.
         if (id.isBlank()) {
             return ResponseEntity.badRequest().build()
         }
 
-        return ResponseEntity.ok(chatRoomService.leaveChatRoom(id, request.memberId))
+        return ResponseEntity.ok(chatRoomService.leaveChatRoomResponse(id, request.memberId))
     }
 
     @GetMapping("/members/{memberId}")
     fun getMemberChatRooms(
         @PathVariable memberId: Long,
-    ): ResponseEntity<List<ChatRoom>> = ResponseEntity.ok(chatRoomService.getMemberChatRooms(memberId))
+    ): ResponseEntity<List<ChatRoomResponse>> = ResponseEntity.ok(chatRoomService.getMemberChatRoomResponses(memberId))
 }
 
 data class CreateChatRoomRequest(

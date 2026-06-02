@@ -69,4 +69,41 @@ class ChatRoomServiceTest {
 
         verify(exactly = 0) { chatRoomRepository.save(any()) }
     }
+
+    @Test
+    fun `채팅방 상세 응답은 참가자 id가 아니라 닉네임을 포함한다`() {
+        val room =
+            ChatRoom(
+                id = "room-1",
+                name = "코프링 스터디",
+                description = "채팅 참가자 표시를 공부하는 방",
+                creatorId = 1L,
+                maxParticipants = 20,
+                participants = mutableSetOf(1L, 2L),
+            )
+        val creator =
+            Member(
+                id = 1L,
+                email = "creator@example.com",
+                nickname = "방장",
+                role = Authority.ROLE_USER,
+            )
+        val participant =
+            Member(
+                id = 2L,
+                email = "participant@example.com",
+                nickname = "참가자",
+                role = Authority.ROLE_USER,
+            )
+
+        every { chatRoomRepository.findById("room-1") } returns Optional.of(room)
+        every { memberRepository.findById(1L) } returns Optional.of(creator)
+        every { memberRepository.findAllById(listOf(1L, 2L)) } returns listOf(creator, participant)
+
+        val response = chatRoomService.getChatRoomResponseById("room-1")
+
+        assertEquals("방장", response.createdBy.nickname)
+        assertEquals(listOf("방장", "참가자"), response.participants.map { it.nickname })
+        assertEquals(2, response.currentParticipants)
+    }
 }

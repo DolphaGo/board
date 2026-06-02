@@ -23,7 +23,7 @@ class ChatRoomControllerTest {
             )
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
-        verify(exactly = 0) { chatRoomService.createChatRoom(any(), any(), any(), any()) }
+        verify(exactly = 0) { chatRoomService.createChatRoomResponse(any(), any(), any(), any()) }
     }
 
     @Test
@@ -41,7 +41,7 @@ class ChatRoomControllerTest {
 
             assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
         }
-        verify(exactly = 0) { chatRoomService.createChatRoom(any(), any(), any(), any()) }
+        verify(exactly = 0) { chatRoomService.createChatRoomResponse(any(), any(), any(), any()) }
     }
 
     @Test
@@ -49,7 +49,7 @@ class ChatRoomControllerTest {
         val response = chatRoomController.joinChatRoom("   ", JoinChatRoomRequest(memberId = 1L))
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
-        verify(exactly = 0) { chatRoomService.joinChatRoom(any(), any()) }
+        verify(exactly = 0) { chatRoomService.joinChatRoomResponse(any(), any()) }
     }
 
     @Test
@@ -57,6 +57,6 @@ class ChatRoomControllerTest {
         val response = chatRoomController.leaveChatRoom("   ", LeaveChatRoomRequest(memberId = 1L))
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
-        verify(exactly = 0) { chatRoomService.leaveChatRoom(any(), any()) }
+        verify(exactly = 0) { chatRoomService.leaveChatRoomResponse(any(), any()) }
     }
 }
