@@ -151,6 +151,43 @@ describe('# Post editor component', () => {
     expect(push).toBeCalledWith('/post/79')
   })
 
+  it('should submit only image URLs that still remain in the edited markdown body', async () => {
+    mockedPostService.createPost.mockResolvedValue({
+      id: 80,
+      title: '본문 기준 이미지 저장',
+      content:
+        '본문에서 첫 이미지를 직접 지웠다\n' +
+        '![첨부 이미지 1](https://cdn.example.com/second.png)\n',
+      imageUrls: ['https://cdn.example.com/second.png'],
+      viewCount: 0,
+      display: true,
+      notice: false,
+    })
+    const wrapper = mount(PostEditor)
+
+    await wrapper.get('#issue-title').setValue('본문 기준 이미지 저장')
+    await wrapper.get('#issue-body').setValue('본문에서 첫 이미지를 직접 지웠다')
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/first.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/second.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.get('#issue-body').setValue(
+      '본문에서 첫 이미지를 직접 지웠다\n' +
+        '![첨부 이미지 2](https://cdn.example.com/second.png)\n',
+    )
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    await flushPromises()
+
+    expect(mockedPostService.createPost).toBeCalledWith({
+      title: '본문 기준 이미지 저장',
+      content:
+        '본문에서 첫 이미지를 직접 지웠다\n' +
+        '![첨부 이미지 1](https://cdn.example.com/second.png)\n',
+      imageUrls: ['https://cdn.example.com/second.png'],
+    })
+    expect(push).toBeCalledWith('/post/80')
+  })
+
   it('should preview image URLs as thumbnails in the same order as the image list', async () => {
     const wrapper = mount(PostEditor)
 

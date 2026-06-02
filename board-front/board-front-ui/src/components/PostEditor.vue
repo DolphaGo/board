@@ -339,6 +339,23 @@ const addImageUrl = () => {
   imageUrlInput.value = '';
 };
 
+const prepareImagePayloadFromBody = () => {
+  const remainingImageUrls = imageUrls.value.filter(imageUrl => bodyText.value.includes(`](${imageUrl})`));
+  let content = bodyText.value;
+
+  remainingImageUrls.forEach((imageUrl, index) => {
+    const markdownPattern = new RegExp(`!\\[첨부 이미지 \\d+\\]\\(${escapeRegExp(imageUrl)}\\)`, 'g');
+    content = content.replace(markdownPattern, `![첨부 이미지 ${index + 1}](${imageUrl})`);
+  });
+
+  // 사용자가 textarea에서 이미지 Markdown을 직접 지울 수 있으므로, 저장 직전에는 본문을 진실의 원천으로 본다.
+  // imageUrls 배열에만 남은 URL을 그대로 보내면 상세 화면의 fallback 첨부 목록에서 지운 사진이 되살아난다.
+  return {
+    content,
+    imageUrls: remainingImageUrls,
+  };
+};
+
 const toggleNotice = (event: Event) => {
   notice.value = event.target instanceof HTMLInputElement && event.target.checked;
 };
@@ -381,10 +398,11 @@ const submit = async () => {
   submitMessage.value = '';
 
   try {
+    const imagePayload = prepareImagePayloadFromBody();
     submitMessage.value = await submitPostEditorForm({
       title: title.value,
-      content: bodyText.value,
-      imageUrls: imageUrls.value,
+      content: imagePayload.content,
+      imageUrls: imagePayload.imageUrls,
       notice: isAdminEditor.value ? notice.value : false,
       createPost: postService.createPost,
       moveToPostDetail: postId => {
