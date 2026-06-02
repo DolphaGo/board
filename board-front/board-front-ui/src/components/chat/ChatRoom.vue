@@ -223,7 +223,15 @@ export default defineComponent({
     }
 
     const sendMessage = (type: 'ENTER' | 'TALK' | 'LEAVE' = 'TALK') => {
-      if (!stompClient.value?.connected) return
+      if (!stompClient.value?.connected) {
+        if (type === 'TALK') {
+          // STOMP 연결 전 publish를 시도하면 서버로 갈 수 없으므로 입력값을 유지하고 원인을 알려준다.
+          // 사용자는 같은 메시지를 다시 작성하지 않고 연결이 회복된 뒤 전송 버튼을 다시 누르면 된다.
+          connectionFeedbackKind.value = '연결 대기'
+          connectionFeedback.value = '채팅 서버에 연결된 뒤 다시 전송해주세요.'
+        }
+        return
+      }
       
       const chatMessage: ChatMessage = {
         type,

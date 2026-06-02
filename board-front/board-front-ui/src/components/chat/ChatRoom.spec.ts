@@ -131,6 +131,25 @@ describe('# Chat room component', () => {
     expect(mockPublish).not.toHaveBeenCalled()
   })
 
+  it('should keep the input and show feedback when sending before STOMP connection is ready', async () => {
+    mockConnected = false
+    const wrapper = mountChatRoom()
+    mockPublish.mockClear()
+
+    const input = wrapper.get('input[placeholder="메시지를 입력하세요..."]')
+    await input.setValue('연결되면 다시 보낼 메시지')
+
+    await wrapper.get('.message-input button').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(mockPublish).not.toHaveBeenCalled()
+    expect((input.element as HTMLInputElement).value).toBe('연결되면 다시 보낼 메시지')
+    expect(wrapper.get('[data-testid="connection-feedback-kind"]').text()).toBe('연결 대기')
+    expect(wrapper.get('.connection-feedback').text()).toBe(
+      '연결 대기 채팅 서버에 연결된 뒤 다시 전송해주세요.'
+    )
+  })
+
   it('should render chat room metadata fetched by room id', async () => {
     const wrapper = mountChatRoom()
 
