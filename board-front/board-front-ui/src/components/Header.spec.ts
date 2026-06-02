@@ -13,6 +13,25 @@ const routerLinkStub = {
 }
 
 describe('# Header component', () => {
+  it('should expose real router links for home and post list navigation', () => {
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    const homeLink = wrapper.find('[data-to="/"][data-nav="home"]')
+    const postsLink = wrapper.find('[data-to="/"][data-nav="posts"]')
+
+    expect(homeLink.exists()).toBe(true)
+    expect(homeLink.text()).toBe('Home')
+    expect(postsLink.exists()).toBe(true)
+    expect(postsLink.text()).toBe('Posts')
+    expect(wrapper.find('a[href="#"]').exists()).toBe(false)
+  })
+
   it('should expose a navigation link to the admin hidden post list', () => {
     const wrapper = mount(Header, {
       global: {
