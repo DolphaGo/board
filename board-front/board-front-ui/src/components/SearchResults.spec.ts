@@ -190,10 +190,65 @@ describe('# Search results component', () => {
       .findAll('[data-testid="search-scoring-study-guide-row"]')
       .map(row => row.text())
     expect(guideRows).toEqual([
-      '원문/BM25: BM25는 제목/본문 원문 일치의 기본 관련도입니다. · 응답 포함',
-      'function_score: function_score는 공지 같은 운영 신호를 작은 가산점으로 더합니다. · 응답 포함',
-      '음절 recall: 음절 recall은 ㅋㅗ처럼 자모로 쪼갠 입력을 보조합니다. · 보조 전략',
-      '초성 recall: 초성 recall은 ㅋㅍㄹ처럼 빠르게 입력한 초성 검색을 보조합니다. · 보조 전략',
+      '원문/BM25: BM25는 제목/본문 원문 일치의 기본 관련도입니다. · 응답 포함 · 적용 1/1개 · 적용 boost 3.00',
+      'function_score: function_score는 공지 같은 운영 신호를 작은 가산점으로 더합니다. · 응답 포함 · 적용 1/1개 · 적용 boost 2.00',
+      '음절 recall: 음절 recall은 ㅋㅗ처럼 자모로 쪼갠 입력을 보조합니다. · 보조 전략 · 이번 응답 signal 없음',
+      '초성 recall: 초성 recall은 ㅋㅍㄹ처럼 빠르게 입력한 초성 검색을 보조합니다. · 보조 전략 · 이번 응답 signal 없음',
+    ])
+  })
+
+  it('should summarize applied count and boost for each scoring study guide category', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: '점수 계열별 적용 개수와 boost 합계를 비교한다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [
+          {
+            field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
+            boost: 3,
+            keyword: '코프링',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+          {
+            field: 'content',
+            category: 'BM25_TEXT',
+            label: '본문 원문',
+            boost: 1,
+            keyword: '코프링',
+            description: '본문 원문 match는 제목보다 넓은 recall을 담당한다.',
+            applied: true,
+          },
+          {
+            field: 'titleSyllables',
+            category: 'SYLLABLE_RECALL',
+            label: '제목 음절',
+            boost: 1.5,
+            keyword: 'ㅋ ㅗ ㅍ ㅡ ㄹ ㅣ ㅇ',
+            description: '음절 분해 제목 필드는 한글 부분 기억과 오타성 검색을 보조한다.',
+            applied: false,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    const guideContributions = wrapper
+      .findAll('[data-testid="search-scoring-study-guide-contribution"]')
+      .map(row => row.text())
+    expect(guideContributions).toEqual([
+      '적용 2/2개 · 적용 boost 4.00',
+      '적용 0/1개 · 적용 boost 0.00',
+      '이번 응답 signal 없음',
+      '이번 응답 signal 없음',
     ])
   })
 

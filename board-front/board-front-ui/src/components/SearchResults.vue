@@ -43,6 +43,13 @@
         >
           <strong>{{ guide.label }}</strong>: {{ guide.description }}
           <span class="search-scoring-study-guide-state">· {{ guide.statusLabel }}</span>
+          <span class="search-scoring-study-guide-separator"> · </span>
+          <span
+            class="search-scoring-study-guide-contribution"
+            data-testid="search-scoring-study-guide-contribution"
+          >
+            {{ guide.contributionLabel }}
+          </span>
         </p>
       </section>
 
@@ -280,6 +287,13 @@ interface ScoringStudyGuideDefinition {
 interface ScoringStudyGuideRow extends ScoringStudyGuideDefinition {
   presentInResponse: boolean
   statusLabel: string
+  contributionLabel: string
+}
+
+interface ScoringStudyGuideStats {
+  appliedCount: number
+  totalCount: number
+  appliedBoost: number
 }
 
 const scoringStudyGuideDefinitions: ScoringStudyGuideDefinition[] = [
@@ -306,13 +320,33 @@ const scoringStudyGuideDefinitions: ScoringStudyGuideDefinition[] = [
 ]
 
 const scoringStudyGuideRows = computed<ScoringStudyGuideRow[]>(() => {
-  const categoriesInResponse = new Set(
-    results.value.flatMap(result => result.scoringSignals.map(signal => signal.category))
+  const statsByCategory = results.value
+    .flatMap(result => result.scoringSignals)
+    .reduce<Record<string, ScoringStudyGuideStats>>(
+      (stats, signal) => {
+        const categoryStats = stats[signal.category] ?? {
+          appliedCount: 0,
+          totalCount: 0,
+          appliedBoost: 0,
+        }
+
+        categoryStats.totalCount += 1
+        if (signal.applied) {
+          categoryStats.appliedCount += 1
+          categoryStats.appliedBoost += signal.boost
+        }
+
+        stats[signal.category] = categoryStats
+
+        return stats
+      },
+      {}
   )
 
   return scoringStudyGuideDefinitions
     .map((guide, index) => {
-      const presentInResponse = categoriesInResponse.has(guide.category)
+      const stats = statsByCategory[guide.category]
+      const presentInResponse = Boolean(stats)
 
       return {
         ...guide,
@@ -322,6 +356,11 @@ const scoringStudyGuideRows = computed<ScoringStudyGuideRow[]>(() => {
         // "응답 포함"은 이번 검색에서 서버가 반환한 scoringSignals에 있었던 계열이고,
         // "보조 전략"은 게시판 검색에서 자주 쓰지만 이번 응답에는 직접 등장하지 않은 참고 계열이다.
         statusLabel: presentInResponse ? '응답 포함' : '보조 전략',
+        // totalCount는 query plan에 들어온 signal 수, appliedCount는 실제 문서 hit에 기여한 signal 수다.
+        // appliedBoost 합계는 ES 최종 점수 자체가 아니라, 샘플에서 설계한 가중치가 어느 계열에 몰렸는지 보는 학습용 지표다.
+        contributionLabel: stats
+          ? `적용 ${stats.appliedCount}/${stats.totalCount}개 · 적용 boost ${stats.appliedBoost.toFixed(2)}`
+          : '이번 응답 signal 없음',
       }
     })
     .sort((left, right) => {
