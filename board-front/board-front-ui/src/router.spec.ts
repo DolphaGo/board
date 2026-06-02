@@ -65,3 +65,11 @@ describe('# Router admin hidden posts', () => {
     expect(route).toBeDefined()
   })
 })
+
+describe('# Router notices', () => {
+  it('should expose the notice post list route', () => {
+    const route = router.getRoutes().find(route => route.path === '/notices')
+
+    expect(route).toBeDefined()
+  })
+})

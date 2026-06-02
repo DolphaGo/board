@@ -61,4 +61,19 @@ describe('# Header component', () => {
     expect(postEditorLink.exists()).toBe(true)
     expect(postEditorLink.text()).toBe('글쓰기')
   })
+
+  it('should expose a navigation link to notices', () => {
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    const noticesLink = wrapper.find('[data-to="/notices"]')
+
+    expect(noticesLink.exists()).toBe(true)
+    expect(noticesLink.text()).toBe('공지사항')
+  })
 })

@@ -14,6 +14,7 @@
     <nav>
       <router-link to="/" data-nav="home">Home</router-link>
       <router-link to="/" data-nav="posts">Posts</router-link>
+      <router-link to="/notices">공지사항</router-link>
       <router-link to="/post/edit">글쓰기</router-link>
       <router-link to="/chat/rooms">Chat</router-link>
       <router-link to="/admin/hidden-posts">숨김 관리</router-link>

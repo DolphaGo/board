@@ -129,6 +129,20 @@ export const postService = {
     return response.data.filter(post => post.display)
   },
 
+  listNoticePosts: async (): Promise<PostListItemResponse[]> => {
+    const response = await axios.get<PostListItemResponse[]>('/api/posts')
+
+    // 공지 모아보기는 현재 목록 API의 notice 플래그를 재사용한다.
+    // 별도 API가 생기기 전까지 같은 DTO 계약을 검증해 화면이 깨진 데이터를 렌더링하지 않게 한다.
+    if (!Array.isArray(response.data) || !response.data.every(isPostListItemResponse)) {
+      throw new Error('Invalid notice post list response')
+    }
+
+    // 백엔드는 공지를 상단 정렬해 내려주지만, 이 화면은 공지만 보는 전용 탭이다.
+    // 그래서 display=true와 notice=true를 프론트 경계에서 다시 확인해 숨김 공지와 일반 글을 제외한다.
+    return response.data.filter(post => post.display && post.notice)
+  },
+
   listHiddenPosts: async (): Promise<PostListItemResponse[]> => {
     const response = await axios.get<PostListItemResponse[]>('/api/posts/hidden', {
       params: {

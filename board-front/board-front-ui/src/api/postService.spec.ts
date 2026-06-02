@@ -92,6 +92,60 @@ describe('# Post service', function () {
     expect(posts[0].title).toBe('보이는 게시글')
   })
 
+  it('should fetch visible notice posts from the post list API', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          id: 10,
+          title: '점검 공지',
+          content: '서비스 점검 시간 안내',
+          imageUrls: [],
+          viewCount: 12,
+          display: true,
+          notice: true,
+          authorNickname: 'admin',
+          createdAt: '2026-06-02T04:00:00',
+          commentCount: 1,
+          recommendCount: 4,
+        },
+        {
+          id: 11,
+          title: '일반 게시글',
+          content: '공지 목록에는 나오면 안 된다',
+          imageUrls: [],
+          viewCount: 3,
+          display: true,
+          notice: false,
+          authorNickname: 'writer',
+          createdAt: '2026-06-02T05:00:00',
+          commentCount: 0,
+          recommendCount: 0,
+        },
+        {
+          id: 12,
+          title: '숨김 공지',
+          content: '숨김 공지는 공지 목록에도 나오면 안 된다',
+          imageUrls: [],
+          viewCount: 1,
+          display: false,
+          notice: true,
+          authorNickname: 'admin',
+          createdAt: '2026-06-02T06:00:00',
+          commentCount: 0,
+          recommendCount: 0,
+        },
+      ],
+    })
+
+    const posts = await postService.listNoticePosts()
+
+    expect(mockedAxios.get).toBeCalledWith('/api/posts')
+    expect(posts).toHaveLength(1)
+    expect(posts[0].title).toBe('점검 공지')
+    expect(posts[0].notice).toBe(true)
+    expect(posts[0].display).toBe(true)
+  })
+
   it('should fetch hidden posts with the study admin member id', async function () {
     mockedAxios.get.mockResolvedValue({
       data: [
@@ -329,6 +383,19 @@ describe('# Post service', function () {
     })
 
     await expect(postService.listPosts()).rejects.toThrow('Invalid post list response')
+  })
+
+  it('should reject malformed notice post list responses', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          id: 10,
+          title: '작성자와 날짜가 없는 공지',
+        },
+      ],
+    })
+
+    await expect(postService.listNoticePosts()).rejects.toThrow('Invalid notice post list response')
   })
 
   it('should reject malformed hidden post list responses', async function () {

@@ -1,6 +1,7 @@
 import {createRouter, createWebHashHistory, RouteParams} from 'vue-router'
 import Homepage from './components/Homepage.vue'
 import AdminHiddenPostList from './components/AdminHiddenPostList.vue'
+import NoticePostList from './components/NoticePostList.vue'
 import PostDetail from './components/PostDetail.vue'
 import PostEditor from "./components/PostEditor.vue";
 import SearchResults from './components/SearchResults.vue'
@@ -60,6 +61,7 @@ export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: '/', component: Homepage },
+    { path: '/notices', component: NoticePostList },
     { path: '/search', component: SearchResults },
     { path: '/admin/hidden-posts', component: AdminHiddenPostList },
     { path: '/post/edit', component: PostEditor, props: buildPostEditorRouteProps },
