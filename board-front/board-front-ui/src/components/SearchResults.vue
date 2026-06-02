@@ -19,6 +19,13 @@
             <span>점수 {{ result.score.toFixed(2) }}</span>
             <span v-if="highlightCount(result) > 0">하이라이트 {{ highlightCount(result) }}개</span>
           </div>
+          <p
+            v-if="result.scoringSignals.length > 0"
+            class="scoring-summary"
+            data-testid="scoring-summary"
+          >
+            {{ scoringSummary(result) }}
+          </p>
           <ul v-if="result.scoringSignals.length > 0" class="scoring-signal-list">
             <li v-for="signal in result.scoringSignals" :key="`${result.postId}:${signal.field}`">
               <span class="signal-field">{{ signal.field }} x{{ signal.boost.toFixed(2) }}</span>
@@ -64,6 +71,27 @@ const highlightCount = (result: PostSearchResult): number =>
   Object.values(result.highlights).reduce((count, values) => count + values.length, 0)
 
 const highlightSnippets = (result: PostSearchResult) => collectSearchResultHighlights(result.highlights)
+
+const scoringSignalLabels: Record<string, string> = {
+  title: '제목 원문',
+  content: '본문 원문',
+  titleSyllables: '제목 음절',
+  contentSyllables: '본문 음절',
+  titleInitials: '제목 초성',
+  contentInitials: '본문 초성',
+  notice: '공지 가산점',
+}
+
+const scoringSummary = (result: PostSearchResult): string => {
+  const appliedSignals = result.scoringSignals.filter(signal => signal.applied)
+  const appliedSignalLabels = appliedSignals.map(signal => scoringSignalLabels[signal.field] ?? signal.field)
+
+  // 개별 signal 목록은 자세한 query plan이고, 이 요약은 사용자가 검색 결과를 훑을 때 보는 첫 설명이다.
+  // BM25 원문 match, 음절/초성 보조 필드, 공지 function_score 중 실제 적용된 신호만 압축해서 보여준다.
+  return `적용 신호 ${appliedSignals.length}/${result.scoringSignals.length}개: ${
+    appliedSignalLabels.length > 0 ? appliedSignalLabels.join(', ') : '없음'
+  }`
+}
 
 // scoringSignals는 Elasticsearch explain API의 원문이 아니라, 우리가 구성한 query plan을 학습용으로 풀어낸 값이다.
 // 실제 점수는 BM25, field length, term frequency, function_score가 합쳐져 계산되므로 화면에는 "어떤 신호가 쓰였는지"만 보여준다.
@@ -171,6 +199,13 @@ watch(
   gap: 10px;
   color: #757575;
   font-size: 12px;
+}
+
+.scoring-summary {
+  margin: 8px 0 0;
+  color: #333333;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .scoring-signal-list {

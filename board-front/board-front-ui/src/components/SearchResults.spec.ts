@@ -111,6 +111,49 @@ describe('# Search results component', () => {
     expect(wrapper.text()).toContain('대기')
   })
 
+  it('should summarize applied scoring signals so users can learn why a result ranked', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: 'Elasticsearch score를 게시판 검색에 반영한다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [
+          {
+            field: 'title',
+            boost: 3,
+            keyword: 'kotlin',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+          {
+            field: 'contentSyllables',
+            boost: 0.5,
+            keyword: 'ㅋㅗㅌㅡㄹㅣㄴ',
+            description: '음절 분해 본문 필드는 넓게 찾되 원문 점수를 넘지 않게 낮게 둔다.',
+            applied: false,
+          },
+          {
+            field: 'notice',
+            boost: 2,
+            keyword: 'notice=true',
+            description: '공지글은 function_score sum 모드로 관련도 점수에 작은 운영 가산점을 더한다.',
+            applied: true,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="scoring-summary"]').text()).toBe(
+      '적용 신호 2/3개: 제목 원문, 공지 가산점'
+    )
+  })
+
   it('should clear failed search state when keyword becomes empty', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
