@@ -129,6 +129,9 @@
       </p>
     </div>
     <div v-if="activeTab === 'preview'" class="markdown-preview">
+      <p class="markdown-preview-guide" data-testid="markdown-preview-guide">
+        미리보기는 본문 Markdown 기준입니다. imageUrls 배열은 서버 저장/검색 색인용이고, 글에서 보이는 위치는 Markdown 순서가 결정합니다.
+      </p>
       <div v-html="markdownPreview"></div>
     </div>
     <button data-testid="post-submit" @click="submit" class="btn-submit" :disabled="submitting">
@@ -587,6 +590,16 @@ const submit = async () => {
   font-family: 'Arial', sans-serif;
 }
 
+.markdown-preview-guide {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-left: 3px solid #057dbc;
+  background: #ffffff;
+  color: #555555;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .markdown-preview blockquote {
   border-left: 4px solid #0366d6;
   margin: 1em 0;
@@ -595,6 +608,15 @@ const submit = async () => {
   padding: 10px 15px;
   border-radius: 4px;
   font-style: italic;
+}
+
+.markdown-preview img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 10px 0;
+  border: 1px solid #d1d5da;
+  border-radius: 4px;
 }
 
 .btn-submit {

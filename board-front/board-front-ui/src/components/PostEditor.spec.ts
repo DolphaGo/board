@@ -203,6 +203,22 @@ describe('# Post editor component', () => {
     expect(bodyTextarea.selectionEnd).toBe(expectedCursorPosition)
   })
 
+  it('should render inserted image markdown as an image in preview mode with a study guide', async () => {
+    const wrapper = mount(PostEditor)
+
+    await wrapper.get('#issue-body').setValue('미리보기 본문')
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/preview.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.findAll('.tabs button')[1].trigger('click')
+
+    const previewImage = wrapper.get('.markdown-preview img')
+    expect(previewImage.attributes('src')).toBe('https://cdn.example.com/preview.png')
+    expect(previewImage.attributes('alt')).toBe('첨부 이미지 1')
+    expect(wrapper.get('[data-testid="markdown-preview-guide"]').text()).toBe(
+      '미리보기는 본문 Markdown 기준입니다. imageUrls 배열은 서버 저장/검색 색인용이고, 글에서 보이는 위치는 Markdown 순서가 결정합니다.'
+    )
+  })
+
   it('should insert pasted image upload markdown at the current body cursor position', async () => {
     mockedRequest.postForm.mockResolvedValue({
       data: {
