@@ -136,7 +136,7 @@ class PostSearchService(
                 PostSearchResult(
                     postId = postId,
                     title = document.title,
-                    contentPreview = document.content.take(CONTENT_PREVIEW_LENGTH),
+                    contentPreview = createContentPreview(document.content),
                     display = document.display,
                     score = hit.score,
                     highlights = hit.highlightFields,
@@ -225,7 +225,21 @@ class PostSearchService(
             ),
         )
 
+    private fun createContentPreview(content: String): String =
+        content
+            .replace(MARKDOWN_IMAGE_PATTERN) { matchResult ->
+                val altText = matchResult.groupValues[1].trim().ifEmpty { "첨부 이미지" }
+                " [이미지: $altText] "
+            }.replace(MARKDOWN_LINK_PATTERN) { matchResult ->
+                matchResult.groupValues[1]
+            }.replace(WHITESPACE_PATTERN, " ")
+            .trim()
+            .take(CONTENT_PREVIEW_LENGTH)
+
     companion object {
+        private val MARKDOWN_IMAGE_PATTERN = Regex("!\\[([^\\]]*)]\\(([^)]+)\\)")
+        private val MARKDOWN_LINK_PATTERN = Regex("(?<!!)\\[([^\\]]+)]\\(([^)]+)\\)")
+        private val WHITESPACE_PATTERN = Regex("\\s+")
         private const val MAX_SEARCH_SIZE = 50
         private const val CONTENT_PREVIEW_LENGTH = 120
         private const val NOTICE_SCORE_WEIGHT = 2.0
