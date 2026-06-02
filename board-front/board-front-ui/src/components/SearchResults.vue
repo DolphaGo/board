@@ -28,7 +28,8 @@
           </p>
           <ul v-if="result.scoringSignals.length > 0" class="scoring-signal-list">
             <li v-for="signal in result.scoringSignals" :key="`${result.postId}:${signal.field}`">
-              <span class="signal-field">{{ signal.field }} x{{ signal.boost.toFixed(2) }}</span>
+              <span class="signal-category">{{ signal.category }}</span>
+              <span class="signal-field">{{ signal.label }} x{{ signal.boost.toFixed(2) }}</span>
               <span class="signal-state">{{ signal.applied ? '적용' : '대기' }}</span>
               <span class="signal-description">{{ signal.description }}</span>
             </li>
@@ -72,19 +73,9 @@ const highlightCount = (result: PostSearchResult): number =>
 
 const highlightSnippets = (result: PostSearchResult) => collectSearchResultHighlights(result.highlights)
 
-const scoringSignalLabels: Record<string, string> = {
-  title: '제목 원문',
-  content: '본문 원문',
-  titleSyllables: '제목 음절',
-  contentSyllables: '본문 음절',
-  titleInitials: '제목 초성',
-  contentInitials: '본문 초성',
-  notice: '공지 가산점',
-}
-
 const scoringSummary = (result: PostSearchResult): string => {
   const appliedSignals = result.scoringSignals.filter(signal => signal.applied)
-  const appliedSignalLabels = appliedSignals.map(signal => scoringSignalLabels[signal.field] ?? signal.field)
+  const appliedSignalLabels = appliedSignals.map(signal => signal.label)
 
   // 개별 signal 목록은 자세한 query plan이고, 이 요약은 사용자가 검색 결과를 훑을 때 보는 첫 설명이다.
   // BM25 원문 match, 음절/초성 보조 필드, 공지 function_score 중 실제 적용된 신호만 압축해서 보여준다.
@@ -216,11 +207,16 @@ watch(
 
 .scoring-signal-list li {
   display: grid;
-  grid-template-columns: minmax(92px, auto) 40px 1fr;
+  grid-template-columns: 120px minmax(92px, auto) 40px 1fr;
   gap: 8px;
   margin-top: 4px;
   color: #444444;
   font-size: 12px;
+}
+
+.signal-category {
+  color: #057dbc;
+  font-weight: 700;
 }
 
 .signal-field {

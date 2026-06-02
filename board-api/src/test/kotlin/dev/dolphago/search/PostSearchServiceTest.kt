@@ -74,6 +74,8 @@ class PostSearchServiceTest {
             listOf(
                 PostSearchScoreSignal(
                     field = "title",
+                    category = "BM25_TEXT",
+                    label = "제목 원문",
                     boost = 3.0f,
                     keyword = "kotlin spring",
                     description = "제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.",
@@ -81,6 +83,8 @@ class PostSearchServiceTest {
                 ),
                 PostSearchScoreSignal(
                     field = "content",
+                    category = "BM25_TEXT",
+                    label = "본문 원문",
                     boost = 1.0f,
                     keyword = "kotlin spring",
                     description = "본문 원문 match는 제목보다 넓은 recall을 담당한다.",
@@ -88,6 +92,8 @@ class PostSearchServiceTest {
                 ),
                 PostSearchScoreSignal(
                     field = "titleSyllables",
+                    category = "SYLLABLE_RECALL",
+                    label = "제목 음절",
                     boost = 1.5f,
                     keyword = "kotlin spring",
                     description = "음절 분해 제목 필드는 한글 부분 기억과 오타성 검색을 보조한다.",
@@ -95,6 +101,8 @@ class PostSearchServiceTest {
                 ),
                 PostSearchScoreSignal(
                     field = "contentSyllables",
+                    category = "SYLLABLE_RECALL",
+                    label = "본문 음절",
                     boost = 0.5f,
                     keyword = "kotlin spring",
                     description = "음절 분해 본문 필드는 넓게 찾되 원문 점수를 넘지 않게 낮게 둔다.",
@@ -102,6 +110,8 @@ class PostSearchServiceTest {
                 ),
                 PostSearchScoreSignal(
                     field = "titleInitials",
+                    category = "INITIAL_RECALL",
+                    label = "제목 초성",
                     boost = 1.0f,
                     keyword = "kotlin spring",
                     description = "제목 초성 필드는 ㅋㅌㄹ 같은 초성 입력을 위한 보조 신호다.",
@@ -109,6 +119,8 @@ class PostSearchServiceTest {
                 ),
                 PostSearchScoreSignal(
                     field = "contentInitials",
+                    category = "INITIAL_RECALL",
+                    label = "본문 초성",
                     boost = 0.25f,
                     keyword = "kotlin spring",
                     description = "본문 초성 필드는 충돌이 많아 가장 낮은 boost로 둔다.",
@@ -116,6 +128,8 @@ class PostSearchServiceTest {
                 ),
                 PostSearchScoreSignal(
                     field = "notice",
+                    category = "FUNCTION_SCORE",
+                    label = "공지 가산점",
                     boost = 2.0f,
                     keyword = "notice=true",
                     description = "공지글은 function_score sum 모드로 관련도 점수에 작은 운영 가산점을 더한다.",

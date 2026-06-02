@@ -19,6 +19,8 @@ data class PostSearchResult(
 
 data class PostSearchScoreSignal(
     val field: String,
+    val category: String,
+    val label: String,
     val boost: Float,
     val keyword: String,
     val description: String,
@@ -160,6 +162,8 @@ class PostSearchService(
         listOf(
             PostSearchScoreSignal(
                 field = "title",
+                category = "BM25_TEXT",
+                label = "제목 원문",
                 boost = TITLE_MATCH_BOOST,
                 keyword = keyword.value,
                 description = "제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.",
@@ -167,6 +171,8 @@ class PostSearchService(
             ),
             PostSearchScoreSignal(
                 field = "content",
+                category = "BM25_TEXT",
+                label = "본문 원문",
                 boost = CONTENT_MATCH_BOOST,
                 keyword = keyword.value,
                 description = "본문 원문 match는 제목보다 넓은 recall을 담당한다.",
@@ -174,6 +180,8 @@ class PostSearchService(
             ),
             PostSearchScoreSignal(
                 field = "titleSyllables",
+                category = "SYLLABLE_RECALL",
+                label = "제목 음절",
                 boost = TITLE_SYLLABLE_BOOST,
                 keyword = syllableKeyword,
                 description = "음절 분해 제목 필드는 한글 부분 기억과 오타성 검색을 보조한다.",
@@ -181,6 +189,8 @@ class PostSearchService(
             ),
             PostSearchScoreSignal(
                 field = "contentSyllables",
+                category = "SYLLABLE_RECALL",
+                label = "본문 음절",
                 boost = CONTENT_SYLLABLE_BOOST,
                 keyword = syllableKeyword,
                 description = "음절 분해 본문 필드는 넓게 찾되 원문 점수를 넘지 않게 낮게 둔다.",
@@ -188,6 +198,8 @@ class PostSearchService(
             ),
             PostSearchScoreSignal(
                 field = "titleInitials",
+                category = "INITIAL_RECALL",
+                label = "제목 초성",
                 boost = TITLE_INITIAL_BOOST,
                 keyword = initialKeyword,
                 description = "제목 초성 필드는 ㅋㅌㄹ 같은 초성 입력을 위한 보조 신호다.",
@@ -195,6 +207,8 @@ class PostSearchService(
             ),
             PostSearchScoreSignal(
                 field = "contentInitials",
+                category = "INITIAL_RECALL",
+                label = "본문 초성",
                 boost = CONTENT_INITIAL_BOOST,
                 keyword = initialKeyword,
                 description = "본문 초성 필드는 충돌이 많아 가장 낮은 boost로 둔다.",
@@ -202,6 +216,8 @@ class PostSearchService(
             ),
             PostSearchScoreSignal(
                 field = "notice",
+                category = "FUNCTION_SCORE",
+                label = "공지 가산점",
                 boost = NOTICE_SCORE_WEIGHT.toFloat(),
                 keyword = "notice=true",
                 description = "공지글은 function_score sum 모드로 관련도 점수에 작은 운영 가산점을 더한다.",

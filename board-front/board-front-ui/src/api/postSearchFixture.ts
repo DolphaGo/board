@@ -22,6 +22,8 @@ export const createPostSearchFixture = (keyword: string): PostSearchResult[] => 
       scoringSignals: [
         {
           field: 'title',
+          category: 'BM25_TEXT',
+          label: '제목 원문',
           boost: 3,
           keyword: normalizedKeyword,
           description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
@@ -29,6 +31,8 @@ export const createPostSearchFixture = (keyword: string): PostSearchResult[] => 
         },
         {
           field: 'content',
+          category: 'BM25_TEXT',
+          label: '본문 원문',
           boost: 1,
           keyword: normalizedKeyword,
           description: '본문 원문 match는 제목보다 넓은 recall을 담당한다.',

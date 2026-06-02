@@ -12,6 +12,8 @@ export interface PostSearchResult {
 
 export interface PostSearchScoreSignal {
   field: string
+  category: string
+  label: string
   boost: number
   keyword: string
   description: string
@@ -52,6 +54,10 @@ const isPostSearchScoreSignal = (data: unknown): data is PostSearchScoreSignal =
   const signal = data as Partial<PostSearchScoreSignal>
   return typeof signal.field === 'string' &&
     signal.field.trim().length > 0 &&
+    typeof signal.category === 'string' &&
+    signal.category.trim().length > 0 &&
+    typeof signal.label === 'string' &&
+    signal.label.trim().length > 0 &&
     typeof signal.boost === 'number' &&
     Number.isFinite(signal.boost) &&
     typeof signal.keyword === 'string' &&

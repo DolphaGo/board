@@ -21,6 +21,8 @@ describe('# Post search service', function () {
           scoringSignals: [
             {
               field: 'title',
+              category: 'BM25_TEXT',
+              label: '제목 원문',
               boost: 3,
               keyword: 'kotlin spring',
               description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
@@ -44,6 +46,8 @@ describe('# Post search service', function () {
     expect(results[0].scoringSignals).toEqual([
       {
         field: 'title',
+        category: 'BM25_TEXT',
+        label: '제목 원문',
         boost: 3,
         keyword: 'kotlin spring',
         description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
@@ -123,6 +127,8 @@ describe('# Post search service', function () {
           scoringSignals: [
             {
               field: 'title',
+              category: 'BM25_TEXT',
+              label: '제목 원문',
               boost: '3',
               keyword: 'kotlin spring',
               description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',

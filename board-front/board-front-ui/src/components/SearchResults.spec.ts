@@ -79,6 +79,8 @@ describe('# Search results component', () => {
         scoringSignals: [
           {
             field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
             boost: 3,
             keyword: 'kotlin',
             description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
@@ -86,6 +88,8 @@ describe('# Search results component', () => {
           },
           {
             field: 'notice',
+            category: 'FUNCTION_SCORE',
+            label: '공지 가산점',
             boost: 2,
             keyword: 'notice=true',
             description: '공지글은 function_score sum 모드로 관련도 점수에 작은 운영 가산점을 더한다.',
@@ -105,9 +109,11 @@ describe('# Search results component', () => {
     expect(wrapper.findAll('.highlight-list li')).toHaveLength(2)
     expect(wrapper.text()).toContain('<em>코프링</em> 검색 구현')
     expect(wrapper.findAll('.scoring-signal-list li')).toHaveLength(2)
-    expect(wrapper.text()).toContain('title x3.00')
+    expect(wrapper.text()).toContain('BM25_TEXT')
+    expect(wrapper.text()).toContain('제목 원문 x3.00')
     expect(wrapper.text()).toContain('적용')
-    expect(wrapper.text()).toContain('notice x2.00')
+    expect(wrapper.text()).toContain('FUNCTION_SCORE')
+    expect(wrapper.text()).toContain('공지 가산점 x2.00')
     expect(wrapper.text()).toContain('대기')
   })
 
@@ -123,6 +129,8 @@ describe('# Search results component', () => {
         scoringSignals: [
           {
             field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
             boost: 3,
             keyword: 'kotlin',
             description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
@@ -130,6 +138,8 @@ describe('# Search results component', () => {
           },
           {
             field: 'contentSyllables',
+            category: 'SYLLABLE_RECALL',
+            label: '본문 음절',
             boost: 0.5,
             keyword: 'ㅋㅗㅌㅡㄹㅣㄴ',
             description: '음절 분해 본문 필드는 넓게 찾되 원문 점수를 넘지 않게 낮게 둔다.',
@@ -137,6 +147,8 @@ describe('# Search results component', () => {
           },
           {
             field: 'notice',
+            category: 'FUNCTION_SCORE',
+            label: '공지 가산점',
             boost: 2,
             keyword: 'notice=true',
             description: '공지글은 function_score sum 모드로 관련도 점수에 작은 운영 가산점을 더한다.',

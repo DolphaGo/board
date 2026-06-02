@@ -29,6 +29,8 @@ describe('# Post search fixture', function () {
         scoringSignals: [
           {
             field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
             boost: 3,
             keyword: 'kotlin spring',
             description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
@@ -36,6 +38,8 @@ describe('# Post search fixture', function () {
           },
           {
             field: 'content',
+            category: 'BM25_TEXT',
+            label: '본문 원문',
             boost: 1,
             keyword: 'kotlin spring',
             description: '본문 원문 match는 제목보다 넓은 recall을 담당한다.',
