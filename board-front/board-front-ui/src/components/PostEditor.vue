@@ -197,8 +197,41 @@ const markdownPreview = computed(() => {
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const createImageMarkdownPattern = (imageUrl: string, flags = '') =>
+    new RegExp(`!\\[([^\\]]*)\\]\\(${escapeRegExp(imageUrl)}\\)`, flags);
+
+const normalizeImageAltText = (altText: string, fallback: string): string => {
+  const normalizedAltText = altText
+      .replace(/[\[\]\r\n]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  return normalizedAltText.length > 0 ? normalizedAltText : fallback;
+};
+
+const findImageAltText = (imageUrl: string): string | undefined => {
+  const match = createImageMarkdownPattern(imageUrl).exec(bodyText.value);
+
+  return match?.[1];
+};
+
+const imageAltTextForPosition = (
+    imageUrl: string,
+    index: number,
+    preservedAltTexts: Record<string, string | undefined> = {},
+): string => {
+  const existingAltText = preservedAltTexts[imageUrl] ?? findImageAltText(imageUrl);
+  const fallbackAltText = `첨부 이미지 ${index + 1}`;
+
+  if (!existingAltText || /^첨부 이미지 \d+$/.test(existingAltText)) {
+    return fallbackAltText;
+  }
+
+  return normalizeImageAltText(existingAltText, fallbackAltText);
+};
+
 const imagePlacementLabel = (imageUrl: string): string => {
-  const markdownPattern = new RegExp(`!\\[첨부 이미지 \\d+\\]\\(${escapeRegExp(imageUrl)}\\)`);
+  const markdownPattern = createImageMarkdownPattern(imageUrl);
   const match = markdownPattern.exec(bodyText.value);
 
   if (!match) {
@@ -292,19 +325,24 @@ const moveBodyCursorAfterRender = (position: number) => {
 // Insert image URL as Markdown
 const insertImageMarkdown = (url: string) => {
   const imageNumber = imageUrls.value.length + 1;
-  const markdownImage = `![첨부 이미지 ${imageNumber}](${url})`;
   const selectionStart = bodyTextarea.value?.selectionStart;
   const selectionEnd = bodyTextarea.value?.selectionEnd;
   if (typeof selectionStart === 'number' && typeof selectionEnd === 'number') {
     const beforeSelection = bodyText.value.slice(0, selectionStart);
+    const selectedText = bodyText.value.slice(selectionStart, selectionEnd);
     const afterSelection = bodyText.value.slice(selectionEnd);
+    const imageAltText = normalizeImageAltText(selectedText, `첨부 이미지 ${imageNumber}`);
+    const markdownImage = `![${imageAltText}](${url})`;
     const beforeSeparator = beforeSelection.length === 0 || beforeSelection.endsWith('\n') ? '' : '\n';
+    const afterSeparator = selectedText.trim().length > 0 || afterSelection.startsWith('\n') ? '' : '\n';
 
     // 블로그형 글쓰기는 이미지를 글 끝에만 몰아넣지 않고 문단 사이에 끼워 넣는 흐름이 중요하다.
     // textarea selection을 기준으로 Markdown을 삽입하면 "본문 -> 이미지 -> 본문" 순서를 직접 조립하며 배울 수 있다.
-    bodyText.value = `${beforeSelection}${beforeSeparator}${markdownImage}\n${afterSelection}`;
-    moveBodyCursorAfterRender(beforeSelection.length + beforeSeparator.length + markdownImage.length + 1);
+    // 선택한 텍스트가 있으면 그 텍스트를 이미지 alt로 써서 상세 화면과 검색 preview에서 이미지 의미가 사라지지 않게 한다.
+    bodyText.value = `${beforeSelection}${beforeSeparator}${markdownImage}${afterSeparator}${afterSelection}`;
+    moveBodyCursorAfterRender(beforeSelection.length + beforeSeparator.length + markdownImage.length + afterSeparator.length);
   } else {
+    const markdownImage = `![첨부 이미지 ${imageNumber}](${url})`;
     const separator = bodyText.value.length === 0 || bodyText.value.endsWith('\n') ? '' : '\n';
     bodyText.value += `${separator}${markdownImage}\n`;
     moveBodyCursorAfterRender(bodyText.value.length);
@@ -326,17 +364,17 @@ const removeManagedImageMarkdown = () => {
   }
 
   const managedMarkdownPattern = new RegExp(
-    `\\n?!\\[첨부 이미지 \\d+\\]\\((${imageUrls.value.map(escapeRegExp).join('|')})\\)\\n?`,
+    `\\n?!\\[[^\\]]*\\]\\((${imageUrls.value.map(escapeRegExp).join('|')})\\)\\n?`,
     'g',
   );
 
   bodyText.value = bodyText.value.replace(managedMarkdownPattern, '\n').replace(/\n{2,}/g, '\n').replace(/^\n/, '');
 };
 
-const appendManagedImageMarkdown = () => {
+const appendManagedImageMarkdown = (preservedAltTexts: Record<string, string | undefined> = {}) => {
   imageUrls.value.forEach((imageUrl, index) => {
     const separator = bodyText.value.length === 0 || bodyText.value.endsWith('\n') ? '' : '\n';
-    bodyText.value += `${separator}![첨부 이미지 ${index + 1}](${imageUrl})\n`;
+    bodyText.value += `${separator}![${imageAltTextForPosition(imageUrl, index, preservedAltTexts)}](${imageUrl})\n`;
   });
 };
 
@@ -348,8 +386,12 @@ const rebuildManagedImageMarkdown = () => {
 
   // 순서 변경은 단순히 배열만 swap하면 본문 Markdown 순서가 그대로 남는다.
   // 그래서 현재 관리 중인 이미지 Markdown을 제거한 뒤, imageUrls 배열 순서대로 다시 붙여 저장 계약과 글 흐름을 맞춘다.
+  // 이때 사용자가 직접 고른 alt 텍스트는 이미지 의미이므로 URL별로 먼저 보존하고, 기본 "첨부 이미지 n"만 새 순서로 다시 번호를 맞춘다.
+  const preservedAltTexts = Object.fromEntries(
+      imageUrls.value.map(imageUrl => [imageUrl, findImageAltText(imageUrl)]),
+  );
   removeManagedImageMarkdown();
-  appendManagedImageMarkdown();
+  appendManagedImageMarkdown(preservedAltTexts);
 };
 
 const removeImageUrl = (index: number) => {
@@ -361,7 +403,7 @@ const removeImageUrl = (index: number) => {
 
   // 이미지 URL 목록은 저장용 배열이고, 본문 Markdown은 사용자가 실제로 읽는 글 흐름이다.
   // 삭제할 때 둘 중 하나만 지우면 상세 화면과 저장 DTO가 서로 다른 이미지를 가리키므로 항상 같이 갱신한다.
-  const markdownPattern = new RegExp(`\\n?!\\[첨부 이미지 \\d+\\]\\(${escapeRegExp(imageUrl)}\\)\\n?`, 'g');
+  const markdownPattern = new RegExp(`\\n?!\\[[^\\]]*\\]\\(${escapeRegExp(imageUrl)}\\)\\n?`, 'g');
   bodyText.value = bodyText.value.replace(markdownPattern, '\n').replace(/\n{2,}/g, '\n').replace(/^\n/, '');
   imageUrls.value = imageUrls.value.filter((_, imageIndex) => imageIndex !== index);
   normalizeImageMarkdownNumbers();
@@ -402,8 +444,15 @@ const prepareImagePayloadFromBody = () => {
   let content = bodyText.value;
 
   remainingImageUrls.forEach((imageUrl, index) => {
-    const markdownPattern = new RegExp(`!\\[첨부 이미지 \\d+\\]\\(${escapeRegExp(imageUrl)}\\)`, 'g');
-    content = content.replace(markdownPattern, `![첨부 이미지 ${index + 1}](${imageUrl})`);
+    const markdownPattern = createImageMarkdownPattern(imageUrl, 'g');
+    content = content.replace(markdownPattern, (_, altText: string) => {
+      const fallbackAltText = `첨부 이미지 ${index + 1}`;
+      const nextAltText = /^첨부 이미지 \d+$/.test(altText)
+          ? fallbackAltText
+          : normalizeImageAltText(altText, fallbackAltText);
+
+      return `![${nextAltText}](${imageUrl})`;
+    });
   });
 
   // 사용자가 textarea에서 이미지 Markdown을 직접 지울 수 있으므로, 저장 직전에는 본문을 진실의 원천으로 본다.

@@ -245,6 +245,69 @@ describe('# Post editor component', () => {
     )
   })
 
+  it('should use selected body text as image alt text when inserting an image URL', async () => {
+    const wrapper = mount(PostEditor)
+
+    await wrapper.get('#issue-body').setValue('첫 문단\n\n대표 사진\n\n둘째 문단')
+    const bodyTextarea = wrapper.get<HTMLTextAreaElement>('#issue-body').element
+    const selectionStart = '첫 문단\n\n'.length
+    const selectionEnd = selectionStart + '대표 사진'.length
+    bodyTextarea.setSelectionRange(selectionStart, selectionEnd)
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/hero.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+
+    expect(wrapper.get('#issue-body').element).toHaveProperty(
+      'value',
+      '첫 문단\n\n![대표 사진](https://cdn.example.com/hero.png)\n\n둘째 문단',
+    )
+  })
+
+  it('should track custom alt image markdown by URL when removing an image', async () => {
+    const wrapper = mount(PostEditor)
+
+    await wrapper.get('#issue-body').setValue('첫 문단\n\n대표 사진\n\n둘째 문단')
+    const bodyTextarea = wrapper.get<HTMLTextAreaElement>('#issue-body').element
+    const selectionStart = '첫 문단\n\n'.length
+    const selectionEnd = selectionStart + '대표 사진'.length
+    bodyTextarea.setSelectionRange(selectionStart, selectionEnd)
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/hero.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+
+    expect(wrapper.get('[data-testid="image-url-body-state"]').text()).toBe('본문 포함')
+    expect(wrapper.get('#issue-body').element).toHaveProperty(
+      'value',
+      '첫 문단\n\n![대표 사진](https://cdn.example.com/hero.png)\n\n둘째 문단',
+    )
+
+    await wrapper.get('[data-testid="remove-image-url"]').trigger('click')
+
+    expect(wrapper.find('[data-testid="image-url-body-state"]').exists()).toBe(false)
+    expect(wrapper.get('#issue-body').element).toHaveProperty(
+      'value',
+      '첫 문단\n둘째 문단',
+    )
+  })
+
+  it('should preserve custom image alt text when reordering images', async () => {
+    const wrapper = mount(PostEditor)
+
+    await wrapper.get('#issue-body').setValue('대표 사진\n\n둘째 문단')
+    const bodyTextarea = wrapper.get<HTMLTextAreaElement>('#issue-body').element
+    bodyTextarea.setSelectionRange(0, '대표 사진'.length)
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/hero.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/detail.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.findAll('[data-testid="move-image-down"]')[0].trigger('click')
+
+    expect(wrapper.get('#issue-body').element).toHaveProperty(
+      'value',
+      '둘째 문단\n' +
+        '![첨부 이미지 1](https://cdn.example.com/detail.png)\n' +
+        '![대표 사진](https://cdn.example.com/hero.png)\n',
+    )
+  })
+
   it('should move the body cursor after inserted image URL markdown', async () => {
     const wrapper = mount(PostEditor)
 
