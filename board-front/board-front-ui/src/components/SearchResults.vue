@@ -30,6 +30,17 @@
         </template>
       </dl>
 
+      <section
+        v-if="showScoringStudyGuide"
+        class="search-scoring-study-guide"
+        data-testid="search-scoring-study-guide"
+        aria-label="검색 점수 학습 요약"
+      >
+        <p v-for="guide in scoringStudyGuideRows" :key="guide.category">
+          <strong>{{ guide.label }}</strong>: {{ guide.description }}
+        </p>
+      </section>
+
       <ol v-if="!loading && !error && searchKeyword.length > 0 && results.length > 0" class="result-list">
         <li v-for="result in results" :key="result.postId" class="result-item">
           <router-link :to="`/post/${result.postId}`" class="result-title">{{ result.title }}</router-link>
@@ -250,6 +261,33 @@ const searchTokenAnalysisRows = computed(() => {
   // 결과별 signal 목록은 자세한 query plan이고, 여기서는 검색어가 어떤 recall 계열로 확장되고 실제 기여했는지만 압축한다.
   return rows
 })
+
+const showScoringStudyGuide = computed(() =>
+  !loading.value && !error.value && searchKeyword.value.length > 0 && results.value.length > 0
+)
+
+const scoringStudyGuideRows = [
+  {
+    category: 'BM25_TEXT',
+    label: '원문/BM25',
+    description: 'BM25는 제목/본문 원문 일치의 기본 관련도입니다.',
+  },
+  {
+    category: 'SYLLABLE_RECALL',
+    label: '음절 recall',
+    description: '음절 recall은 ㅋㅗ처럼 자모로 쪼갠 입력을 보조합니다.',
+  },
+  {
+    category: 'INITIAL_RECALL',
+    label: '초성 recall',
+    description: '초성 recall은 ㅋㅍㄹ처럼 빠르게 입력한 초성 검색을 보조합니다.',
+  },
+  {
+    category: 'FUNCTION_SCORE',
+    label: 'function_score',
+    description: 'function_score는 공지 같은 운영 신호를 작은 가산점으로 더합니다.',
+  },
+]
 
 // scoringSignals는 Elasticsearch explain API의 원문이 아니라, 우리가 구성한 query plan을 학습용으로 풀어낸 값이다.
 // 실제 점수는 BM25, field length, term frequency, function_score가 합쳐져 계산되므로 화면에는 "어떤 신호가 쓰였는지"만 보여준다.

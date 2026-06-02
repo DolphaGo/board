@@ -118,6 +118,39 @@ describe('# Search results component', () => {
     expect(wrapper.text()).toContain('대기')
   })
 
+  it('should show a scoring study guide above search results', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: '검색 결과 위에서 점수 전략을 먼저 설명한다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [
+          {
+            field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
+            boost: 3,
+            keyword: '코프링',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    const guide = wrapper.get('[data-testid="search-scoring-study-guide"]').text()
+    expect(guide).toContain('BM25는 제목/본문 원문 일치의 기본 관련도입니다.')
+    expect(guide).toContain('음절 recall은 ㅋㅗ처럼 자모로 쪼갠 입력을 보조합니다.')
+    expect(guide).toContain('초성 recall은 ㅋㅍㄹ처럼 빠르게 입력한 초성 검색을 보조합니다.')
+    expect(guide).toContain('function_score는 공지 같은 운영 신호를 작은 가산점으로 더합니다.')
+  })
+
   it('should summarize applied scoring signals so users can learn why a result ranked', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {
