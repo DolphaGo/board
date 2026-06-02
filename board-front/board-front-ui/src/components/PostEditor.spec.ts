@@ -219,6 +219,18 @@ describe('# Post editor component', () => {
     expect(states).toEqual(['본문에서 제거됨', '본문 포함'])
   })
 
+  it('should show paragraph placement for image URLs in write mode', async () => {
+    const wrapper = mount(PostEditor)
+
+    await wrapper.get('#issue-body').setValue('첫 문단\n\n둘째 문단')
+    const bodyTextarea = wrapper.get<HTMLTextAreaElement>('#issue-body').element
+    bodyTextarea.setSelectionRange('첫 문단\n\n'.length, '첫 문단\n\n'.length)
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/middle.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+
+    expect(wrapper.get('[data-testid="image-url-placement"]').text()).toBe('1번째 문단 뒤')
+  })
+
   it('should preview image URLs as thumbnails in the same order as the image list', async () => {
     const wrapper = mount(PostEditor)
 

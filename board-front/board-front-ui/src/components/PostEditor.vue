@@ -127,6 +127,12 @@
               >
                 {{ imageUrlBodyStateLabel(imageUrl) }}
               </span>
+              <span
+                  class="image-url-placement"
+                  data-testid="image-url-placement"
+              >
+                {{ imagePlacementLabel(imageUrl) }}
+              </span>
               <button
                   type="button"
                   class="btn-image-move"
@@ -793,6 +799,16 @@ const submit = async () => {
   color: #555555;
   font-size: 11px;
   font-weight: 700;
+  padding: 2px 6px;
+}
+
+.image-url-placement {
+  flex: 0 0 auto;
+  border: 1px solid #b7d8ea;
+  background: #f5fbff;
+  color: #057dbc;
+  font-size: 11px;
+  font-weight: 800;
   padding: 2px 6px;
 }
 
