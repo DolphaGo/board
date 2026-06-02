@@ -36,7 +36,7 @@ class SearchRankingController(
     fun suggestKeywords(
         @RequestParam keyword: String,
         @RequestParam(defaultValue = "5") limit: Long = 5,
-    ): ResponseEntity<List<SearchRankingItem>> {
+    ): ResponseEntity<List<SearchKeywordSuggestionItem>> {
         if (keyword.isBlank() || limit < 1) {
             return ResponseEntity.badRequest().build()
         }

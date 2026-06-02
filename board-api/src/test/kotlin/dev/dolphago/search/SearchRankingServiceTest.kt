@@ -71,7 +71,16 @@ class SearchRankingServiceTest {
 
         val result = searchRankingService.suggest(rawKeyword = "  Kotlin  ", limit = 1)
 
-        assertEquals(listOf(SearchRankingItem(keyword = "kotlin spring", score = 7)), result)
+        assertEquals(
+            listOf(
+                SearchKeywordSuggestionItem(
+                    keyword = "kotlin spring",
+                    score = 7,
+                    matchType = SearchKeywordSuggestionMatchType.TEXT_PREFIX,
+                ),
+            ),
+            result,
+        )
         verify(exactly = 1) {
             zSetOperations.reverseRangeWithScores(SearchRankingService.RANKING_KEY, 0, -1)
         }
@@ -96,7 +105,16 @@ class SearchRankingServiceTest {
 
         val result = searchRankingService.suggest(rawKeyword = "ㅋㅍ", limit = 2)
 
-        assertEquals(listOf(SearchRankingItem(keyword = "코프링 검색", score = 9)), result)
+        assertEquals(
+            listOf(
+                SearchKeywordSuggestionItem(
+                    keyword = "코프링 검색",
+                    score = 9,
+                    matchType = SearchKeywordSuggestionMatchType.INITIAL_PREFIX,
+                ),
+            ),
+            result,
+        )
     }
 
     @Test
@@ -115,6 +133,15 @@ class SearchRankingServiceTest {
 
         val result = searchRankingService.suggest(rawKeyword = "ㅋㅗ", limit = 5)
 
-        assertEquals(listOf(SearchRankingItem(keyword = "코프링 검색", score = 9)), result)
+        assertEquals(
+            listOf(
+                SearchKeywordSuggestionItem(
+                    keyword = "코프링 검색",
+                    score = 9,
+                    matchType = SearchKeywordSuggestionMatchType.SYLLABLE_PREFIX,
+                ),
+            ),
+            result,
+        )
     }
 }

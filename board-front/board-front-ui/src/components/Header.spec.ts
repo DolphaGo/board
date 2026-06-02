@@ -114,8 +114,8 @@ describe('# Header component', () => {
 
   it('should render ranked keyword suggestions while typing in the search input', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7 },
-      { keyword: 'kotlin elasticsearch', score: 5 },
+      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
+      { keyword: 'kotlin elasticsearch', score: 5, matchType: 'TEXT_PREFIX' },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -131,12 +131,13 @@ describe('# Header component', () => {
     expect(mockedSearchRankingService.suggestKeywords).toBeCalledWith('kotlin', 5)
     expect(wrapper.findAll('[data-testid="search-suggestion"]')).toHaveLength(2)
     expect(wrapper.text()).toContain('kotlin spring')
+    expect(wrapper.text()).toContain('원문 일치')
     expect(wrapper.text()).toContain('7회')
   })
 
   it('should explain that keyword suggestions come from realtime search history', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7 },
+      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -157,7 +158,7 @@ describe('# Header component', () => {
 
   it('should explain that suggestions also support Korean initial and syllable jamo input', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: '코프링 검색', score: 9 },
+      { keyword: '코프링 검색', score: 9, matchType: 'SYLLABLE_PREFIX' },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -177,7 +178,7 @@ describe('# Header component', () => {
 
   it('should search with the clicked suggestion keyword', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7 },
+      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -233,8 +234,8 @@ describe('# Header component', () => {
 
   it('should search with the highlighted suggestion keyword from the keyboard', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7 },
-      { keyword: 'kotlin elasticsearch', score: 5 },
+      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
+      { keyword: 'kotlin elasticsearch', score: 5, matchType: 'TEXT_PREFIX' },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -262,8 +263,8 @@ describe('# Header component', () => {
 
   it('should connect the highlighted suggestion to the search input for screen readers', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7 },
-      { keyword: 'kotlin elasticsearch', score: 5 },
+      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
+      { keyword: 'kotlin elasticsearch', score: 5, matchType: 'TEXT_PREFIX' },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -293,7 +294,7 @@ describe('# Header component', () => {
 
   it('should expose search suggestions as a combobox listbox pattern', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7 },
+      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
     ])
     const wrapper = mount(Header, {
       global: {
@@ -314,7 +315,7 @@ describe('# Header component', () => {
 
   it('should close keyword suggestions with escape', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
-      { keyword: 'kotlin spring', score: 7 },
+      { keyword: 'kotlin spring', score: 7, matchType: 'TEXT_PREFIX' },
     ])
     const wrapper = mount(Header, {
       global: {

@@ -48,6 +48,7 @@
             @click="submitSuggestion(suggestion.keyword)"
           >
             <span>{{ suggestion.keyword }}</span>
+            <span>{{ suggestionMatchTypeLabel(suggestion.matchType) }}</span>
             <span>검색 {{ suggestion.score }}회</span>
           </button>
         </li>
@@ -70,12 +71,16 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { searchRankingService, type SearchRankingItem } from 'src/api/searchRankingService'
+import {
+  searchRankingService,
+  type SearchKeywordSuggestionItem,
+  type SearchKeywordSuggestionMatchType,
+} from 'src/api/searchRankingService'
 import { normalizeSearchKeyword } from 'src/search/normalizeSearchKeyword'
 import { createHeaderSearch } from './useHeaderSearch'
 
 const router = useRouter()
-const suggestions = ref<SearchRankingItem[]>([])
+const suggestions = ref<SearchKeywordSuggestionItem[]>([])
 const highlightedSuggestionIndex = ref(-1)
 let suggestionRequestSequence = 0
 let skipNextSuggestionLookup = false
@@ -89,6 +94,17 @@ const { keyword, rankingRecordError, submitSearch } = createHeaderSearch({
 })
 
 const suggestionOptionId = (index: number) => `header-search-suggestion-${index}`
+
+const suggestionMatchTypeLabel = (matchType: SearchKeywordSuggestionMatchType): string => {
+  switch (matchType) {
+    case 'TEXT_PREFIX':
+      return '원문 일치'
+    case 'SYLLABLE_PREFIX':
+      return '음절 일치'
+    case 'INITIAL_PREFIX':
+      return '초성 일치'
+  }
+}
 
 const activeSuggestionId = computed(() => {
   // combobox/listbox 패턴에서는 input focus를 유지한 채 현재 option id를 aria-activedescendant로 알려준다.

@@ -5,6 +5,12 @@ export interface SearchRankingItem {
   score: number
 }
 
+export type SearchKeywordSuggestionMatchType = 'TEXT_PREFIX' | 'SYLLABLE_PREFIX' | 'INITIAL_PREFIX'
+
+export interface SearchKeywordSuggestionItem extends SearchRankingItem {
+  matchType: SearchKeywordSuggestionMatchType
+}
+
 const isSearchRankingItem = (data: unknown): data is SearchRankingItem => {
   if (typeof data !== 'object' || data === null) {
     return false
@@ -17,6 +23,17 @@ const isSearchRankingItem = (data: unknown): data is SearchRankingItem => {
     Number.isFinite(item.score) &&
     Number.isInteger(item.score) &&
     item.score >= 0
+}
+
+const isSearchKeywordSuggestionMatchType = (data: unknown): data is SearchKeywordSuggestionMatchType =>
+  data === 'TEXT_PREFIX' || data === 'SYLLABLE_PREFIX' || data === 'INITIAL_PREFIX'
+
+const isSearchKeywordSuggestionItem = (data: unknown): data is SearchKeywordSuggestionItem => {
+  if (!isSearchRankingItem(data)) {
+    return false
+  }
+
+  return isSearchKeywordSuggestionMatchType((data as Partial<SearchKeywordSuggestionItem>).matchType)
 }
 
 // 서버의 SearchRankingService는 limit이 1 이상이어야 한다고 검증한다.
@@ -57,7 +74,7 @@ export const searchRankingService = {
     return response.data
   },
 
-  suggestKeywords: async (keyword: string, limit = 5): Promise<SearchRankingItem[]> => {
+  suggestKeywords: async (keyword: string, limit = 5): Promise<SearchKeywordSuggestionItem[]> => {
     const normalizedKeyword = keyword.trim()
 
     if (normalizedKeyword.length === 0) {
@@ -65,16 +82,16 @@ export const searchRankingService = {
     }
 
     const normalizedLimit = normalizeSuggestionLimit(limit)
-    const response = await axios.get<SearchRankingItem[]>('/api/search/rankings/suggestions', {
+    const response = await axios.get<SearchKeywordSuggestionItem[]>('/api/search/rankings/suggestions', {
       params: {
         keyword: normalizedKeyword,
         limit: normalizedLimit,
       },
     })
 
-    // 추천어도 랭킹과 같은 DTO를 쓴다.
-    // 검색창 자동완성은 사용자가 바로 클릭할 데이터라 깨진 keyword/score는 렌더링 전에 차단한다.
-    if (!Array.isArray(response.data) || !response.data.every(isSearchRankingItem)) {
+    // 추천어는 랭킹 keyword/score에 더해 원문/음절/초성 중 어떤 prefix가 맞았는지 함께 내려온다.
+    // 이 값이 있어야 검색창에서 "왜 추천됐는지"를 학습용 라벨로 설명할 수 있다.
+    if (!Array.isArray(response.data) || !response.data.every(isSearchKeywordSuggestionItem)) {
       throw new Error('Invalid search ranking response')
     }
 

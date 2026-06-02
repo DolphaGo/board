@@ -8,6 +8,18 @@ data class SearchRankingItem(
     val score: Long,
 )
 
+data class SearchKeywordSuggestionItem(
+    val keyword: String,
+    val score: Long,
+    val matchType: SearchKeywordSuggestionMatchType,
+)
+
+enum class SearchKeywordSuggestionMatchType {
+    TEXT_PREFIX,
+    SYLLABLE_PREFIX,
+    INITIAL_PREFIX,
+}
+
 @Service
 class SearchRankingService(
     private val redisTemplate: StringRedisTemplate,
@@ -40,7 +52,7 @@ class SearchRankingService(
     fun suggest(
         rawKeyword: String,
         limit: Long,
-    ): List<SearchRankingItem> {
+    ): List<SearchKeywordSuggestionItem> {
         require(limit > 0) { "추천 개수는 1 이상이어야 합니다." }
 
         val prefix = SearchKeyword.from(rawKeyword).value
@@ -56,26 +68,31 @@ class SearchRankingService(
             .asSequence()
             .mapNotNull { tuple ->
                 val keyword = tuple.value ?: return@mapNotNull null
-                if (!matchesSuggestionKeyword(keyword, prefix, syllablePrefix, initialPrefix)) {
-                    return@mapNotNull null
-                }
-                SearchRankingItem(
+                val matchType =
+                    findSuggestionMatchType(
+                        keyword = keyword,
+                        prefix = prefix,
+                        syllablePrefix = syllablePrefix,
+                        initialPrefix = initialPrefix,
+                    ) ?: return@mapNotNull null
+                SearchKeywordSuggestionItem(
                     keyword = keyword,
                     score = tuple.score?.toLong() ?: 0L,
+                    matchType = matchType,
                 )
             }
             .take(limit.toInt())
             .toList()
     }
 
-    private fun matchesSuggestionKeyword(
+    private fun findSuggestionMatchType(
         keyword: String,
         prefix: String,
         syllablePrefix: String,
         initialPrefix: String,
-    ): Boolean {
+    ): SearchKeywordSuggestionMatchType? {
         if (keyword.startsWith(prefix)) {
-            return true
+            return SearchKeywordSuggestionMatchType.TEXT_PREFIX
         }
 
         // 사용자가 "ㅋㅗ"처럼 초성+중성을 직접 입력하면 초성만 비교해서는 "코"와 "카"를 구분할 수 없다.
@@ -84,18 +101,22 @@ class SearchRankingService(
             syllablePrefix.isNotBlank() &&
             KoreanSyllableTokenizer.tokenizeSyllablePrefix(keyword).startsWith(syllablePrefix)
         ) {
-            return true
+            return SearchKeywordSuggestionMatchType.SYLLABLE_PREFIX
         }
 
         if (syllablePrefix != initialPrefix) {
             // "ㅋㅗ"처럼 중성까지 입력한 경우에는 사용자가 이미 "코" 계열을 의도한 상태다.
             // 여기서 다시 초성 "ㅋ"만으로 fallback하면 "카프카" 같은 다른 모음 검색어가 섞여 추천 품질이 떨어진다.
-            return false
+            return null
         }
 
         // 랭킹 ZSET에는 사용자가 실제 검색한 원문을 저장한다.
         // 자동완성에서 "ㅋㅍ" 같은 초성 입력까지 지원하려면 저장된 원문을 초성 토큰으로 바꿔 같은 prefix 규칙으로 비교한다.
-        return KoreanSyllableTokenizer.tokenizeInitials(keyword).startsWith(initialPrefix)
+        return if (KoreanSyllableTokenizer.tokenizeInitials(keyword).startsWith(initialPrefix)) {
+            SearchKeywordSuggestionMatchType.INITIAL_PREFIX
+        } else {
+            null
+        }
     }
 
     companion object {

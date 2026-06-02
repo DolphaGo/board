@@ -40,7 +40,14 @@ class SearchRankingControllerTest {
 
     @Test
     fun `검색어 추천은 키워드와 개수를 랭킹 서비스에 전달한다`() {
-        val suggestions = listOf(SearchRankingItem(keyword = "kotlin spring", score = 7))
+        val suggestions =
+            listOf(
+                SearchKeywordSuggestionItem(
+                    keyword = "kotlin spring",
+                    score = 7,
+                    matchType = SearchKeywordSuggestionMatchType.TEXT_PREFIX,
+                ),
+            )
         every { searchRankingService.suggest(rawKeyword = "Kotlin", limit = 3) } returns suggestions
 
         val response = controller.suggestKeywords(keyword = "Kotlin", limit = 3)
