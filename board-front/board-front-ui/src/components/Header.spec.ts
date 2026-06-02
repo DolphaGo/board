@@ -144,4 +144,52 @@ describe('# Header component', () => {
       },
     })
   })
+
+  it('should search with the highlighted suggestion keyword from the keyboard', async () => {
+    mockedSearchRankingService.suggestKeywords.mockResolvedValue([
+      { keyword: 'kotlin spring', score: 7 },
+      { keyword: 'kotlin elasticsearch', score: 5 },
+    ])
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    await wrapper.get('.header-search-input').setValue('kotlin')
+    await flushPromises()
+    await wrapper.get('.header-search-input').trigger('keydown', { key: 'ArrowDown' })
+    await wrapper.get('.header-search-input').trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="search-suggestion"]').exists()).toBe(false)
+    expect(mockedSearchRankingService.recordKeyword).toBeCalledWith('kotlin spring')
+    expect(routerPush).toBeCalledWith({
+      path: '/search',
+      query: {
+        keyword: 'kotlin spring',
+      },
+    })
+  })
+
+  it('should close keyword suggestions with escape', async () => {
+    mockedSearchRankingService.suggestKeywords.mockResolvedValue([
+      { keyword: 'kotlin spring', score: 7 },
+    ])
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    await wrapper.get('.header-search-input').setValue('kotlin')
+    await flushPromises()
+    await wrapper.get('.header-search-input').trigger('keydown', { key: 'Escape' })
+
+    expect(wrapper.find('[data-testid="search-suggestion"]').exists()).toBe(false)
+  })
 })

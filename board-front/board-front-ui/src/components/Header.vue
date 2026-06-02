@@ -8,14 +8,26 @@
         type="search"
         placeholder="게시글 검색"
         aria-label="게시글 검색"
+        :aria-expanded="suggestions.length > 0"
+        aria-autocomplete="list"
+        aria-controls="header-search-suggestions"
+        @keydown="handleSearchKeydown"
       >
       <button type="submit" class="header-search-button">검색</button>
-      <ul v-if="suggestions.length > 0" class="search-suggestions">
-        <li v-for="suggestion in suggestions" :key="suggestion.keyword">
+      <ul
+        v-if="suggestions.length > 0"
+        id="header-search-suggestions"
+        class="search-suggestions"
+        role="listbox"
+      >
+        <li v-for="(suggestion, index) in suggestions" :key="suggestion.keyword">
           <button
             type="button"
             class="search-suggestion"
+            :class="{ active: index === highlightedSuggestionIndex }"
             data-testid="search-suggestion"
+            role="option"
+            :aria-selected="index === highlightedSuggestionIndex"
             @click="submitSuggestion(suggestion.keyword)"
           >
             <span>{{ suggestion.keyword }}</span>
@@ -44,7 +56,9 @@ import { createHeaderSearch } from './useHeaderSearch'
 
 const router = useRouter()
 const suggestions = ref<SearchRankingItem[]>([])
+const highlightedSuggestionIndex = ref(-1)
 let suggestionRequestSequence = 0
+let skipNextSuggestionLookup = false
 const { keyword, submitSearch } = createHeaderSearch({
   onSearch: searchKeyword => router.push({
     path: '/search',
@@ -55,11 +69,17 @@ const { keyword, submitSearch } = createHeaderSearch({
 })
 
 watch(keyword, async currentKeyword => {
+  if (skipNextSuggestionLookup) {
+    skipNextSuggestionLookup = false
+    clearSuggestions()
+    return
+  }
+
   const normalizedKeyword = normalizeSearchKeyword(currentKeyword)
   const requestSequence = ++suggestionRequestSequence
 
   if (normalizedKeyword.length === 0) {
-    suggestions.value = []
+    clearSuggestions()
     return
   }
 
@@ -69,18 +89,77 @@ watch(keyword, async currentKeyword => {
     const nextSuggestions = await searchRankingService.suggestKeywords(normalizedKeyword, 5)
     if (requestSequence === suggestionRequestSequence) {
       suggestions.value = nextSuggestions
+      resetSuggestionHighlight()
     }
   } catch (err) {
     console.error('검색어 추천 조회 실패:', err)
     if (requestSequence === suggestionRequestSequence) {
-      suggestions.value = []
+      clearSuggestions()
     }
   }
 })
 
-const submitSuggestion = async (suggestionKeyword: string) => {
-  keyword.value = suggestionKeyword
+const resetSuggestionHighlight = () => {
+  highlightedSuggestionIndex.value = -1
+}
+
+const clearSuggestions = () => {
   suggestions.value = []
+  resetSuggestionHighlight()
+}
+
+const moveSuggestionHighlight = (amount: number) => {
+  if (suggestions.value.length === 0) {
+    return
+  }
+
+  // 추천 목록은 순환형으로 움직인다.
+  // 사용자는 첫 항목에서 ArrowUp을 눌러 마지막 추천어로 이동할 수 있고, 반대 방향도 동일하다.
+  highlightedSuggestionIndex.value = (
+    highlightedSuggestionIndex.value + amount + suggestions.value.length
+  ) % suggestions.value.length
+}
+
+const submitHighlightedSuggestion = async (event: KeyboardEvent) => {
+  const highlightedSuggestion = suggestions.value[highlightedSuggestionIndex.value]
+
+  if (!highlightedSuggestion) {
+    return
+  }
+
+  event.preventDefault()
+  await submitSuggestion(highlightedSuggestion.keyword)
+}
+
+const handleSearchKeydown = async (event: KeyboardEvent) => {
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    moveSuggestionHighlight(1)
+    return
+  }
+
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    moveSuggestionHighlight(-1)
+    return
+  }
+
+  if (event.key === 'Escape') {
+    clearSuggestions()
+    return
+  }
+
+  if (event.key === 'Enter') {
+    await submitHighlightedSuggestion(event)
+  }
+}
+
+const submitSuggestion = async (suggestionKeyword: string) => {
+  // 추천어 클릭/키보드 선택은 이미 사용자가 검색어를 확정한 상태다.
+  // keyword 변경이 다시 추천 조회를 발생시키면 닫은 드롭다운이 재노출되므로 다음 watcher 1회만 건너뛴다.
+  skipNextSuggestionLookup = true
+  keyword.value = suggestionKeyword
+  clearSuggestions()
   await submitSearch()
 }
 </script>
@@ -153,7 +232,8 @@ const submitSuggestion = async (suggestionKeyword: string) => {
   cursor: pointer;
 }
 
-.search-suggestion:hover {
+.search-suggestion:hover,
+.search-suggestion.active {
   background: #f5f5f5;
 }
 
