@@ -22,6 +22,13 @@
     >
       {{ liveRefreshFeedback }}
     </p>
+    <p
+      v-if="rankingClickFeedback"
+      class="ranking-click-feedback"
+      data-testid="ranking-click-feedback"
+    >
+      {{ rankingClickFeedback }}
+    </p>
 
     <p v-if="loading" class="ranking-message">불러오는 중...</p>
     <p v-else-if="error" class="ranking-message">검색어 순위를 불러오지 못했습니다.</p>
@@ -30,7 +37,14 @@
     <ol v-else class="ranking-list">
       <li v-for="(item, index) in rankings" :key="item.keyword" class="ranking-item">
         <span class="rank-number">{{ index + 1 }}</span>
-        <span class="rank-keyword">{{ item.keyword }}</span>
+        <button
+          type="button"
+          class="rank-keyword"
+          data-testid="ranking-keyword-search"
+          @click="searchRankedKeyword(item.keyword)"
+        >
+          {{ item.keyword }}
+        </button>
         <span class="rank-score">검색 {{ item.score }}회</span>
       </li>
     </ol>
@@ -40,11 +54,14 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { createSearchRanking } from './useSearchRanking'
 import { onSearchRankingChanged } from './searchRankingRefreshEvent'
 
+const router = useRouter()
 const { rankings, loading, error, lastUpdatedAt, fetchRankings } = createSearchRanking()
 const liveRefreshFeedback = ref('')
+const rankingClickFeedback = ref('')
 let refreshTimer: number | undefined
 let unsubscribeSearchRankingChanged: (() => void) | undefined
 const rankingRefreshIntervalMs = 30_000
@@ -89,6 +106,19 @@ const fetchRankingsAfterSearchEvent = () => {
   // 그래서 "방금 검색어가 기록됨" 피드백을 별도 상태로 두어 실시간 랭킹 학습 포인트를 화면에 남긴다.
   liveRefreshFeedback.value = '방금 검색어가 기록되어 순위를 다시 읽었습니다.'
   fetchRankings()
+}
+
+const searchRankedKeyword = (rankedKeyword: string) => {
+  // 실시간 검색어 UI는 "많이 검색된 단어를 보여주기"에서 끝나지 않고 다시 검색 진입점이 된다.
+  // /search 화면은 검색 성공 뒤 랭킹 변경 이벤트를 발행하므로, 랭킹 클릭 -> 검색 결과 -> 랭킹 재조회 흐름도 같은 학습 경로를 탄다.
+  rankingClickFeedback.value =
+    `랭킹 키워드 "${rankedKeyword}"로 검색 결과를 열었습니다. 검색 결과 API가 성공하면 같은 키워드가 다시 랭킹 기록 이벤트로 이어집니다.`
+  router.push({
+    path: '/search',
+    query: {
+      keyword: rankedKeyword,
+    },
+  })
 }
 
 onMounted(() => {
@@ -181,6 +211,16 @@ onUnmounted(() => {
   line-height: 1.45;
 }
 
+.ranking-click-feedback {
+  margin: 8px 0 0;
+  border: 1px solid #e5dcc4;
+  background: #fffdf7;
+  padding: 7px 8px;
+  color: #5f4b15;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .ranking-list {
   margin: 12px 0 0;
   padding: 0;
@@ -204,9 +244,21 @@ onUnmounted(() => {
 
 .rank-keyword {
   min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #1a1a1a;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.rank-keyword:hover {
+  color: #057dbc;
+  text-decoration: underline;
 }
 
 .rank-score {

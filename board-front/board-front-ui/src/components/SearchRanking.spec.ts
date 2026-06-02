@@ -2,9 +2,16 @@ import { mount } from '@vue/test-utils'
 import SearchRanking from './SearchRanking.vue'
 
 const fetchRankings = jest.fn()
+const routerPush = jest.fn()
 const unsubscribeSearchRankingChanged = jest.fn()
 let mockSearchRankingChangedListener: (() => void) | undefined
 let mockRankings: Array<{ keyword: string; score: number }> = []
+
+jest.mock('vue-router', () => ({
+  useRouter: () => ({
+    push: routerPush,
+  }),
+}))
 
 jest.mock('./useSearchRanking', () => {
   const { ref } = require('vue')
@@ -31,6 +38,7 @@ jest.mock('./searchRankingRefreshEvent', () => ({
 describe('# Search ranking component', function () {
   beforeEach(() => {
     jest.useFakeTimers()
+    routerPush.mockReset()
     fetchRankings.mockClear()
     unsubscribeSearchRankingChanged.mockClear()
     mockSearchRankingChangedListener = undefined
@@ -88,6 +96,27 @@ describe('# Search ranking component', function () {
     expect(fetchRankings).toBeCalledTimes(2)
     expect(wrapper.get('[data-testid="ranking-live-refresh-feedback"]').text()).toBe(
       '방금 검색어가 기록되어 순위를 다시 읽었습니다.'
+    )
+
+    wrapper.unmount()
+  })
+
+  it('should search with the clicked ranked keyword', async function () {
+    mockRankings = [
+      { keyword: 'kotlin spring', score: 7 },
+    ]
+    const wrapper = mount(SearchRanking)
+
+    await wrapper.get('[data-testid="ranking-keyword-search"]').trigger('click')
+
+    expect(routerPush).toBeCalledWith({
+      path: '/search',
+      query: {
+        keyword: 'kotlin spring',
+      },
+    })
+    expect(wrapper.get('[data-testid="ranking-click-feedback"]').text()).toBe(
+      '랭킹 키워드 "kotlin spring"로 검색 결과를 열었습니다. 검색 결과 API가 성공하면 같은 키워드가 다시 랭킹 기록 이벤트로 이어집니다.'
     )
 
     wrapper.unmount()
