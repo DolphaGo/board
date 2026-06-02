@@ -137,6 +137,24 @@
               <dd>: {{ row.description }}</dd>
             </div>
           </dl>
+          <details
+            v-if="relatedPost.scoringSignals.length > 0"
+            class="related-scoring-signals"
+            data-testid="related-scoring-signals"
+          >
+            <summary>추천 점수 신호 {{ relatedAppliedSignalCount(relatedPost) }}/{{ relatedPost.scoringSignals.length }}</summary>
+            <ul>
+              <li
+                v-for="signal in relatedPost.scoringSignals"
+                :key="`${relatedPost.postId}:${signal.field}:${signal.label}`"
+                data-testid="related-scoring-signal-row"
+              >
+                {{ signal.label }} · {{ signal.field }} · boost {{ signal.boost.toFixed(2) }} · {{ signal.applied ? '적용' : '미적용' }}
+                키워드 {{ signal.keyword }}
+                {{ signal.description }}
+              </li>
+            </ul>
+          </details>
         </article>
       </section>
     </article>
@@ -321,6 +339,11 @@ const relatedScoreFormulaTermRows = (relatedPost: PostSearchResult): PostSearchS
   // 공식에 실제로 등장한 용어만 보여주면 "왜 이 추천 점수가 나왔는지"를 검색 화면과 같은 기준으로 학습할 수 있다.
   return explanation.formulaTerms.filter(row => explanation.formula.includes(row.term));
 };
+
+const relatedAppliedSignalCount = (relatedPost: PostSearchResult): number =>
+  // 추천 API는 검색 결과와 같은 scoringSignals를 내려준다.
+  // 화면에서는 ES 점수를 다시 계산하지 않고, 서버가 "적용됨"으로 판정한 신호 개수만 세어 학습용 요약으로 보여준다.
+  relatedPost.scoringSignals.filter(signal => signal.applied).length;
 
 const findApiErrorMessage = (err: unknown) => {
   if (typeof err !== 'object' || err === null || !('response' in err)) {
@@ -692,6 +715,36 @@ const restorePost = async () => {
 .related-score-formula-terms dd {
   color: #555555;
   margin: 0;
+}
+
+.related-scoring-signals {
+  border-top: 1px dashed #d5dde5;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.related-scoring-signals summary {
+  color: #394f63;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.related-scoring-signals ul {
+  display: grid;
+  gap: 5px;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.related-scoring-signals li {
+  background: #ffffff;
+  border: 1px solid #e4e9ee;
+  color: #555555;
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 7px;
 }
 
 .comment-list {

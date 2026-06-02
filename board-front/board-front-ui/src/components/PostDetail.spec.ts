@@ -212,6 +212,16 @@ describe('# Post detail component', () => {
             description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
             applied: true,
           },
+          {
+            field: 'content.initials',
+            category: 'INITIAL_RECALL',
+            categoryDescription: '초성 recall은 원문 match가 부족한 검색을 보조합니다.',
+            label: '본문 초성',
+            boost: 0.4,
+            keyword: 'ㅋㅌㄹ ㄱㅅ',
+            description: '초성 필드는 사용자가 일부 소리만 기억할 때 후보를 넓힌다.',
+            applied: false,
+          },
         ],
         scoreExplanation: {
           formula: 'final_score = bm25_text_score + function_score_bonus',
@@ -246,6 +256,11 @@ describe('# Post detail component', () => {
     expect(wrapper.findAll('[data-testid="related-score-formula-term-row"]').map(row => row.text())).toEqual([
       'bm25_text_score: 제목/본문 원문 match가 만드는 BM25 관련도입니다.',
       'function_score_bonus: 공지 같은 운영 신호를 BM25 점수 위에 작은 가산점으로 더합니다.',
+    ])
+    expect(wrapper.get('[data-testid="related-scoring-signals"]').text()).toContain('추천 점수 신호 1/2')
+    expect(wrapper.findAll('[data-testid="related-scoring-signal-row"]').map(row => row.text())).toEqual([
+      '제목 원문 · title · boost 3.00 · 적용 키워드 코틀린 검색 제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+      '본문 초성 · content.initials · boost 0.40 · 미적용 키워드 ㅋㅌㄹ ㄱㅅ 초성 필드는 사용자가 일부 소리만 기억할 때 후보를 넓힌다.',
     ])
   })
 
