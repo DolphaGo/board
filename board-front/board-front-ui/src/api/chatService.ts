@@ -6,6 +6,7 @@ const STUDY_MEMBER_ID = 1
 interface ChatRoomResponse {
   id: string
   name: string
+  description?: string | null
   createdAt: string
   maxParticipants: number
   participants?: number[]
@@ -14,6 +15,7 @@ interface ChatRoomResponse {
 export interface ChatRoom {
   id: string
   name: string
+  description?: string | null
   participantCount: number
   maxParticipants: number
   createdAt: string
@@ -24,16 +26,24 @@ interface CreateChatRoomOptions {
   maxParticipants?: number
 }
 
-const toChatRoom = (room: ChatRoomResponse): ChatRoom => ({
-  id: room.id,
-  name: room.name,
-  // 백엔드는 참가자 id Set을 내려준다.
-  // 화면은 인원수만 필요하므로 API 경계에서 UI가 쓰기 좋은 값으로 변환한다.
-  participantCount: room.participants?.length ?? 0,
-  // 입장 제한 로직과 같은 숫자를 목록에도 보여주면, 사용자가 방에 들어가기 전 정원 상태를 판단할 수 있다.
-  maxParticipants: room.maxParticipants,
-  createdAt: room.createdAt,
-})
+const toChatRoom = (room: ChatRoomResponse): ChatRoom => {
+  const chatRoom: ChatRoom = {
+    id: room.id,
+    name: room.name,
+    // 백엔드는 참가자 id Set을 내려준다.
+    // 화면은 인원수만 필요하므로 API 경계에서 UI가 쓰기 좋은 값으로 변환한다.
+    participantCount: room.participants?.length ?? 0,
+    // 입장 제한 로직과 같은 숫자를 목록에도 보여주면, 사용자가 방에 들어가기 전 정원 상태를 판단할 수 있다.
+    maxParticipants: room.maxParticipants,
+    createdAt: room.createdAt,
+  }
+
+  if (room.description !== undefined) {
+    chatRoom.description = room.description
+  }
+
+  return chatRoom
+}
 
 const isChatRoomResponse = (room: unknown): room is ChatRoomResponse => {
   if (typeof room !== 'object' || room === null) {
@@ -69,6 +79,18 @@ export const chatService = {
     }
 
     return response.data.map(parseChatRoom)
+  },
+
+  // 채팅방 상세 조회
+  getRoom: async (roomId: string): Promise<ChatRoom | null> => {
+    // 상세 화면은 URL params에서 roomId를 받는다.
+    // 빈 값으로 요청하면 /api/chat/rooms/ 같은 모호한 URL이 되므로 API 경계에서 멈춘다.
+    if (roomId.trim().length === 0) {
+      return null
+    }
+
+    const response = await axios.get<ChatRoomResponse>(`${BASE_URL}/chat/rooms/${roomId}`)
+    return parseChatRoom(response.data)
   },
 
   // 채팅방 생성

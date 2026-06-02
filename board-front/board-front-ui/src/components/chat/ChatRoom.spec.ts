@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { useRouter } from 'vue-router'
 import { chatService } from 'src/api/chatService'
 import ChatRoom from './ChatRoom.vue'
@@ -45,6 +45,7 @@ jest.mock('@stomp/stompjs', () => ({
 
 jest.mock('src/api/chatService', () => ({
   chatService: {
+    getRoom: jest.fn(),
     leaveRoom: jest.fn(),
   },
 }))
@@ -97,6 +98,15 @@ describe('# Chat room component', () => {
     mockSubscribe.mockClear()
     mockDeactivate.mockClear()
     pushMock.mockClear()
+    mockedChatService.getRoom.mockClear()
+    mockedChatService.getRoom.mockResolvedValue({
+      id: 'room-1',
+      name: '코프링 채팅방',
+      description: '검색과 채팅 기능을 같이 실습한다',
+      createdAt: '2026-06-01T17:00:00',
+      participantCount: 2,
+      maxParticipants: 20,
+    })
     mockedChatService.leaveRoom.mockClear()
     mockedChatService.leaveRoom.mockResolvedValue(undefined)
     mockedUseRouter.mockReturnValue({
@@ -115,6 +125,32 @@ describe('# Chat room component', () => {
     await wrapper.get('.message-input button').trigger('click')
 
     expect(mockPublish).not.toHaveBeenCalled()
+  })
+
+  it('should render chat room metadata fetched by room id', async () => {
+    const wrapper = mountChatRoom()
+
+    await flushPromises()
+
+    expect(mockedChatService.getRoom).toHaveBeenCalledWith('room-1')
+    expect(wrapper.get('[data-testid="chat-room-title"]').text()).toBe('코프링 채팅방')
+    expect(wrapper.get('[data-testid="chat-room-participants"]').text()).toBe('참여자: 2/20명')
+    expect(wrapper.get('[data-testid="chat-room-description"]').text()).toBe('검색과 채팅 기능을 같이 실습한다')
+  })
+
+  it('should keep chat usable when room metadata fetch fails', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation()
+    mockedChatService.getRoom.mockRejectedValue(new Error('room failed'))
+
+    const wrapper = mountChatRoom()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="chat-room-title"]').text()).toBe('채팅방')
+    expect(wrapper.get('[data-testid="chat-room-detail-feedback"]').text()).toBe(
+      '채팅방 정보를 불러오지 못했습니다. 메시지는 계속 보낼 수 있습니다.'
+    )
+    expect(mockSubscribe).toHaveBeenCalledWith('/topic/chat/room-1', expect.any(Function))
+    error.mockRestore()
   })
 
   it('should publish talk messages and clear the input', async () => {

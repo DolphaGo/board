@@ -37,6 +37,31 @@ describe('# Chat service', function () {
     ])
   })
 
+  it('should fetch a chat room and convert participants to a count', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: {
+        id: 'room-1',
+        name: '코프링 채팅방',
+        description: '검색과 채팅 기능을 같이 실습한다',
+        createdAt: '2026-06-01T17:00:00',
+        maxParticipants: 20,
+        participants: [1, 2],
+      },
+    })
+
+    const room = await chatService.getRoom('room-1')
+
+    expect(mockedAxios.get).toBeCalledWith('/api/chat/rooms/room-1')
+    expect(room).toEqual({
+      id: 'room-1',
+      name: '코프링 채팅방',
+      description: '검색과 채팅 기능을 같이 실습한다',
+      createdAt: '2026-06-01T17:00:00',
+      participantCount: 2,
+      maxParticipants: 20,
+    })
+  })
+
   it('should create a chat room with the study member id', async function () {
     mockedAxios.post.mockResolvedValue({
       data: {
@@ -104,7 +129,16 @@ describe('# Chat service', function () {
     await expect(chatService.createRoom('새 채팅방')).rejects.toThrow('Invalid chat room response')
   })
 
+  it('should reject malformed chat room detail responses', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: '<html>vite fallback</html>',
+    })
+
+    await expect(chatService.getRoom('room-1')).rejects.toThrow('Invalid chat room response')
+  })
+
   it.each([
+    ['getRoom', () => chatService.getRoom('   ')],
     ['joinRoom', () => chatService.joinRoom('   ')],
     ['leaveRoom', () => chatService.leaveRoom('   ')],
   ])('should ignore blank room id for %s', async function (_, action) {

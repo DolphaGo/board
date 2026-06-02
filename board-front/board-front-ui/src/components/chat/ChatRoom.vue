@@ -1,7 +1,18 @@
 <template>
   <div class="chat-container">
     <div class="chat-header">
-      <h2>채팅방</h2>
+      <div class="chat-room-summary">
+        <h2 data-testid="chat-room-title">{{ room?.name || '채팅방' }}</h2>
+        <p v-if="room" class="chat-room-meta" data-testid="chat-room-participants">
+          참여자: {{ room.participantCount }}/{{ room.maxParticipants }}명
+        </p>
+        <p v-if="room?.description" class="chat-room-description" data-testid="chat-room-description">
+          {{ room.description }}
+        </p>
+        <p v-if="roomDetailFeedback" class="chat-room-detail-feedback" data-testid="chat-room-detail-feedback">
+          {{ roomDetailFeedback }}
+        </p>
+      </div>
       <button class="leave-room-btn" @click="leaveRoomAndGoToList">나가기</button>
     </div>
     
@@ -56,7 +67,7 @@ import { useRouter } from 'vue-router'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import dayjs from 'dayjs'
-import { chatService } from 'src/api/chatService'
+import { chatService, type ChatRoom } from 'src/api/chatService'
 
 interface ChatMessage {
   type: 'ENTER' | 'TALK' | 'LEAVE' | 'SIGNAL'
@@ -87,6 +98,8 @@ export default defineComponent({
   setup(props) {
     const router = useRouter()
     const stompClient = ref<Client | null>(null)
+    const room = ref<ChatRoom | null>(null)
+    const roomDetailFeedback = ref('')
     const messages = ref<ChatMessage[]>([])
     const newMessage = ref('')
     const connectionFeedback = ref('')
@@ -138,6 +151,19 @@ export default defineComponent({
       }
 
       stompClient.value.activate()
+    }
+
+    const fetchRoomDetail = async () => {
+      try {
+        roomDetailFeedback.value = ''
+        room.value = await chatService.getRoom(props.roomId)
+      } catch (error) {
+        console.error('채팅방 정보 조회 실패:', error)
+        // 상세 정보 조회는 제목/정원 표시용이고, 메시지 송수신은 STOMP 연결로 별도 동작한다.
+        // 공부 포인트: 부가 정보 API 실패가 핵심 채팅 기능까지 막지 않도록 실패 범위를 좁힌다.
+        room.value = null
+        roomDetailFeedback.value = '채팅방 정보를 불러오지 못했습니다. 메시지는 계속 보낼 수 있습니다.'
+      }
     }
 
     const parseIncomingMessage = (body: string): ChatMessage | null => {
@@ -341,6 +367,7 @@ export default defineComponent({
     }
 
     onMounted(() => {
+      fetchRoomDetail()
       connectWebSocket()
       if (props.isVideoEnabled) {
         initializeWebRTC()
@@ -366,6 +393,8 @@ export default defineComponent({
     })
 
     return {
+      room,
+      roomDetailFeedback,
       messages,
       newMessage,
       connectionFeedback,
@@ -405,6 +434,23 @@ export default defineComponent({
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+}
+
+.chat-room-summary {
+  min-width: 0;
+}
+
+.chat-room-summary h2 {
+  margin: 0;
+}
+
+.chat-room-meta,
+.chat-room-description,
+.chat-room-detail-feedback {
+  margin: 4px 0 0 0;
+  font-size: 0.85rem;
+  opacity: 0.9;
 }
 
 .leave-room-btn {
