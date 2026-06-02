@@ -1,4 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
+import { searchRankingService } from 'src/api/searchRankingService'
 import { postSearchService } from 'src/api/postSearchService'
 import { nextTick, reactive } from 'vue'
 import { onSearchRankingChanged } from './searchRankingRefreshEvent'
@@ -20,7 +21,14 @@ jest.mock('src/api/postSearchService', () => ({
   },
 }))
 
+jest.mock('src/api/searchRankingService', () => ({
+  searchRankingService: {
+    getSourceRankings: jest.fn(),
+  },
+}))
+
 const mockedPostSearchService = postSearchService as jest.Mocked<typeof postSearchService>
+const mockedSearchRankingService = searchRankingService as jest.Mocked<typeof searchRankingService>
 
 const mountedWrappers: Array<ReturnType<typeof mount>> = []
 
@@ -61,6 +69,8 @@ describe('# Search results component', () => {
       keyword: 'kotlin',
     }
     mockedPostSearchService.search.mockReset()
+    mockedSearchRankingService.getSourceRankings.mockReset()
+    mockedSearchRankingService.getSourceRankings.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -172,6 +182,31 @@ describe('# Search results component', () => {
       '유입 경로: 실시간 검색어 추천 선택',
       '랭킹 기록: 추천어는 Redis ZSET에서 prefix/초성/음절로 걸러낸 인기 검색어이고, 선택 후 다시 검색 기록으로 누적',
     ])
+  })
+
+  it('should render source ranking totals for search source analysis', async () => {
+    mockRoute.query = {
+      keyword: 'kotlin spring',
+      source: 'suggestion',
+    }
+    mockedPostSearchService.search.mockResolvedValue([])
+    mockedSearchRankingService.getSourceRankings.mockResolvedValue([
+      {
+        source: 'suggestion',
+        label: '추천어 선택',
+        score: 8,
+        description: '자동완성 추천어를 선택해서 검색 결과로 진입한 횟수입니다.',
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(mockedSearchRankingService.getSourceRankings).toBeCalledWith(4)
+    expect(wrapper.get('[data-testid="search-source-ranking-list"]').text()).toContain(
+      '추천어 선택 8회'
+    )
+    expect(wrapper.text()).toContain('자동완성 추천어를 선택해서 검색 결과로 진입한 횟수입니다.')
   })
 
   it('should explain direct URL searches without a source query', async () => {

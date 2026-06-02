@@ -39,6 +39,33 @@ class SearchRankingControllerTest {
     }
 
     @Test
+    fun `검색 유입 경로 순위 조회는 기본 4개를 반환한다`() {
+        val rankings =
+            listOf(
+                SearchSourceRankingItem(
+                    source = "header",
+                    label = "헤더 검색창",
+                    score = 6,
+                    description = "헤더 검색창에서 submit되어 검색 결과로 진입한 횟수입니다.",
+                ),
+            )
+        every { searchRankingService.getTopSources(4) } returns rankings
+
+        val response = controller.getTopSources()
+
+        assertEquals(rankings, response.body)
+        verify(exactly = 1) { searchRankingService.getTopSources(4) }
+    }
+
+    @Test
+    fun `검색 유입 경로 순위 조회 개수가 1보다 작으면 400을 반환한다`() {
+        val response = controller.getTopSources(limit = 0)
+
+        assertEquals(400, response.statusCode.value())
+        verify(exactly = 0) { searchRankingService.getTopSources(any()) }
+    }
+
+    @Test
     fun `검색어 추천은 키워드와 개수를 랭킹 서비스에 전달한다`() {
         val suggestions =
             listOf(

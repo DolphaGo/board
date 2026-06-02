@@ -5,6 +5,13 @@ export interface SearchRankingItem {
   score: number
 }
 
+export interface SearchSourceRankingItem {
+  source: string
+  label: string
+  score: number
+  description: string
+}
+
 export type SearchKeywordSuggestionMatchType = 'TEXT_PREFIX' | 'SYLLABLE_PREFIX' | 'INITIAL_PREFIX'
 
 export interface SearchKeywordSuggestionItem extends SearchRankingItem {
@@ -40,6 +47,24 @@ const isSearchKeywordSuggestionItem = (data: unknown): data is SearchKeywordSugg
     item.matchDescription.trim().length > 0
 }
 
+const isSearchSourceRankingItem = (data: unknown): data is SearchSourceRankingItem => {
+  if (typeof data !== 'object' || data === null) {
+    return false
+  }
+
+  const item = data as Partial<SearchSourceRankingItem>
+  return typeof item.source === 'string' &&
+    item.source.trim().length > 0 &&
+    typeof item.label === 'string' &&
+    item.label.trim().length > 0 &&
+    typeof item.score === 'number' &&
+    Number.isFinite(item.score) &&
+    Number.isInteger(item.score) &&
+    item.score >= 0 &&
+    typeof item.description === 'string' &&
+    item.description.trim().length > 0
+}
+
 // 서버의 SearchRankingService는 limit이 1 이상이어야 한다고 검증한다.
 // 프론트 service도 같은 계약으로 정리해 두면 잘못된 값 때문에 500 응답을 만드는 일을 줄일 수 있다.
 const normalizeSearchRankingLimit = (limit: number): number =>
@@ -72,6 +97,22 @@ export const searchRankingService = {
     // API 계약이 깨진 값을 그대로 렌더링하면 빈 순위 행이 생긴다.
     // 그래서 배열 여부, keyword/score 타입, 공백뿐인 keyword, 0 이상 정수 score를 함께 확인한다.
     if (!Array.isArray(response.data) || !response.data.every(isSearchRankingItem)) {
+      throw new Error('Invalid search ranking response')
+    }
+
+    return response.data
+  },
+
+  getSourceRankings: async (limit = 4): Promise<SearchSourceRankingItem[]> => {
+    const normalizedLimit = normalizeSearchRankingLimit(limit)
+
+    const response = await axios.get<SearchSourceRankingItem[]>('/api/search/rankings/sources', {
+      params: { limit: normalizedLimit },
+    })
+
+    // source ranking은 keyword ranking과 같은 ZSET 기반 집계지만, 화면 학습 문구를 위해 label/description까지 필요하다.
+    // 이 경계에서 응답 구조를 확인해 두면 백엔드 계약이 깨졌을 때 잘못된 통계 문구를 렌더링하지 않는다.
+    if (!Array.isArray(response.data) || !response.data.every(isSearchSourceRankingItem)) {
       throw new Error('Invalid search ranking response')
     }
 

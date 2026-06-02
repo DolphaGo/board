@@ -15,6 +15,13 @@ data class SearchKeywordSuggestionItem(
     val matchDescription: String,
 )
 
+data class SearchSourceRankingItem(
+    val source: String,
+    val label: String,
+    val score: Long,
+    val description: String,
+)
+
 enum class SearchKeywordSuggestionMatchType {
     TEXT_PREFIX,
     SYLLABLE_PREFIX,
@@ -23,11 +30,29 @@ enum class SearchKeywordSuggestionMatchType {
 
 enum class SearchRankingSource(
     val value: String,
+    val label: String,
+    val description: String,
 ) {
-    DIRECT("direct"),
-    HEADER("header"),
-    RANKING("ranking"),
-    SUGGESTION("suggestion"),
+    DIRECT(
+        value = "direct",
+        label = "직접 진입",
+        description = "검색 URL 직접 접근이나 북마크처럼 명시적인 프론트 진입 경로가 없는 검색 횟수입니다.",
+    ),
+    HEADER(
+        value = "header",
+        label = "헤더 검색창",
+        description = "헤더 검색창에서 submit되어 검색 결과로 진입한 횟수입니다.",
+    ),
+    RANKING(
+        value = "ranking",
+        label = "실시간 검색어 클릭",
+        description = "실시간 검색어 순위 항목을 클릭해서 검색 결과로 진입한 횟수입니다.",
+    ),
+    SUGGESTION(
+        value = "suggestion",
+        label = "추천어 선택",
+        description = "자동완성 추천어를 선택해서 검색 결과로 진입한 횟수입니다.",
+    ),
     ;
 
     companion object {
@@ -70,6 +95,24 @@ class SearchRankingService(
                 SearchRankingItem(
                     keyword = keyword,
                     score = tuple.score?.toLong() ?: 0L,
+                )
+            }
+    }
+
+    fun getTopSources(limit: Long): List<SearchSourceRankingItem> {
+        require(limit > 0) { "조회 개수는 1 이상이어야 합니다." }
+
+        return redisTemplate
+            .opsForZSet()
+            .reverseRangeWithScores(SOURCE_RANKING_KEY, 0, limit - 1)
+            .orEmpty()
+            .mapNotNull { tuple ->
+                val source = SearchRankingSource.from(tuple.value ?: return@mapNotNull null)
+                SearchSourceRankingItem(
+                    source = source.value,
+                    label = source.label,
+                    score = tuple.score?.toLong() ?: 0L,
+                    description = source.description,
                 )
             }
     }

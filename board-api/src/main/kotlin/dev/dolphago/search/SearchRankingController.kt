@@ -32,6 +32,19 @@ class SearchRankingController(
         return ResponseEntity.ok(searchRankingService.getTopKeywords(limit))
     }
 
+    @GetMapping("/sources")
+    fun getTopSources(
+        @RequestParam(defaultValue = "4") limit: Long = 4,
+    ): ResponseEntity<List<SearchSourceRankingItem>> {
+        if (limit < 1) {
+            return ResponseEntity.badRequest().build()
+        }
+
+        // source 순위는 검색어 자체가 아니라 "검색 결과로 들어온 경로"를 집계한다.
+        // 키워드 랭킹과 같은 Redis ZSET 조회 패턴이지만, 응답에는 학습용 label/description을 함께 담는다.
+        return ResponseEntity.ok(searchRankingService.getTopSources(limit))
+    }
+
     @GetMapping("/suggestions")
     fun suggestKeywords(
         @RequestParam keyword: String,

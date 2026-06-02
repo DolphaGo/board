@@ -27,6 +27,31 @@
           <dd>: {{ row.description }}</dd>
         </div>
       </dl>
+      <section
+        v-if="sourceRankings.length > 0"
+        class="search-source-ranking"
+        data-testid="search-source-ranking-list"
+        aria-label="검색 유입 경로별 누적 집계"
+      >
+        <p class="search-source-ranking-title">검색 유입 경로 집계</p>
+        <ul>
+          <li
+            v-for="item in sourceRankings"
+            :key="item.source"
+            data-testid="search-source-ranking-item"
+          >
+            <strong>{{ item.label }}</strong> {{ item.score }}회
+            <span>{{ item.description }}</span>
+          </li>
+        </ul>
+      </section>
+      <p
+        v-else-if="sourceRankingError"
+        class="search-source-ranking-error"
+        data-testid="search-source-ranking-error"
+      >
+        검색 유입 경로 집계를 불러오지 못했습니다.
+      </p>
 
       <p v-if="loading" class="search-message">검색 중...</p>
       <p v-else-if="error" class="search-message">검색 결과를 불러오지 못했습니다.</p>
@@ -179,12 +204,18 @@ import {
   type PostSearchScoreSignal,
   type PostSearchSource,
 } from 'src/api/postSearchService'
+import {
+  searchRankingService,
+  type SearchSourceRankingItem,
+} from 'src/api/searchRankingService'
 import { normalizeSearchKeyword } from 'src/search/normalizeSearchKeyword'
 import { collectSearchResultHighlights } from './searchResultHighlights'
 import { notifySearchRankingChanged } from './searchRankingRefreshEvent'
 
 const route = useRoute()
 const results = ref<PostSearchResult[]>([])
+const sourceRankings = ref<SearchSourceRankingItem[]>([])
+const sourceRankingError = ref(false)
 const loading = ref(false)
 const error = ref(false)
 let searchRequestId = 0
@@ -262,6 +293,19 @@ const searchSourceAnalysisRows = computed(() => {
     },
   ]
 })
+
+const fetchSearchSourceRankings = async () => {
+  try {
+    sourceRankingError.value = false
+    sourceRankings.value = await searchRankingService.getSourceRankings(4)
+  } catch (err) {
+    // 검색 결과 조회와 source 집계 조회는 서로 다른 학습 패널이다.
+    // 집계 API가 잠시 실패해도 검색 결과 자체를 실패 상태로 바꾸면 사용자가 ES scoring 학습을 계속할 수 없다.
+    console.error('검색 유입 경로 집계 조회 실패:', err)
+    sourceRankings.value = []
+    sourceRankingError.value = true
+  }
+}
 
 const highlightCount = (result: PostSearchResult): number =>
   Object.values(result.highlights).reduce((count, values) => count + values.length, 0)
@@ -502,6 +546,8 @@ watch(
     if (keyword.length === 0) {
       searchRequestId += 1
       results.value = []
+      sourceRankings.value = []
+      sourceRankingError.value = false
       error.value = false
       loading.value = false
       return
@@ -524,6 +570,7 @@ watch(
       // /api/search/posts는 검색 결과 조회와 동시에 서버에서 검색어 랭킹을 기록한다.
       // 성공 응답 뒤 이벤트를 발행하면 사이드바 랭킹이 30초 polling을 기다리지 않고 즉시 다시 읽는다.
       notifySearchRankingChanged()
+      await fetchSearchSourceRankings()
     } catch (err) {
       if (requestId !== searchRequestId) {
         return
@@ -606,6 +653,42 @@ watch(
 
 .search-source-analysis dd {
   margin: 0;
+}
+
+.search-source-ranking {
+  margin: 8px 0 0;
+  padding: 9px 10px;
+  border: 1px solid #d8e6ef;
+  background: #f8fbfd;
+  color: #333333;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.search-source-ranking-title {
+  margin: 0 0 6px;
+  color: #057dbc;
+  font-weight: 700;
+}
+
+.search-source-ranking ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.search-source-ranking li + li {
+  margin-top: 4px;
+}
+
+.search-source-ranking span {
+  display: block;
+  color: #555555;
+}
+
+.search-source-ranking-error {
+  margin: 8px 0 0;
+  color: #9b1c1c;
+  font-size: 12px;
 }
 
 .search-empty-study-note {

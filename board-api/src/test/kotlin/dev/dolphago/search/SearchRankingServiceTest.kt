@@ -96,6 +96,41 @@ class SearchRankingServiceTest {
     }
 
     @Test
+    fun `검색 유입 경로 순위는 높은 점수 순으로 조회한다`() {
+        val first = mockk<ZSetOperations.TypedTuple<String>>()
+        val second = mockk<ZSetOperations.TypedTuple<String>>()
+
+        every { first.value } returns "suggestion"
+        every { first.score } returns 8.0
+        every { second.value } returns "ranking"
+        every { second.score } returns 5.0
+        every { redisTemplate.opsForZSet() } returns zSetOperations
+        every {
+            zSetOperations.reverseRangeWithScores(SearchRankingService.SOURCE_RANKING_KEY, 0, 1)
+        } returns linkedSetOf(first, second)
+
+        val result = searchRankingService.getTopSources(limit = 2)
+
+        assertEquals(
+            listOf(
+                SearchSourceRankingItem(
+                    source = "suggestion",
+                    label = "추천어 선택",
+                    score = 8,
+                    description = "자동완성 추천어를 선택해서 검색 결과로 진입한 횟수입니다.",
+                ),
+                SearchSourceRankingItem(
+                    source = "ranking",
+                    label = "실시간 검색어 클릭",
+                    score = 5,
+                    description = "실시간 검색어 순위 항목을 클릭해서 검색 결과로 진입한 횟수입니다.",
+                ),
+            ),
+            result,
+        )
+    }
+
+    @Test
     fun `검색어 추천은 정규화된 입력으로 시작하는 인기 검색어만 반환한다`() {
         val first = mockk<ZSetOperations.TypedTuple<String>>()
         val second = mockk<ZSetOperations.TypedTuple<String>>()

@@ -25,6 +25,33 @@ describe('# Search ranking service', function () {
     ])
   })
 
+  it('should request top 4 search source rankings by default', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          source: 'suggestion',
+          label: '추천어 선택',
+          score: 8,
+          description: '자동완성 추천어를 선택해서 검색 결과로 진입한 횟수입니다.',
+        },
+      ],
+    })
+
+    const rankings = await searchRankingService.getSourceRankings()
+
+    expect(mockedAxios.get).toBeCalledWith('/api/search/rankings/sources', {
+      params: { limit: 4 },
+    })
+    expect(rankings).toEqual([
+      {
+        source: 'suggestion',
+        label: '추천어 선택',
+        score: 8,
+        description: '자동완성 추천어를 선택해서 검색 결과로 진입한 횟수입니다.',
+      },
+    ])
+  })
+
   it.each([0, -1, 1.5, Number.NaN])('should use default ranking limit for invalid limit: %s', async function (limit) {
     mockedAxios.get.mockResolvedValue({
       data: [],
@@ -90,6 +117,20 @@ describe('# Search ranking service', function () {
     })
 
     await expect(searchRankingService.getRankings()).rejects.toThrow('Invalid search ranking response')
+  })
+
+  it('should reject source ranking arrays with malformed items', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          source: 'suggestion',
+          label: '추천어 선택',
+          score: 8,
+        },
+      ],
+    })
+
+    await expect(searchRankingService.getSourceRankings()).rejects.toThrow('Invalid search ranking response')
   })
 
   it('should reject suggestion arrays without match type', async function () {
