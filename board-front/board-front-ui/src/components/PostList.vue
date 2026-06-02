@@ -34,23 +34,63 @@
     >
       <button
         type="button"
-        class="board-page-button"
+        class="board-page-button board-page-edge"
+        data-testid="board-page-first"
+        :disabled="currentPage === 1"
+        @click="goToPage(1)"
+      >
+        처음
+      </button>
+      <button
+        type="button"
+        class="board-page-button board-page-edge"
         data-testid="board-page-prev"
         :disabled="currentPage === 1"
         @click="movePage(-1)"
       >
         이전
       </button>
-      <span class="board-page-status">{{ currentPage }} / {{ totalPages }}</span>
+      <div class="board-page-numbers" aria-label="페이지 번호">
+        <button
+          v-for="pageNumber in pageNumbers"
+          :key="pageNumber"
+          type="button"
+          class="board-page-number"
+          :class="{ current: pageNumber === currentPage }"
+          data-testid="board-page-number"
+          :aria-current="pageNumber === currentPage ? 'page' : undefined"
+          :disabled="pageNumber === currentPage"
+          @click="goToPage(pageNumber)"
+        >
+          <span
+            v-if="pageNumber === currentPage"
+            data-testid="board-page-number-current"
+            aria-current="page"
+          >
+            {{ pageNumber }}
+          </span>
+          <template v-else>{{ pageNumber }}</template>
+        </button>
+      </div>
       <button
         type="button"
-        class="board-page-button"
+        class="board-page-button board-page-edge"
         data-testid="board-page-next"
         :disabled="currentPage === totalPages"
         @click="movePage(1)"
       >
         다음
       </button>
+      <button
+        type="button"
+        class="board-page-button board-page-edge"
+        data-testid="board-page-last"
+        :disabled="currentPage === totalPages"
+        @click="goToPage(totalPages)"
+      >
+        끝
+      </button>
+      <span class="board-page-status">{{ currentPage }} / {{ totalPages }}</span>
     </nav>
   </section>
 </template>
@@ -66,8 +106,20 @@ const currentPage = ref(1)
 const totalElements = ref(0)
 const serverTotalPages = ref(1)
 const PAGE_SIZE = 10
+const MAX_VISIBLE_PAGE_NUMBERS = 5
 
 const totalPages = computed(() => Math.max(1, serverTotalPages.value))
+
+const pageNumbers = computed(() => {
+  const visibleCount = Math.min(MAX_VISIBLE_PAGE_NUMBERS, totalPages.value)
+  const halfWindow = Math.floor(visibleCount / 2)
+  const maxStartPage = Math.max(1, totalPages.value - visibleCount + 1)
+  const startPage = Math.min(maxStartPage, Math.max(1, currentPage.value - halfWindow))
+
+  // 게시판 페이지가 많아질수록 모든 번호를 한 번에 보여주면 하단 컨트롤이 길어지고 모바일에서 줄이 깨진다.
+  // 현재 페이지를 중심으로 최대 5개만 보여주면 사용자는 주변 이동을 빠르게 하고, 처음/끝 버튼으로 큰 이동도 할 수 있다.
+  return Array.from({ length: visibleCount }, (_, index) => startPage + index)
+})
 
 const boardSummary = computed(() =>
   totalElements.value > 0
@@ -78,6 +130,10 @@ const boardSummary = computed(() =>
 const movePage = async (amount: number) => {
   const nextPage = Math.min(totalPages.value, Math.max(1, currentPage.value + amount))
 
+  await goToPage(nextPage)
+}
+
+const goToPage = async (nextPage: number) => {
   if (nextPage === currentPage.value) {
     return
   }
@@ -205,12 +261,13 @@ onMounted(fetchPosts)
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 14px 12px 0;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 16px 12px 0;
 }
 
 .board-page-button {
-  min-width: 58px;
+  min-width: 54px;
   border: 1px solid #cfd7de;
   background: #ffffff;
   color: #1f2933;
@@ -221,15 +278,54 @@ onMounted(fetchPosts)
   padding: 0 12px;
 }
 
+.board-page-edge {
+  background: #f8fafc;
+}
+
 .board-page-button:disabled {
   background: #f4f6f8;
   color: #9aa4af;
   cursor: not-allowed;
 }
 
-.board-page-status {
-  color: #333333;
+.board-page-numbers {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 4px;
+}
+
+.board-page-number {
+  inline-size: 34px;
+  block-size: 34px;
+  border: 1px solid #d7dee6;
+  background: #ffffff;
+  color: #1f2933;
+  cursor: pointer;
   font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0;
+  text-align: center;
+}
+
+.board-page-number:hover:not(:disabled),
+.board-page-button:hover:not(:disabled) {
+  border-color: #057dbc;
+  color: #057dbc;
+}
+
+.board-page-number.current,
+.board-page-number:disabled.current {
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
+  cursor: default;
+}
+
+.board-page-status {
+  color: #53606c;
+  font-size: 12px;
   font-weight: 700;
   min-width: 54px;
   text-align: center;

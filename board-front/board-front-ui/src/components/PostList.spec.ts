@@ -135,4 +135,64 @@ describe('# Post list component', () => {
       '게시글 13',
     ])
   })
+
+  it('should render compact numbered pagination and jump to first or last page', async () => {
+    mockedPostService.listPosts
+      .mockResolvedValueOnce({
+        items: Array.from({ length: 10 }, (_, index) => createPost(index + 31)),
+        page: 3,
+        size: 10,
+        totalElements: 80,
+        totalPages: 8,
+      })
+      .mockResolvedValueOnce({
+        items: Array.from({ length: 10 }, (_, index) => createPost(index + 1)),
+        page: 0,
+        size: 10,
+        totalElements: 80,
+        totalPages: 8,
+      })
+      .mockResolvedValueOnce({
+        items: Array.from({ length: 10 }, (_, index) => createPost(index + 71)),
+        page: 7,
+        size: 10,
+        totalElements: 80,
+        totalPages: 8,
+      })
+
+    const wrapper = mount(PostList, {
+      global: {
+        stubs: {
+          RouterLink: {
+            template: '<a><slot /></a>',
+          },
+        },
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.findAll('[data-testid="board-page-number"]').map(button => button.text())).toEqual([
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+    ])
+    expect(wrapper.get('[data-testid="board-page-number-current"]').text()).toBe('4')
+    expect(wrapper.get('[data-testid="board-page-number-current"]').attributes('aria-current')).toBe('page')
+
+    await wrapper.get('[data-testid="board-page-first"]').trigger('click')
+    await flushPromises()
+
+    expect(mockedPostService.listPosts).toHaveBeenLastCalledWith({ page: 0, size: 10 })
+    expect(wrapper.get('[data-testid="board-page-first"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.findAll('.board-title-text')[0].text()).toBe('게시글 1')
+
+    await wrapper.get('[data-testid="board-page-last"]').trigger('click')
+    await flushPromises()
+
+    expect(mockedPostService.listPosts).toHaveBeenLastCalledWith({ page: 7, size: 10 })
+    expect(wrapper.get('[data-testid="board-page-last"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.findAll('.board-title-text')[0].text()).toBe('게시글 71')
+  })
 })
