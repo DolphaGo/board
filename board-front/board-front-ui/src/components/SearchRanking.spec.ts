@@ -3,13 +3,14 @@ import SearchRanking from './SearchRanking.vue'
 
 const fetchRankings = jest.fn()
 const unsubscribeSearchRankingChanged = jest.fn()
+let mockRankings: Array<{ keyword: string; score: number }> = []
 
 jest.mock('./useSearchRanking', () => {
   const { ref } = require('vue')
 
   return {
     createSearchRanking: () => ({
-      rankings: ref([]),
+      rankings: ref(mockRankings),
       loading: ref(false),
       error: ref(false),
       lastUpdatedAt: ref(null),
@@ -27,6 +28,7 @@ describe('# Search ranking component', function () {
     jest.useFakeTimers()
     fetchRankings.mockClear()
     unsubscribeSearchRankingChanged.mockClear()
+    mockRankings = []
   })
 
   afterEach(() => {
@@ -39,6 +41,19 @@ describe('# Search ranking component', function () {
     expect(wrapper.get('[data-testid="ranking-study-note"]').text()).toBe(
       '검색창에서 검색한 키워드를 서버가 랭킹 점수로 기록하고, 화면은 30초마다 다시 읽거나 새 검색 성공 이벤트 때 즉시 갱신합니다.'
     )
+
+    wrapper.unmount()
+  })
+
+  it('should label ranking scores as search counts', function () {
+    mockRankings = [
+      { keyword: 'kotlin spring', score: 7 },
+    ]
+
+    const wrapper = mount(SearchRanking)
+
+    expect(wrapper.get('.rank-keyword').text()).toBe('kotlin spring')
+    expect(wrapper.get('.rank-score').text()).toBe('검색 7회')
 
     wrapper.unmount()
   })

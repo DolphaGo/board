@@ -19,7 +19,7 @@
       <li v-for="(item, index) in rankings" :key="item.keyword" class="ranking-item">
         <span class="rank-number">{{ index + 1 }}</span>
         <span class="rank-keyword">{{ item.keyword }}</span>
-        <span class="rank-score">{{ item.score }}</span>
+        <span class="rank-score">검색 {{ item.score }}회</span>
       </li>
     </ol>
     <p v-if="lastUpdatedLabel" class="ranking-updated-at">마지막 갱신 {{ lastUpdatedLabel }}</p>
