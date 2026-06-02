@@ -29,6 +29,14 @@ describe('# Post search service', function () {
               applied: true,
             },
           ],
+          scoreExplanation: {
+            formula: 'final_score = bm25_text_score + function_score_bonus',
+            finalScore: 10.5,
+            appliedSignalCount: 1,
+            totalSignalCount: 1,
+            functionScoreApplied: false,
+            description: 'Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 운영 가산점을 더한 값이다.',
+          },
         },
       ],
     })
@@ -54,6 +62,14 @@ describe('# Post search service', function () {
         applied: true,
       },
     ])
+    expect(results[0].scoreExplanation).toEqual({
+      formula: 'final_score = bm25_text_score + function_score_bonus',
+      finalScore: 10.5,
+      appliedSignalCount: 1,
+      totalSignalCount: 1,
+      functionScoreApplied: false,
+      description: 'Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 운영 가산점을 더한 값이다.',
+    })
   })
 
   it('should ignore hidden post search results when the API returns mixed display states', async function () {
@@ -135,6 +151,32 @@ describe('# Post search service', function () {
               applied: true,
             },
           ],
+        },
+      ],
+    })
+
+    await expect(postSearchService.search('kotlin')).rejects.toThrow('Invalid post search response')
+  })
+
+  it('should reject post search arrays with malformed score explanations', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          postId: 1,
+          title: 'kotlin spring',
+          contentPreview: 'Elasticsearch scoring example',
+          display: true,
+          score: 10.5,
+          highlights: {},
+          scoringSignals: [],
+          scoreExplanation: {
+            formula: 'final_score = bm25',
+            finalScore: '10.5',
+            appliedSignalCount: 1,
+            totalSignalCount: 1,
+            functionScoreApplied: false,
+            description: '점수 설명',
+          },
         },
       ],
     })

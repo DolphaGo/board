@@ -15,6 +15,16 @@ data class PostSearchResult(
     val score: Float,
     val highlights: Map<String, List<String>>,
     val scoringSignals: List<PostSearchScoreSignal> = emptyList(),
+    val scoreExplanation: PostSearchScoreExplanation,
+)
+
+data class PostSearchScoreExplanation(
+    val formula: String,
+    val finalScore: Float,
+    val appliedSignalCount: Int,
+    val totalSignalCount: Int,
+    val functionScoreApplied: Boolean,
+    val description: String,
 )
 
 data class PostSearchScoreSignal(
@@ -133,6 +143,14 @@ class PostSearchService(
             .mapNotNull { hit ->
                 val document = hit.content
                 val postId = document.id ?: return@mapNotNull null
+                val scoringSignals =
+                    createScoringSignals(
+                        keyword = keyword,
+                        syllableKeyword = syllableKeyword,
+                        initialKeyword = initialKeyword,
+                        notice = document.notice,
+                        highlights = hit.highlightFields,
+                    )
                 PostSearchResult(
                     postId = postId,
                     title = document.title,
@@ -140,16 +158,28 @@ class PostSearchService(
                     display = document.display,
                     score = hit.score,
                     highlights = createDisplayHighlights(hit.highlightFields),
-                    scoringSignals =
-                        createScoringSignals(
-                            keyword = keyword,
-                            syllableKeyword = syllableKeyword,
-                            initialKeyword = initialKeyword,
-                            notice = document.notice,
-                            highlights = hit.highlightFields,
-                        ),
+                    scoringSignals = scoringSignals,
+                    scoreExplanation = createScoreExplanation(hit.score, scoringSignals),
                 )
             }
+    }
+
+    private fun createScoreExplanation(
+        finalScore: Float,
+        scoringSignals: List<PostSearchScoreSignal>,
+    ): PostSearchScoreExplanation {
+        val appliedSignals = scoringSignals.filter { it.applied }
+
+        return PostSearchScoreExplanation(
+            formula = "final_score = bm25_text_score + syllable_recall_score + initial_recall_score + function_score_bonus",
+            finalScore = finalScore,
+            appliedSignalCount = appliedSignals.size,
+            totalSignalCount = scoringSignals.size,
+            functionScoreApplied = appliedSignals.any { it.category == "FUNCTION_SCORE" },
+            // 실제 ES explain API 전체 트리를 그대로 노출하면 너무 길고 버전별 차이가 크다.
+            // 학습용 샘플에서는 우리가 구성한 query plan 기준으로 최종 점수의 큰 재료를 먼저 설명한다.
+            description = "Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 음절/초성 recall 신호와 공지 가산점을 더한 값이다.",
+        )
     }
 
     private fun createScoringSignals(

@@ -138,6 +138,17 @@ class PostSearchServiceTest {
             ),
             results.single().scoringSignals,
         )
+        assertEquals(
+            PostSearchScoreExplanation(
+                formula = "final_score = bm25_text_score + syllable_recall_score + initial_recall_score + function_score_bonus",
+                finalScore = 10.5f,
+                appliedSignalCount = 2,
+                totalSignalCount = 7,
+                functionScoreApplied = true,
+                description = "Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 음절/초성 recall 신호와 공지 가산점을 더한 값이다.",
+            ),
+            results.single().scoreExplanation,
+        )
         assertEquals(3, querySlot.captured.pageable.pageSize)
         verify(exactly = 1) { elasticsearchOperations.search(any<NativeQuery>(), PostSearchDocument::class.java) }
     }

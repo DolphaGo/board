@@ -44,6 +44,17 @@
           >
             {{ scoringCategorySummary(result) }}
           </p>
+          <div
+            v-if="result.scoreExplanation"
+            class="score-explanation"
+          >
+            <p data-testid="score-explanation">
+              {{ scoreExplanationSummary(result) }}
+            </p>
+            <p data-testid="score-explanation-description">
+              {{ result.scoreExplanation.description }}
+            </p>
+          </div>
           <ul v-if="result.scoringSignals.length > 0" class="scoring-signal-list">
             <li
               v-for="signal in result.scoringSignals"
@@ -138,6 +149,21 @@ const scoringCategorySummary = (result: PostSearchResult): string => {
   // category는 BM25 원문 점수, 음절/초성 recall, function_score 같은 큰 학습 단위다.
   // 같은 적용 신호라도 어느 계열의 검색 전략이 먹혔는지 묶어 보면 점수 튜닝 방향을 잡기 쉽다.
   return `카테고리: ${summary.length > 0 ? summary : '없음'}`
+}
+
+const scoreExplanationSummary = (result: PostSearchResult): string => {
+  const explanation = result.scoreExplanation
+  if (!explanation) {
+    return ''
+  }
+
+  // scoreExplanation은 ES explain API 원문이 아니라 이 샘플의 검색 query plan을 공부하기 쉽게 요약한 값이다.
+  // 최종 점수, 적용된 signal 수, function_score 가산점 여부를 한 줄에 묶어 결과별 점수 해석의 출발점으로 삼는다.
+  return `점수 공식 ${explanation.formula} · 최종 ${explanation.finalScore.toFixed(2)} · 적용 ${
+    explanation.appliedSignalCount
+  }/${explanation.totalSignalCount}개 · ${
+    explanation.functionScoreApplied ? '공지 가산점 적용' : '공지 가산점 없음'
+  }`
 }
 
 const findSignalByCategory = (category: string) =>
@@ -305,6 +331,24 @@ watch(
   margin: 4px 0 0;
   color: #555555;
   font-size: 12px;
+}
+
+.score-explanation {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid #d8e6ef;
+  background: #f8fbfd;
+  color: #333333;
+  font-size: 12px;
+}
+
+.score-explanation p {
+  margin: 0;
+}
+
+.score-explanation p + p {
+  margin-top: 4px;
+  color: #555555;
 }
 
 .scoring-signal-list {

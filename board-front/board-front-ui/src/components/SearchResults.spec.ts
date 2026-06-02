@@ -166,6 +166,38 @@ describe('# Search results component', () => {
     )
   })
 
+  it('should render the final score formula as a learning explanation', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: 'Elasticsearch score 계산식을 학습용으로 보여준다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [],
+        scoreExplanation: {
+          formula: 'final_score = bm25_text_score + syllable_recall_score + initial_recall_score + function_score_bonus',
+          finalScore: 12.3456,
+          appliedSignalCount: 2,
+          totalSignalCount: 7,
+          functionScoreApplied: true,
+          description: 'Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 음절/초성 recall 신호와 공지 가산점을 더한 값이다.',
+        },
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="score-explanation"]').text()).toBe(
+      '점수 공식 final_score = bm25_text_score + syllable_recall_score + initial_recall_score + function_score_bonus · 최종 12.35 · 적용 2/7개 · 공지 가산점 적용'
+    )
+    expect(wrapper.get('[data-testid="score-explanation-description"]').text()).toBe(
+      'Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 음절/초성 recall 신호와 공지 가산점을 더한 값이다.'
+    )
+  })
+
   it('should label each scoring signal explanation as applied evidence or pending reason', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {

@@ -8,6 +8,16 @@ export interface PostSearchResult {
   score: number
   highlights: Record<string, string[]>
   scoringSignals: PostSearchScoreSignal[]
+  scoreExplanation?: PostSearchScoreExplanation
+}
+
+export interface PostSearchScoreExplanation {
+  formula: string
+  finalScore: number
+  appliedSignalCount: number
+  totalSignalCount: number
+  functionScoreApplied: boolean
+  description: string
 }
 
 export interface PostSearchScoreSignal {
@@ -43,7 +53,27 @@ const isPostSearchResult = (data: unknown): data is PostSearchResult => {
     typeof result.score === 'number' &&
     isHighlightMap(result.highlights) &&
     Array.isArray(result.scoringSignals) &&
-    result.scoringSignals.every(isPostSearchScoreSignal)
+    result.scoringSignals.every(isPostSearchScoreSignal) &&
+    (result.scoreExplanation === undefined || isPostSearchScoreExplanation(result.scoreExplanation))
+}
+
+const isPostSearchScoreExplanation = (data: unknown): data is PostSearchScoreExplanation => {
+  if (typeof data !== 'object' || data === null) {
+    return false
+  }
+
+  const explanation = data as Partial<PostSearchScoreExplanation>
+  return typeof explanation.formula === 'string' &&
+    explanation.formula.trim().length > 0 &&
+    typeof explanation.finalScore === 'number' &&
+    Number.isFinite(explanation.finalScore) &&
+    typeof explanation.appliedSignalCount === 'number' &&
+    Number.isInteger(explanation.appliedSignalCount) &&
+    typeof explanation.totalSignalCount === 'number' &&
+    Number.isInteger(explanation.totalSignalCount) &&
+    typeof explanation.functionScoreApplied === 'boolean' &&
+    typeof explanation.description === 'string' &&
+    explanation.description.trim().length > 0
 }
 
 const isPostSearchScoreSignal = (data: unknown): data is PostSearchScoreSignal => {
