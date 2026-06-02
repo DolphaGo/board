@@ -52,7 +52,11 @@
               <span class="signal-keyword" data-testid="scoring-signal-keyword">
                 검색 토큰: {{ signal.keyword }}
               </span>
-              <span class="signal-description">{{ signal.description }}</span>
+              <span class="signal-description">
+                <span class="signal-study-label" data-testid="scoring-signal-study-label">
+                  {{ scoringSignalStudyLabel(signal) }}
+                </span>: {{ signal.description }}
+              </span>
             </li>
           </ul>
           <ul v-if="highlightCount(result) > 0" class="highlight-list">
@@ -73,7 +77,11 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import MainLayout from './MainLayout.vue'
-import { postSearchService, type PostSearchResult } from 'src/api/postSearchService'
+import {
+  postSearchService,
+  type PostSearchResult,
+  type PostSearchScoreSignal,
+} from 'src/api/postSearchService'
 import { normalizeSearchKeyword } from 'src/search/normalizeSearchKeyword'
 import { collectSearchResultHighlights } from './searchResultHighlights'
 
@@ -93,6 +101,11 @@ const highlightCount = (result: PostSearchResult): number =>
   Object.values(result.highlights).reduce((count, values) => count + values.length, 0)
 
 const highlightSnippets = (result: PostSearchResult) => collectSearchResultHighlights(result.highlights)
+
+const scoringSignalStudyLabel = (signal: PostSearchScoreSignal): string =>
+  // 적용된 signal은 이 문서가 왜 위로 올라왔는지 설명하는 "근거"이고,
+  // 대기 signal은 query plan에는 들어갔지만 이 문서에서는 직접 hit가 잡히지 않은 보조 전략이다.
+  signal.applied ? '적용 근거' : '대기 이유'
 
 const scoringSummary = (result: PostSearchResult): string => {
   const appliedSignals = result.scoringSignals.filter(signal => signal.applied)

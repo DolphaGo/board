@@ -166,6 +166,51 @@ describe('# Search results component', () => {
     )
   })
 
+  it('should label each scoring signal explanation as applied evidence or pending reason', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: 'Elasticsearch score를 게시판 검색에 반영한다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [
+          {
+            field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
+            boost: 3,
+            keyword: 'kotlin',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+          {
+            field: 'titleSyllables',
+            category: 'SYLLABLE_RECALL',
+            label: '제목 음절',
+            boost: 1.5,
+            keyword: 'ㅋ ㅗ ㅌ ㅡ ㄹ ㄹ ㅣ ㄴ',
+            description: '음절 분해 제목 필드는 한글 부분 기억과 오타성 검색을 보조한다.',
+            applied: false,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    const studyLabels = wrapper.findAll('[data-testid="scoring-signal-study-label"]').map(label => label.text())
+    expect(studyLabels).toEqual(['적용 근거', '대기 이유'])
+    expect(wrapper.text()).toContain(
+      '적용 근거: 제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.'
+    )
+    expect(wrapper.text()).toContain(
+      '대기 이유: 음절 분해 제목 필드는 한글 부분 기억과 오타성 검색을 보조한다.'
+    )
+  })
+
   it('should summarize applied scoring signals by category', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {
