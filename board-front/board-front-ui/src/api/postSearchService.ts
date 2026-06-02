@@ -23,6 +23,7 @@ export interface PostSearchScoreExplanation {
 export interface PostSearchScoreSignal {
   field: string
   category: string
+  categoryDescription?: string
   label: string
   boost: number
   keyword: string
@@ -86,6 +87,8 @@ const isPostSearchScoreSignal = (data: unknown): data is PostSearchScoreSignal =
     signal.field.trim().length > 0 &&
     typeof signal.category === 'string' &&
     signal.category.trim().length > 0 &&
+    typeof signal.categoryDescription === 'string' &&
+    signal.categoryDescription.trim().length > 0 &&
     typeof signal.label === 'string' &&
     signal.label.trim().length > 0 &&
     typeof signal.boost === 'number' &&

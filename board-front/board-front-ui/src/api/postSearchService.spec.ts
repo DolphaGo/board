@@ -22,6 +22,7 @@ describe('# Post search service', function () {
             {
               field: 'title',
               category: 'BM25_TEXT',
+              categoryDescription: 'BM25는 제목/본문 원문 일치의 기본 관련도입니다.',
               label: '제목 원문',
               boost: 3,
               keyword: 'kotlin spring',
@@ -55,6 +56,7 @@ describe('# Post search service', function () {
       {
         field: 'title',
         category: 'BM25_TEXT',
+        categoryDescription: 'BM25는 제목/본문 원문 일치의 기본 관련도입니다.',
         label: '제목 원문',
         boost: 3,
         keyword: 'kotlin spring',
@@ -146,6 +148,34 @@ describe('# Post search service', function () {
               category: 'BM25_TEXT',
               label: '제목 원문',
               boost: '3',
+              keyword: 'kotlin spring',
+              description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+              applied: true,
+            },
+          ],
+        },
+      ],
+    })
+
+    await expect(postSearchService.search('kotlin')).rejects.toThrow('Invalid post search response')
+  })
+
+  it('should reject scoring signals without a category description', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          postId: 1,
+          title: 'kotlin spring',
+          contentPreview: 'Elasticsearch scoring example',
+          display: true,
+          score: 10.5,
+          highlights: {},
+          scoringSignals: [
+            {
+              field: 'title',
+              category: 'BM25_TEXT',
+              label: '제목 원문',
+              boost: 3,
               keyword: 'kotlin spring',
               description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
               applied: true,

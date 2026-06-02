@@ -197,6 +197,38 @@ describe('# Search results component', () => {
     ])
   })
 
+  it('should prefer backend category descriptions in the scoring study guide', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: '백엔드가 내려준 category 설명을 학습 가이드에 연결한다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [
+          {
+            field: 'title',
+            category: 'BM25_TEXT',
+            categoryDescription: '서버 설명: BM25는 term frequency와 field length를 함께 보는 원문 관련도다.',
+            label: '제목 원문',
+            boost: 3,
+            keyword: '코프링',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="search-scoring-study-guide-row"]').text()).toContain(
+      '서버 설명: BM25는 term frequency와 field length를 함께 보는 원문 관련도다.'
+    )
+  })
+
   it('should summarize applied count and boost for each scoring study guide category', async () => {
     mockedPostSearchService.search.mockResolvedValue([
       {

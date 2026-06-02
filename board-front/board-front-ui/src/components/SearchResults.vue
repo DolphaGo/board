@@ -342,6 +342,15 @@ const scoringStudyGuideRows = computed<ScoringStudyGuideRow[]>(() => {
       },
       {}
   )
+  const descriptionsByCategory = results.value
+    .flatMap(result => result.scoringSignals)
+    .reduce<Record<string, string>>((descriptions, signal) => {
+      if (signal.categoryDescription && !descriptions[signal.category]) {
+        descriptions[signal.category] = signal.categoryDescription
+      }
+
+      return descriptions
+    }, {})
 
   return scoringStudyGuideDefinitions
     .map((guide, index) => {
@@ -350,6 +359,10 @@ const scoringStudyGuideRows = computed<ScoringStudyGuideRow[]>(() => {
 
       return {
         ...guide,
+        // categoryDescription은 백엔드 query plan이 내려주는 "계열 설명"이다.
+        // 프론트 기본 설명은 Vite fixture나 오래된 목업을 위한 fallback이고,
+        // 실제 API 응답이 있으면 서버 설명을 우선해서 백엔드 scoring 설계와 UI 학습 문구가 어긋나지 않게 한다.
+        description: descriptionsByCategory[guide.category] ?? guide.description,
         index,
         presentInResponse,
         // 같은 학습 설명이라도 현재 응답에 실제 query plan으로 내려온 category인지 구분해야 한다.

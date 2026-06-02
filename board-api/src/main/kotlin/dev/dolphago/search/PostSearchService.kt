@@ -30,6 +30,7 @@ data class PostSearchScoreExplanation(
 data class PostSearchScoreSignal(
     val field: String,
     val category: String,
+    val categoryDescription: String,
     val label: String,
     val boost: Float,
     val keyword: String,
@@ -198,6 +199,7 @@ class PostSearchService(
             PostSearchScoreSignal(
                 field = "title",
                 category = "BM25_TEXT",
+                categoryDescription = categoryDescriptionOf("BM25_TEXT"),
                 label = "제목 원문",
                 boost = TITLE_MATCH_BOOST,
                 keyword = keyword.value,
@@ -207,6 +209,7 @@ class PostSearchService(
             PostSearchScoreSignal(
                 field = "content",
                 category = "BM25_TEXT",
+                categoryDescription = categoryDescriptionOf("BM25_TEXT"),
                 label = "본문 원문",
                 boost = CONTENT_MATCH_BOOST,
                 keyword = keyword.value,
@@ -216,6 +219,7 @@ class PostSearchService(
             PostSearchScoreSignal(
                 field = "titleSyllables",
                 category = "SYLLABLE_RECALL",
+                categoryDescription = categoryDescriptionOf("SYLLABLE_RECALL"),
                 label = "제목 음절",
                 boost = TITLE_SYLLABLE_BOOST,
                 keyword = syllableKeyword,
@@ -225,6 +229,7 @@ class PostSearchService(
             PostSearchScoreSignal(
                 field = "contentSyllables",
                 category = "SYLLABLE_RECALL",
+                categoryDescription = categoryDescriptionOf("SYLLABLE_RECALL"),
                 label = "본문 음절",
                 boost = CONTENT_SYLLABLE_BOOST,
                 keyword = syllableKeyword,
@@ -234,6 +239,7 @@ class PostSearchService(
             PostSearchScoreSignal(
                 field = "titleInitials",
                 category = "INITIAL_RECALL",
+                categoryDescription = categoryDescriptionOf("INITIAL_RECALL"),
                 label = "제목 초성",
                 boost = TITLE_INITIAL_BOOST,
                 keyword = initialKeyword,
@@ -243,6 +249,7 @@ class PostSearchService(
             PostSearchScoreSignal(
                 field = "contentInitials",
                 category = "INITIAL_RECALL",
+                categoryDescription = categoryDescriptionOf("INITIAL_RECALL"),
                 label = "본문 초성",
                 boost = CONTENT_INITIAL_BOOST,
                 keyword = initialKeyword,
@@ -252,6 +259,7 @@ class PostSearchService(
             PostSearchScoreSignal(
                 field = "notice",
                 category = "FUNCTION_SCORE",
+                categoryDescription = categoryDescriptionOf("FUNCTION_SCORE"),
                 label = "공지 가산점",
                 boost = NOTICE_SCORE_WEIGHT.toFloat(),
                 keyword = "notice=true",
@@ -259,6 +267,24 @@ class PostSearchService(
                 applied = notice,
             ),
         )
+
+    private fun categoryDescriptionOf(category: String): String =
+        when (category) {
+            // BM25는 "검색어가 몇 번 나왔는가"만 보지 않는다.
+            // 같은 단어가 짧은 제목에 나오면 긴 본문에 한 번 나온 것보다 더 강한 신호가 될 수 있어,
+            // title/content 원문 match를 검색 결과의 기본 관련도 계열로 묶는다.
+            "BM25_TEXT" -> "BM25는 제목/본문 원문 일치의 기본 관련도입니다."
+            // 음절 recall은 사용자가 한글을 완성형 단어로 정확히 기억하지 못할 때를 위한 보조 계열이다.
+            // 예를 들어 코프링을 자모 단위로 풀어 색인하면 부분 기억과 일부 오타를 더 넓게 받아낼 수 있다.
+            "SYLLABLE_RECALL" -> "음절 recall은 ㅋㅗ처럼 자모로 쪼갠 입력을 보조합니다."
+            // 초성 recall은 빠르게 ㅋㅍㄹ처럼 입력하는 게시판 검색 습관을 보조한다.
+            // 초성은 충돌이 많기 때문에 원문 BM25보다 낮은 boost로만 점수에 참여시킨다.
+            "INITIAL_RECALL" -> "초성 recall은 ㅋㅍㄹ처럼 빠르게 입력한 초성 검색을 보조합니다."
+            // function_score는 텍스트 관련도 밖의 운영 신호를 더할 때 사용한다.
+            // 이 샘플에서는 공지글을 검색 결과에서도 조금 더 잘 보이게 하되, BM25 관련도를 대체하지 않도록 sum으로 더한다.
+            "FUNCTION_SCORE" -> "function_score는 공지 같은 운영 신호를 작은 가산점으로 더합니다."
+            else -> "알 수 없는 검색 점수 계열입니다."
+        }
 
     private fun createContentPreview(content: String): String =
         createDisplayText(content)
