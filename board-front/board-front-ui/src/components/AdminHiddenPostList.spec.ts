@@ -5,6 +5,7 @@ import AdminHiddenPostList from './AdminHiddenPostList.vue'
 jest.mock('src/api/postService', () => ({
   postService: {
     listHiddenPosts: jest.fn(),
+    restorePost: jest.fn(),
   },
 }))
 
@@ -16,6 +17,10 @@ const routerLinkStub = {
 }
 
 describe('# Admin hidden post list component', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
   it('should render hidden posts as admin recovery candidates', async () => {
     mockedPostService.listHiddenPosts.mockResolvedValue([
       {
@@ -55,6 +60,50 @@ describe('# Admin hidden post list component', () => {
     expect(row.get('.meta-row').text()).toContain('2026.06.02')
     expect(row.get('.meta-row').text()).toContain('댓글 2')
     expect(row.get('.meta-row').text()).toContain('추천 5')
+  })
+
+  it('should restore a hidden post from the list and remove the row', async () => {
+    mockedPostService.listHiddenPosts.mockResolvedValue([
+      {
+        id: 10,
+        title: '숨김 게시글',
+        content: '관리자가 복구할 대상',
+        imageUrls: [],
+        viewCount: 3,
+        display: false,
+        notice: false,
+        authorNickname: 'writer',
+        createdAt: '2026-06-02T04:00:00',
+        commentCount: 2,
+        recommendCount: 5,
+      },
+    ])
+    mockedPostService.restorePost.mockResolvedValue({
+      id: 10,
+      title: '숨김 게시글',
+      content: '관리자가 복구할 대상',
+      imageUrls: [],
+      viewCount: 3,
+      display: true,
+      notice: false,
+    })
+
+    const wrapper = mount(AdminHiddenPostList, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+    await flushPromises()
+
+    await wrapper.get('[data-testid="restore-hidden-post"]').trigger('click')
+    await flushPromises()
+
+    expect(mockedPostService.restorePost).toBeCalledWith(10)
+    expect(wrapper.find('.board-row').exists()).toBe(false)
+    expect(wrapper.get('.board-message').text()).toBe('숨김 게시글이 없습니다.')
+    expect(wrapper.get('.action-message').text()).toBe('게시글을 복구했습니다.')
   })
 
   it('should render an empty message when there are no hidden posts', async () => {
