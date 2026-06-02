@@ -321,6 +321,56 @@ describe('# Search results component', () => {
     )
   })
 
+  it('should show whether each analyzed search token family contributed to ranking', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: '적용된 토큰 계열과 대기 토큰 계열을 함께 설명한다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [
+          {
+            field: 'title',
+            category: 'BM25_TEXT',
+            label: '제목 원문',
+            boost: 3,
+            keyword: '코프링',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+          {
+            field: 'titleSyllables',
+            category: 'SYLLABLE_RECALL',
+            label: '제목 음절',
+            boost: 1.5,
+            keyword: 'ㅋ ㅗ ㅍ ㅡ ㄹ ㅣ ㅇ',
+            description: '음절 분해 제목 필드는 한글 부분 기억과 오타성 검색을 보조한다.',
+            applied: false,
+          },
+          {
+            field: 'titleInitials',
+            category: 'INITIAL_RECALL',
+            label: '제목 초성',
+            boost: 1,
+            keyword: 'ㅋ ㅍ ㄹ',
+            description: '제목 초성 필드는 ㅋㅌㄹ 같은 초성 입력을 위한 보조 신호다.',
+            applied: true,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    const analysisText = wrapper.get('[data-testid="search-token-analysis"]').text()
+    expect(analysisText).toContain('원문/BM25: 코프링 · 적용')
+    expect(analysisText).toContain('음절 토큰: ㅋ ㅗ ㅍ ㅡ ㄹ ㅣ ㅇ · 대기')
+    expect(analysisText).toContain('초성 토큰: ㅋ ㅍ ㄹ · 적용')
+  })
+
   it('should clear failed search state when keyword becomes empty', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 

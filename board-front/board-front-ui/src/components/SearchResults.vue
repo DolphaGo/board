@@ -18,7 +18,7 @@
       >
         <template v-for="row in searchTokenAnalysisRows" :key="row.label">
           <dt>{{ row.label }}</dt>
-          <dd>: {{ row.keyword }}</dd>
+          <dd>: {{ row.keyword }} · {{ row.applied ? '적용' : '대기' }}</dd>
         </template>
       </dl>
 
@@ -122,20 +122,28 @@ const scoringCategorySummary = (result: PostSearchResult): string => {
   return `카테고리: ${summary.length > 0 ? summary : '없음'}`
 }
 
-const findSignalKeyword = (category: string): string | undefined =>
+const findSignalByCategory = (category: string) =>
   results.value
     .flatMap(result => result.scoringSignals)
-    .find(signal => signal.category === category)?.keyword
+    .find(signal => signal.category === category)
 
 const searchTokenAnalysisRows = computed(() => {
   const rows = [
-    { label: '원문/BM25', keyword: findSignalKeyword('BM25_TEXT') },
-    { label: '음절 토큰', keyword: findSignalKeyword('SYLLABLE_RECALL') },
-    { label: '초성 토큰', keyword: findSignalKeyword('INITIAL_RECALL') },
-  ].filter((row): row is { label: string; keyword: string } => Boolean(row.keyword))
+    { label: '원문/BM25', signal: findSignalByCategory('BM25_TEXT') },
+    { label: '음절 토큰', signal: findSignalByCategory('SYLLABLE_RECALL') },
+    { label: '초성 토큰', signal: findSignalByCategory('INITIAL_RECALL') },
+  ].flatMap(row =>
+    row.signal?.keyword
+      ? [{
+          label: row.label,
+          keyword: row.signal.keyword,
+          applied: row.signal.applied,
+        }]
+      : []
+  )
 
   // 이 요약은 ES가 실제로 받은 "원문 query + 음절 보조 query + 초성 보조 query"를 한눈에 보여주는 학습용 패널이다.
-  // 결과별 signal 목록은 자세한 query plan이고, 여기서는 검색어가 어떤 recall 계열로 확장됐는지만 압축한다.
+  // 결과별 signal 목록은 자세한 query plan이고, 여기서는 검색어가 어떤 recall 계열로 확장되고 실제 기여했는지만 압축한다.
   return rows
 })
 
