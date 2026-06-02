@@ -21,6 +21,8 @@ export interface PostResponse {
   viewCount: number
   display: boolean
   notice: boolean
+  authorNickname?: string
+  createdAt?: string
 }
 
 export interface PostListItemResponse extends PostResponse {
@@ -61,7 +63,9 @@ const isPostResponse = (data: unknown): data is PostResponse => {
     post.imageUrls.every(imageUrl => typeof imageUrl === 'string' && imageUrl.trim().length > 0) &&
     typeof post.viewCount === 'number' &&
     typeof post.display === 'boolean' &&
-    typeof post.notice === 'boolean'
+    typeof post.notice === 'boolean' &&
+    (post.authorNickname === undefined || typeof post.authorNickname === 'string') &&
+    (post.createdAt === undefined || typeof post.createdAt === 'string')
 }
 
 const isPostListItemResponse = (data: unknown): data is PostListItemResponse => {

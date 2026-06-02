@@ -18,7 +18,11 @@
             loading="lazy"
           />
         </div>
-        <p class="post-meta">조회수 {{ post.viewCount }}</p>
+        <p class="post-meta">
+          <span v-if="post.authorNickname">{{ post.authorNickname }}</span>
+          <span v-if="post.createdAt">{{ formatCreatedAt(post.createdAt) }}</span>
+          <span>조회수 {{ post.viewCount }}</span>
+        </p>
 
         <div class="post-actions" aria-label="게시글 액션">
           <button
@@ -296,6 +300,9 @@ const restorePost = async () => {
 }
 
 .post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   color: #777777;
   font-size: 13px;
 }

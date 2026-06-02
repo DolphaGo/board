@@ -65,6 +65,8 @@ class PostControllerTest {
                 viewCount = 0,
                 display = true,
                 notice = false,
+                authorNickname = "writer",
+                createdAt = savedPost.createDate,
             ),
             response.body,
         )
@@ -126,6 +128,8 @@ class PostControllerTest {
                 viewCount = 0,
                 display = true,
                 notice = true,
+                authorNickname = "admin",
+                createdAt = savedPost.createDate,
             ),
             response.body,
         )
@@ -170,6 +174,8 @@ class PostControllerTest {
                 viewCount = 3,
                 display = true,
                 notice = false,
+                authorNickname = "writer",
+                createdAt = post.createDate,
             ),
             response.body,
         )
@@ -402,6 +408,8 @@ class PostControllerTest {
                 viewCount = 3,
                 display = false,
                 notice = false,
+                authorNickname = "writer",
+                createdAt = hiddenPost.createDate,
             ),
             response.body,
         )
@@ -453,6 +461,8 @@ class PostControllerTest {
                 viewCount = 3,
                 display = true,
                 notice = false,
+                authorNickname = "writer",
+                createdAt = restoredPost.createDate,
             ),
             response.body,
         )

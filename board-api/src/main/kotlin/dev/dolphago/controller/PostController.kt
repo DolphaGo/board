@@ -172,6 +172,8 @@ data class PostResponse(
     val viewCount: Long,
     val display: Boolean,
     val notice: Boolean,
+    val authorNickname: String,
+    val createdAt: LocalDateTime,
 )
 
 data class PostListItemResponse(
@@ -215,6 +217,8 @@ private fun Post.toResponse(): PostResponse =
         viewCount = viewCount,
         display = display,
         notice = notice,
+        authorNickname = member.nickname,
+        createdAt = createDate,
     )
 
 private fun PostListItem.toListItemResponse(): PostListItemResponse =
