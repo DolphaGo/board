@@ -14,6 +14,7 @@ import org.springframework.data.elasticsearch.core.TotalHitsRelation
 import java.time.Duration
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class PostSearchServiceTest {
@@ -205,6 +206,20 @@ class PostSearchServiceTest {
         val result = postSearchService.search("코프링", 10).single()
 
         assertTrue(result.scoreExplanation.description.contains("이번 결과 적용 계열: 음절 recall, 초성 recall."))
+    }
+
+    @Test
+    fun `게시글 검색 점수 설명은 적용 signal 수가 전체 signal 수보다 클 수 없다`() {
+        assertFailsWith<IllegalArgumentException> {
+            PostSearchScoreExplanation(
+                formula = "final_score = bm25_text_score",
+                finalScore = 10.5f,
+                appliedSignalCount = 2,
+                totalSignalCount = 1,
+                functionScoreApplied = false,
+                description = "적용 signal 수가 전체 signal 수보다 크면 학습용 점수 설명으로 신뢰할 수 없다.",
+            )
+        }
     }
 
     @Test

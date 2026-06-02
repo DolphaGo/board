@@ -25,7 +25,17 @@ data class PostSearchScoreExplanation(
     val totalSignalCount: Int,
     val functionScoreApplied: Boolean,
     val description: String,
-)
+) {
+    init {
+        require(appliedSignalCount >= 0) { "적용 signal 수는 0 이상이어야 합니다." }
+        require(totalSignalCount >= 0) { "전체 signal 수는 0 이상이어야 합니다." }
+        // 이 DTO는 프론트가 그대로 "적용 n/m개"로 렌더링하는 학습용 계약이다.
+        // 여기서 의미적으로 불가능한 값을 막아야 UI와 API 문서가 서로 다른 설명을 하지 않는다.
+        require(appliedSignalCount <= totalSignalCount) {
+            "적용 signal 수는 전체 signal 수보다 클 수 없습니다."
+        }
+    }
+}
 
 data class PostSearchScoreSignal(
     val field: String,
