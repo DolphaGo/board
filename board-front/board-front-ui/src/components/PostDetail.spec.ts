@@ -204,6 +204,31 @@ describe('# Post detail component', () => {
     )
   })
 
+  it('should explain paragraph placement for custom alt markdown body images', async () => {
+    mockedPostService.getPost.mockResolvedValue({
+      id: 10,
+      title: 'custom alt 이미지 본문',
+      content:
+        '첫 문단\n\n' +
+        '![대표 사진](https://cdn.example.com/hero.png)\n' +
+        '둘째 문단',
+      imageUrls: ['https://cdn.example.com/hero.png'],
+      viewCount: 3,
+      display: true,
+      notice: false,
+    })
+    mockedPostService.listComments.mockResolvedValue([])
+
+    const wrapper = mount(PostDetail)
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="post-content"] img').attributes('alt')).toBe('대표 사진')
+    expect(wrapper.find('.post-image-list').exists()).toBe(false)
+    expect(wrapper.get('[data-testid="post-image-flow-row"]').text()).toBe(
+      '1. 본문 Markdown: 첨부 이미지 1은 글 흐름 위치에 렌더링되어 하단 첨부 목록에서 숨깁니다. 배치: 1번째 문단 뒤.'
+    )
+  })
+
   it('should remove unsafe html from rendered markdown content', async () => {
     mockedPostService.getPost.mockResolvedValue({
       id: 10,

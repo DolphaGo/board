@@ -142,12 +142,15 @@ const isImageUrlInBody = (imageUrl: string) => post.value?.content.includes(`]($
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const createImageMarkdownPattern = (imageUrl: string) =>
+  new RegExp(`!\\[[^\\]]*\\]\\(${escapeRegExp(imageUrl)}\\)`);
+
 const imagePlacementLabel = (imageUrl: string): string => {
   if (!post.value) {
     return '본문 밖';
   }
 
-  const markdownPattern = new RegExp(`!\\[첨부 이미지 \\d+\\]\\(${escapeRegExp(imageUrl)}\\)`);
+  const markdownPattern = createImageMarkdownPattern(imageUrl);
   const match = markdownPattern.exec(post.value.content);
 
   if (!match) {
