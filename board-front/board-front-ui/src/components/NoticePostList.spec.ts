@@ -50,6 +50,8 @@ describe('# Notice post list component', () => {
     expect(row.get('.notice-badge').text()).toBe('공지')
     expect(row.get('.board-title-text').text()).toBe('점검 공지')
     expect(row.get('.board-title-link').attributes('data-to')).toBe('/post/10')
+    expect(row.get('[data-testid="notice-admin-detail-link"]').attributes('data-to')).toBe('/post/10?role=admin')
+    expect(row.get('[data-testid="notice-admin-detail-link"]').text()).toBe('관리자 보기')
     expect(row.get('.post-preview').text()).toBe('서비스 점검 시간 안내')
     expect(row.get('.meta-row').text()).toContain('admin')
     expect(row.get('.meta-row').text()).toContain('2026.06.02')

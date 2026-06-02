@@ -15,6 +15,15 @@
           <span class="notice-badge">공지</span>
           <span class="board-title-text">{{ post.title }}</span>
         </router-link>
+        <!-- 공지도 일반 글과 같은 상세/숨김 API를 사용한다.
+             학습용 관리자 진입은 role=admin query로 연결해 상세 화면에서 숨김 버튼까지 바로 확인할 수 있게 한다. -->
+        <router-link
+          class="notice-admin-link"
+          data-testid="notice-admin-detail-link"
+          :to="`/post/${post.id}?role=admin`"
+        >
+          관리자 보기
+        </router-link>
         <p class="post-preview">{{ post.content }}</p>
         <div class="meta-row">
           <span>{{ post.authorNickname }}</span>
@@ -116,6 +125,19 @@ onMounted(fetchNoticePosts)
 }
 
 .board-title-link:hover {
+  color: #057dbc;
+}
+
+.notice-admin-link {
+  display: inline-block;
+  margin-left: 8px;
+  color: #555555;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.notice-admin-link:hover {
   color: #057dbc;
 }
 
