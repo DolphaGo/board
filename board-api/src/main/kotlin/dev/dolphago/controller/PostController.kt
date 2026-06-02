@@ -3,6 +3,7 @@ package dev.dolphago.controller
 import dev.dolphago.mysql.Comment
 import dev.dolphago.mysql.Post
 import dev.dolphago.mysql.PostRecommend
+import dev.dolphago.service.PostDetailItem
 import dev.dolphago.service.PostListItem
 import dev.dolphago.service.PostService
 import org.springframework.http.ResponseEntity
@@ -44,7 +45,7 @@ class PostController(
     @GetMapping("/{id}")
     fun getPost(
         @PathVariable id: Long,
-    ): ResponseEntity<PostResponse> = ResponseEntity.ok(postService.getPost(id).toResponse())
+    ): ResponseEntity<PostResponse> = ResponseEntity.ok(postService.getPostDetail(id).toResponse())
 
     @GetMapping("/{id}/comments")
     fun listComments(
@@ -174,6 +175,8 @@ data class PostResponse(
     val notice: Boolean,
     val authorNickname: String,
     val createdAt: LocalDateTime,
+    val commentCount: Long = 0,
+    val recommendCount: Long = 0,
 )
 
 data class PostListItemResponse(
@@ -223,6 +226,21 @@ private fun Post.toResponse(): PostResponse =
 
 private fun PostListItem.toListItemResponse(): PostListItemResponse =
     PostListItemResponse(
+        id = post.id,
+        title = post.title,
+        content = post.content,
+        imageUrls = post.imageUrls,
+        viewCount = post.viewCount,
+        display = post.display,
+        notice = post.notice,
+        authorNickname = post.member.nickname,
+        createdAt = post.createDate,
+        commentCount = commentCount,
+        recommendCount = recommendCount,
+    )
+
+private fun PostDetailItem.toResponse(): PostResponse =
+    PostResponse(
         id = post.id,
         title = post.title,
         content = post.content,

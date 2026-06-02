@@ -23,6 +23,7 @@
           <span v-if="post.createdAt">{{ formatCreatedAt(post.createdAt) }}</span>
           <span>조회수 {{ post.viewCount }}</span>
           <span>댓글 {{ comments.length }}</span>
+          <span>추천 {{ detailRecommendCount }}</span>
         </p>
 
         <div class="post-actions" aria-label="게시글 액션">
@@ -125,6 +126,7 @@ const actionError = ref('');
 const comments = ref<CommentResponse[]>([]);
 
 const isAdminViewer = computed(() => props.authorRole === 'admin');
+const detailRecommendCount = computed(() => post.value?.recommendCount ?? 0);
 
 const renderedPostContent = computed(() => {
   if (!post.value?.display) {
@@ -230,11 +232,17 @@ const submitRecommend = async () => {
 
   try {
     actionError.value = '';
-    // 추천 수 증가는 목록 메타 API에서 다시 읽는다.
-    // 여기서는 사용자가 클릭 결과를 알 수 있도록 성공 메시지만 표시한다.
     await postService.createRecommend(id);
+    if (post.value) {
+      // 상세 API가 내려준 recommendCount는 현재 화면의 기준값이다.
+      // 추천 성공 직후에는 같은 게시글을 다시 조회하지 않고 로컬 값만 1 올려 버튼 피드백과 메타 수치를 함께 맞춘다.
+      post.value = {
+        ...post.value,
+        recommendCount: detailRecommendCount.value + 1,
+      };
+    }
     // 백엔드도 같은 회원의 중복 추천을 막지만, 성공 직후 버튼을 닫아 두면 사용자가 같은 액션을 반복 전송하지 않는다.
-    // 추천 수를 서버에서 다시 내려받는 계약이 붙기 전까지는 "완료" 상태가 가장 단순한 즉시 피드백이다.
+    // 버튼 상태와 카운트 갱신을 같이 처리해야 클릭 결과가 게시판 메타에 바로 드러난다.
     recommendSubmitted.value = true;
     recommendMessage.value = '추천을 반영했습니다.';
   } catch (err) {

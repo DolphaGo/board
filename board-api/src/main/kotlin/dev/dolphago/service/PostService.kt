@@ -36,6 +36,19 @@ class PostService(
         return post
     }
 
+    fun getPostDetail(postId: Long): PostDetailItem {
+        val post = getPost(postId)
+        val resolvedPostId = post.id ?: postId
+
+        // 상세 화면의 댓글/추천 수는 목록과 같은 display=true 기준을 쓴다.
+        // 본문과 메타 수치가 같은 저장소 기준으로 묶여야 목록에서 들어온 사용자가 다른 숫자를 보지 않는다.
+        return PostDetailItem(
+            post = post,
+            commentCount = commentRepository.countByPostIdAndDisplayTrue(resolvedPostId),
+            recommendCount = postRecommendRepository.countByPostIdAndDisplayTrue(resolvedPostId),
+        )
+    }
+
     fun listPosts(): List<PostListItem> {
         // 목록은 게시판 첫 화면을 빠르게 그리는 용도다.
         // 상세 조회와 달리 "읽었다"는 사용자 행위가 아니므로 조회수를 올리지 않는다.
@@ -249,6 +262,12 @@ class PostService(
 }
 
 data class PostListItem(
+    val post: Post,
+    val commentCount: Long,
+    val recommendCount: Long,
+)
+
+data class PostDetailItem(
     val post: Post,
     val commentCount: Long,
     val recommendCount: Long,

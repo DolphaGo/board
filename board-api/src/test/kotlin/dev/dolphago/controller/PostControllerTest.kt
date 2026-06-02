@@ -5,6 +5,7 @@ import dev.dolphago.mysql.Comment
 import dev.dolphago.mysql.Member
 import dev.dolphago.mysql.Post
 import dev.dolphago.mysql.PostRecommend
+import dev.dolphago.service.PostDetailItem
 import dev.dolphago.service.PostListItem
 import dev.dolphago.service.PostService
 import io.mockk.every
@@ -144,7 +145,7 @@ class PostControllerTest {
     }
 
     @Test
-    fun `게시글 단건 조회는 응답 DTO를 반환한다`() {
+    fun `게시글 단건 조회는 응답 DTO와 상세 메타를 반환한다`() {
         val author =
             Member(
                 id = 1L,
@@ -161,7 +162,12 @@ class PostControllerTest {
                 viewCount = 3,
                 display = true,
             )
-        every { postService.getPost(10L) } returns post
+        every { postService.getPostDetail(10L) } returns
+            PostDetailItem(
+                post = post,
+                commentCount = 2,
+                recommendCount = 5,
+            )
 
         val response = controller.getPost(10L)
 
@@ -176,10 +182,12 @@ class PostControllerTest {
                 notice = false,
                 authorNickname = "writer",
                 createdAt = post.createDate,
+                commentCount = 2,
+                recommendCount = 5,
             ),
             response.body,
         )
-        verify(exactly = 1) { postService.getPost(10L) }
+        verify(exactly = 1) { postService.getPostDetail(10L) }
     }
 
     @Test

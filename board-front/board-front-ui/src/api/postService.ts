@@ -23,6 +23,8 @@ export interface PostResponse {
   notice: boolean
   authorNickname?: string
   createdAt?: string
+  commentCount?: number
+  recommendCount?: number
 }
 
 export interface PostListItemResponse extends PostResponse {
@@ -65,7 +67,9 @@ const isPostResponse = (data: unknown): data is PostResponse => {
     typeof post.display === 'boolean' &&
     typeof post.notice === 'boolean' &&
     (post.authorNickname === undefined || typeof post.authorNickname === 'string') &&
-    (post.createdAt === undefined || typeof post.createdAt === 'string')
+    (post.createdAt === undefined || typeof post.createdAt === 'string') &&
+    (post.commentCount === undefined || typeof post.commentCount === 'number') &&
+    (post.recommendCount === undefined || typeof post.recommendCount === 'number')
 }
 
 const isPostListItemResponse = (data: unknown): data is PostListItemResponse => {

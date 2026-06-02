@@ -536,6 +536,39 @@ class PostServiceTest {
     }
 
     @Test
+    fun `게시글 단건 상세 조회는 노출 댓글 수와 추천 수를 함께 반환한다`() {
+        val author =
+            Member(
+                id = 1L,
+                email = "writer@example.com",
+                nickname = "writer",
+                role = Authority.ROLE_USER,
+            )
+        val post =
+            Post(
+                id = 10L,
+                member = author,
+                title = "코프링 검색 게시글",
+                content = "상세 화면에서 보여줄 본문",
+                viewCount = 3,
+                display = true,
+            )
+        every { postRepository.findById(10L) } returns Optional.of(post)
+        every { commentRepository.countByPostIdAndDisplayTrue(10L) } returns 2L
+        every { postRecommendRepository.countByPostIdAndDisplayTrue(10L) } returns 5L
+
+        val detail = postService.getPostDetail(10L)
+
+        assertEquals(post, detail.post)
+        assertEquals(4L, detail.post.viewCount)
+        assertEquals(2L, detail.commentCount)
+        assertEquals(5L, detail.recommendCount)
+        verify(exactly = 1) { postRepository.findById(10L) }
+        verify(exactly = 1) { commentRepository.countByPostIdAndDisplayTrue(10L) }
+        verify(exactly = 1) { postRecommendRepository.countByPostIdAndDisplayTrue(10L) }
+    }
+
+    @Test
     fun `목록 조회는 공지를 먼저 읽고 같은 그룹에서는 최신순으로 읽는다`() {
         val author =
             Member(
