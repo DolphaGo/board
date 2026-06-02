@@ -26,11 +26,13 @@
         v-for="room in rooms"
         :key="room.id"
         class="room-item"
+        :class="{ 'room-item-full': isRoomFull(room) }"
         role="button"
         tabindex="0"
-        @click="enterRoom(room.id)"
-        @keyup.enter="enterRoom(room.id)"
-        @keyup.space="enterRoom(room.id)"
+        :aria-disabled="isRoomFull(room)"
+        @click="enterRoom(room)"
+        @keyup.enter="enterRoom(room)"
+        @keyup.space="enterRoom(room)"
       >
         <div class="room-info">
           <h3>{{ room.name }}</h3>
@@ -38,7 +40,8 @@
           <p class="created-at">{{ formatDate(room.createdAt) }}</p>
         </div>
         <div class="room-action">
-          <span class="enter-icon">→</span>
+          <span v-if="isRoomFull(room)" class="room-status">정원 마감</span>
+          <span v-else class="enter-icon">→</span>
         </div>
       </div>
     </div>
@@ -114,14 +117,23 @@ export default defineComponent({
       }
     }
 
-    const enterRoom = async (roomId: string) => {
+    const isRoomFull = (room: ChatRoom) => room.participantCount >= room.maxParticipants
+
+    const enterRoom = async (room: ChatRoom) => {
+      if (isRoomFull(room)) {
+        // 서버도 정원을 다시 검사하지만, 목록에서 이미 꽉 찬 방은 프론트에서 먼저 막아 불필요한 요청을 줄인다.
+        // 공부 포인트: 프론트 검증은 사용자 경험용이고, 실제 보안/정합성은 백엔드 검증이 최종 책임진다.
+        feedbackMessage.value = '정원이 가득 찬 채팅방입니다.'
+        return
+      }
+
       try {
         feedbackMessage.value = ''
-        await chatService.joinRoom(roomId)
+        await chatService.joinRoom(room.id)
         // 로그인 기능이 붙기 전까지는 학습용 사용자명을 query로 넘겨 ChatRoom의 sender 흐름을 눈에 보이게 둔다.
         // 이후 회원 세션을 붙이면 이 값은 로그인 사용자 닉네임이나 프로필명으로 교체한다.
         router.push({
-          path: `/chat/rooms/${roomId}`,
+          path: `/chat/rooms/${room.id}`,
           query: { username: STUDY_CHAT_USERNAME },
         })
       } catch (err) {
@@ -164,7 +176,7 @@ export default defineComponent({
           maxParticipants: newRoomMaxParticipants.value,
         })
         const newRoom = await chatService.createRoom(request.name, request.options)
-        await enterRoom(newRoom.id)
+        await enterRoom(newRoom)
       } catch (err) {
         console.error('채팅방 생성 실패:', err)
         feedbackMessage.value = buildChatRoomActionErrorMessage('create')
@@ -197,6 +209,7 @@ export default defineComponent({
       feedbackMessage,
       fetchRooms,
       enterRoom,
+      isRoomFull,
       openCreateRoomDialog,
       closeCreateRoomDialog,
       createRoom,
@@ -281,6 +294,16 @@ export default defineComponent({
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.room-item-full {
+  cursor: not-allowed;
+  background-color: #fafafa;
+}
+
+.room-item-full:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .room-info h3 {
   margin: 0 0 8px 0;
   font-size: 1.1em;
@@ -301,6 +324,16 @@ export default defineComponent({
 .enter-icon {
   font-size: 1.5em;
   color: #4CAF50;
+}
+
+.room-status {
+  padding: 4px 8px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background-color: #f1f1f1;
+  color: #666;
+  font-size: 0.85em;
+  font-weight: bold;
 }
 
 .dialog-overlay {

@@ -127,6 +127,27 @@ describe('# Chat room list component', () => {
     expect(wrapper.get('.participant-count').text()).toBe('참여자: 3/20명')
   })
 
+  it('should block entering a full room from the room list', async () => {
+    mockedChatService.getRoomList.mockResolvedValue([
+      chatRoomFixture({
+        participantCount: 20,
+        maxParticipants: 20,
+      }),
+    ])
+
+    const wrapper = mount(ChatRoomList)
+    await flushPromises()
+
+    expect(wrapper.get('.room-status').text()).toBe('정원 마감')
+
+    await wrapper.get('.room-item').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('.action-feedback').text()).toBe('정원이 가득 찬 채팅방입니다.')
+    expect(mockedChatService.joinRoom).not.toHaveBeenCalled()
+    expect(pushMock).not.toHaveBeenCalled()
+  })
+
   it('should enter the room with the Space key from a room item', async () => {
     mockedChatService.getRoomList.mockResolvedValue([
       chatRoomFixture({
