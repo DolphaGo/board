@@ -2,6 +2,11 @@ import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import {resolve} from "path";
 import analyzer from "rollup-plugin-analyzer";
+import {
+  createLocalPostCommentsFixture,
+  createLocalPostFixture,
+  parseLocalPostRequestPath,
+} from "./src/api/localPostFixture";
 import {createPostSearchFixture} from "./src/api/postSearchFixture";
 import {createSearchRankingFixture} from "./src/api/searchRankingFixture";
 
@@ -57,17 +62,19 @@ export default defineConfig({
         })
         server.middlewares.use('/api/posts', (req, res, next) => {
           if (req.method === 'GET') {
-            const postId = (req.url ?? '').replace(/^\//, '') || '999'
+            const localPostRequest = parseLocalPostRequestPath(req.url ?? '')
+
+            if (localPostRequest.kind === 'comments') {
+              // 상세 화면은 게시글과 댓글을 Promise.all로 함께 읽는다.
+              // 댓글 경로까지 배열 DTO로 맞춰야 Vite 단독 학습 모드에서 API 검증 오류 없이 작성 완료 흐름을 확인할 수 있다.
+              res.setHeader('Content-Type', 'application/json; charset=utf-8')
+              res.end(JSON.stringify(createLocalPostCommentsFixture()))
+              return
+            }
 
             // 상세 화면도 board-api 없이 확인할 수 있게 작성 fixture와 같은 형태를 돌려준다.
             res.setHeader('Content-Type', 'application/json; charset=utf-8')
-            res.end(JSON.stringify({
-              id: Number(postId),
-              title: `local fixture post #${postId}`,
-              content: 'created by vite fixture',
-              viewCount: 0,
-              display: true,
-            }))
+            res.end(JSON.stringify(createLocalPostFixture(localPostRequest.postId)))
             return
           }
 
@@ -79,13 +86,7 @@ export default defineConfig({
           // local Vite 단독 실행에서는 board-api가 없으므로 작성 성공 흐름만 재현한다.
           // 실제 DB 저장과 ES 색인은 Spring API의 PostService가 담당한다.
           res.setHeader('Content-Type', 'application/json; charset=utf-8')
-          res.end(JSON.stringify({
-            id: 999,
-            title: 'local fixture post',
-            content: 'created by vite fixture',
-            viewCount: 0,
-            display: true,
-          }))
+          res.end(JSON.stringify(createLocalPostFixture()))
         })
       },
     },
