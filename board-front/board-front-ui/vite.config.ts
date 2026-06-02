@@ -3,6 +3,11 @@ import vue from '@vitejs/plugin-vue'
 import {resolve} from "path";
 import analyzer from "rollup-plugin-analyzer";
 import {
+  createLocalChatRoomFixture,
+  createLocalChatRoomsFixture,
+  parseLocalChatRoomsRequestPath,
+} from "./src/api/localChatFixture";
+import {
   createLocalHiddenPostsFixture,
   createLocalNoticePostsFixture,
   createLocalPostCommentsFixture,
@@ -75,6 +80,39 @@ export default defineConfig({
           // 프론트만 실행해도 우측 실시간 검색어 영역이 API fallback HTML을 받지 않게 한다.
           res.setHeader('Content-Type', 'application/json; charset=utf-8')
           res.end(JSON.stringify(createSearchRankingFixture(limit)))
+        })
+        server.middlewares.use('/api/chat/rooms', (req, res, next) => {
+          if (req.method === 'GET') {
+            const localChatRequest = parseLocalChatRoomsRequestPath(req.url ?? '')
+
+            // 채팅 REST fixture는 WebSocket/STOMP를 대체하지 않는다.
+            // 대신 Vite만 띄운 학습 모드에서 목록, 상세, 정원 표시, 입장 버튼의 REST 전제조건을 확인하게 해준다.
+            res.setHeader('Content-Type', 'application/json; charset=utf-8')
+            res.end(JSON.stringify(
+              localChatRequest.kind === 'list'
+                ? createLocalChatRoomsFixture()
+                : createLocalChatRoomFixture(localChatRequest.roomId),
+            ))
+            return
+          }
+
+          if (req.method === 'POST') {
+            const localChatRequest = parseLocalChatRoomsRequestPath(req.url ?? '')
+
+            if (localChatRequest.kind === 'join' || localChatRequest.kind === 'leave') {
+              res.statusCode = 204
+              res.end()
+              return
+            }
+
+            // 방 생성 API는 생성된 방 DTO를 바로 반환한다.
+            // 요청 body 파싱은 실제 Spring API 책임으로 두고, local fixture는 생성 후 입장 흐름만 재현한다.
+            res.setHeader('Content-Type', 'application/json; charset=utf-8')
+            res.end(JSON.stringify(createLocalChatRoomFixture('local-created-room')))
+            return
+          }
+
+          next()
         })
         server.middlewares.use('/api/posts', (req, res, next) => {
           if (req.method === 'GET') {
