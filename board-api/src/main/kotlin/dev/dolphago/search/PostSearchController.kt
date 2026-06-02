@@ -2,6 +2,7 @@ package dev.dolphago.search
 
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -28,5 +29,22 @@ class PostSearchController(
         searchRankingService.record(keyword, source)
 
         return ResponseEntity.ok(results)
+    }
+
+    @GetMapping("/{postId}/related")
+    fun recommendRelated(
+        @PathVariable postId: Long,
+        @RequestParam keyword: String,
+        @RequestParam(defaultValue = "3") size: Int = 3,
+    ): ResponseEntity<List<PostSearchResult>> {
+        // 관련 글 추천은 사용자가 명시적으로 검색창에 입력한 키워드가 아니다.
+        // 그래서 실시간 검색어 랭킹에는 기록하지 않고, 검색 스코어링을 재사용한 추천 결과만 반환한다.
+        return ResponseEntity.ok(
+            postSearchService.recommendRelated(
+                rawKeyword = keyword,
+                currentPostId = postId,
+                size = size,
+            ),
+        )
     }
 }

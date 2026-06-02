@@ -56,6 +56,21 @@ data class PostSearchScoreSignal(
 class PostSearchService(
     private val elasticsearchOperations: ElasticsearchOperations,
 ) {
+    fun recommendRelated(
+        rawKeyword: String,
+        currentPostId: Long,
+        size: Int,
+    ): List<PostSearchResult> {
+        val safeSize = size.coerceIn(1, MAX_SEARCH_SIZE)
+
+        // 관련 글 추천은 별도 개인화 모델을 만들기 전 단계의 학습용 추천이다.
+        // 현재 글 제목/키워드를 일반 검색과 같은 BM25 + 음절/초성 recall 쿼리에 넣고,
+        // 지금 읽는 글만 제외하면 "검색 스코어링이 추천으로도 확장되는 흐름"을 작게 확인할 수 있다.
+        return search(rawKeyword, (safeSize + 1).coerceAtMost(MAX_SEARCH_SIZE))
+            .filter { it.postId != currentPostId }
+            .take(safeSize)
+    }
+
     fun search(
         rawKeyword: String,
         size: Int,

@@ -42,4 +42,35 @@ class PostSearchControllerTest {
         verify(exactly = 1) { postSearchService.search("  Kotlin Spring  ", 5) }
         verify(exactly = 1) { searchRankingService.record("  Kotlin Spring  ", "suggestion") }
     }
+
+    @Test
+    fun `관련 게시글 추천은 현재 글 id와 검색어를 서비스에 전달하고 검색 랭킹은 기록하지 않는다`() {
+        val results =
+            listOf(
+                PostSearchResult(
+                    postId = 11L,
+                    title = "Kotlin BM25 추천",
+                    contentPreview = "현재 글과 같은 검색 스코어링 계열",
+                    display = true,
+                    score = 8.5f,
+                    highlights = mapOf("title" to listOf("<em>Kotlin</em> BM25 추천")),
+                    scoreExplanation =
+                        PostSearchScoreExplanation(
+                            formula = "final_score = bm25_text_score + function_score_bonus",
+                            finalScore = 8.5f,
+                            appliedSignalCount = 1,
+                            totalSignalCount = 1,
+                            functionScoreApplied = false,
+                            description = "관련 글 추천 점수 설명",
+                        ),
+                ),
+            )
+        every { postSearchService.recommendRelated("Kotlin 검색", currentPostId = 10L, size = 4) } returns results
+
+        val response = controller.recommendRelated(postId = 10L, keyword = "Kotlin 검색", size = 4)
+
+        assertEquals(results, response.body)
+        verify(exactly = 1) { postSearchService.recommendRelated("Kotlin 검색", currentPostId = 10L, size = 4) }
+        verify(exactly = 0) { searchRankingService.record(any(), any()) }
+    }
 }

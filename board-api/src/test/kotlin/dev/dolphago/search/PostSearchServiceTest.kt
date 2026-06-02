@@ -209,6 +209,95 @@ class PostSearchServiceTest {
     }
 
     @Test
+    fun `관련 게시글 추천은 같은 검색 스코어링을 쓰되 현재 게시글은 제외한다`() {
+        every {
+            elasticsearchOperations.search(any<NativeQuery>(), PostSearchDocument::class.java)
+        } returns
+            SearchHitsImpl(
+                3,
+                TotalHitsRelation.EQUAL_TO,
+                9.0f,
+                Duration.ofMillis(9),
+                null,
+                null,
+                listOf(
+                    SearchHit(
+                        "board-posts",
+                        "10",
+                        null,
+                        9.0f,
+                        emptyArray(),
+                        mapOf("title" to listOf("<em>코틀린</em> 검색")),
+                        emptyMap(),
+                        null,
+                        null,
+                        emptyMap(),
+                        PostSearchDocument(
+                            id = 10L,
+                            title = "코틀린 검색",
+                            content = "현재 읽는 게시글",
+                            viewCount = 5,
+                            display = true,
+                            notice = false,
+                        ),
+                    ),
+                    SearchHit(
+                        "board-posts",
+                        "11",
+                        null,
+                        8.0f,
+                        emptyArray(),
+                        mapOf("title" to listOf("<em>코틀린</em> BM25")),
+                        emptyMap(),
+                        null,
+                        null,
+                        emptyMap(),
+                        PostSearchDocument(
+                            id = 11L,
+                            title = "코틀린 BM25",
+                            content = "같은 검색어로 읽을 만한 글",
+                            viewCount = 3,
+                            display = true,
+                            notice = false,
+                        ),
+                    ),
+                    SearchHit(
+                        "board-posts",
+                        "12",
+                        null,
+                        7.0f,
+                        emptyArray(),
+                        mapOf("content" to listOf("<em>코틀린</em> 초성")),
+                        emptyMap(),
+                        null,
+                        null,
+                        emptyMap(),
+                        PostSearchDocument(
+                            id = 12L,
+                            title = "초성 검색",
+                            content = "코틀린 초성 검색 설명",
+                            viewCount = 2,
+                            display = true,
+                            notice = false,
+                        ),
+                    ),
+                ),
+                null,
+                null,
+                null,
+            )
+
+        val results = postSearchService.recommendRelated("코틀린 검색", currentPostId = 10L, size = 1)
+
+        assertEquals(listOf(11L), results.map { it.postId })
+        assertEquals("코틀린 BM25", results.single().title)
+        assertTrue(
+            results.single().scoreExplanation.description.contains("BM25 기반 텍스트 관련도"),
+            "관련 글 추천도 일반 검색과 같은 점수 설명을 유지해야 학습용 UI에서 왜 추천됐는지 설명할 수 있다.",
+        )
+    }
+
+    @Test
     fun `게시글 검색 점수 설명은 적용 signal 수가 전체 signal 수보다 클 수 없다`() {
         assertFailsWith<IllegalArgumentException> {
             PostSearchScoreExplanation(

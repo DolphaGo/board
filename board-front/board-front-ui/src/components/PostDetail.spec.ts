@@ -1,5 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { postService } from 'src/api/postService'
+import { postSearchService } from 'src/api/postSearchService'
 import PostDetail from './PostDetail.vue'
 
 const mockRoute = {
@@ -23,11 +24,19 @@ jest.mock('src/api/postService', () => ({
   },
 }))
 
+jest.mock('src/api/postSearchService', () => ({
+  postSearchService: {
+    recommendRelatedPosts: jest.fn(),
+  },
+}))
+
 const mockedPostService = postService as jest.Mocked<typeof postService>
+const mockedPostSearchService = postSearchService as jest.Mocked<typeof postSearchService>
 
 describe('# Post detail component', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockedPostSearchService.recommendRelatedPosts.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -131,6 +140,61 @@ describe('# Post detail component', () => {
       'https://cdn.example.com/body.png'
     )
     expect(wrapper.get('[data-testid="post-content"] img').attributes('alt')).toBe('첨부 이미지 1')
+  })
+
+  it('should render related post recommendations with search score explanations', async () => {
+    mockedPostService.getPost.mockResolvedValue({
+      id: 10,
+      title: '코틀린 검색',
+      content: 'BM25와 초성 검색을 설명하는 글',
+      imageUrls: [],
+      viewCount: 3,
+      display: true,
+      notice: false,
+    })
+    mockedPostService.listComments.mockResolvedValue([])
+    mockedPostSearchService.recommendRelatedPosts.mockResolvedValue([
+      {
+        postId: 11,
+        title: '코틀린 BM25 추천',
+        contentPreview: '현재 글과 같은 검색 스코어링 계열',
+        display: true,
+        score: 8.5,
+        highlights: {
+          title: ['<em>코틀린</em> BM25 추천'],
+        },
+        scoringSignals: [
+          {
+            field: 'title',
+            category: 'BM25_TEXT',
+            categoryDescription: 'BM25는 제목/본문 원문 일치의 기본 관련도입니다.',
+            label: '제목 원문',
+            boost: 3,
+            keyword: '코틀린 검색',
+            description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+            applied: true,
+          },
+        ],
+        scoreExplanation: {
+          formula: 'final_score = bm25_text_score + function_score_bonus',
+          finalScore: 8.5,
+          appliedSignalCount: 1,
+          totalSignalCount: 1,
+          functionScoreApplied: false,
+          description: '관련 글 추천 점수 설명',
+        },
+      },
+    ])
+
+    const wrapper = mount(PostDetail)
+    await flushPromises()
+
+    expect(mockedPostSearchService.recommendRelatedPosts).toBeCalledWith(10, '코틀린 검색', { size: 3 })
+    expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('관련 글')
+    expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('코틀린 BM25 추천')
+    expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('score 8.50')
+    expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('적용 1/1')
+    expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('관련 글 추천 점수 설명')
   })
 
   it('should not repeat markdown body images in the fallback image list', async () => {

@@ -100,6 +100,24 @@
           <p>{{ comment.content }}</p>
         </article>
       </section>
+
+      <section
+        v-if="post.display && relatedPosts.length > 0"
+        class="related-posts"
+        data-testid="related-posts"
+        aria-label="관련 글"
+      >
+        <h2>관련 글</h2>
+        <article v-for="relatedPost in relatedPosts" :key="relatedPost.postId" class="related-post-row">
+          <a :href="`/post/${relatedPost.postId}`">{{ relatedPost.title }}</a>
+          <p>{{ relatedPost.contentPreview }}</p>
+          <span>
+            score {{ relatedPost.score.toFixed(2) }}
+            · 적용 {{ relatedPost.scoreExplanation?.appliedSignalCount ?? 0 }}/{{ relatedPost.scoreExplanation?.totalSignalCount ?? 0 }}
+          </span>
+          <small v-if="relatedPost.scoreExplanation">{{ relatedPost.scoreExplanation.description }}</small>
+        </article>
+      </section>
     </article>
   </div>
 </template>
@@ -109,6 +127,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { marked } from 'marked';
 import { postService, type CommentResponse, type PostResponse } from 'src/api/postService';
+import { postSearchService, type PostSearchResult } from 'src/api/postSearchService';
 import { sanitizeRenderedMarkdown } from 'src/markdown/sanitizeRenderedMarkdown';
 
 type AuthorRole = 'user' | 'admin';
@@ -133,6 +152,7 @@ const recommendSubmitted = ref(false);
 const moderationMessage = ref('');
 const actionError = ref('');
 const comments = ref<CommentResponse[]>([]);
+const relatedPosts = ref<PostSearchResult[]>([]);
 
 const isAdminViewer = computed(() => props.authorRole === 'admin');
 const detailCommentCount = computed(() => post.value?.commentCount ?? comments.value.length);
@@ -236,10 +256,25 @@ watch(
       ]);
       post.value = postResponse;
       comments.value = commentResponses;
+      relatedPosts.value = [];
+
+      if (postResponse.display) {
+        try {
+          // 관련 글은 현재 글 제목을 검색어로 삼는 첫 추천 단계다.
+          // 검색 결과와 같은 scoreExplanation을 받아오므로 상세 화면에서도 BM25/음절/초성 신호가 추천에 어떻게 쓰였는지 볼 수 있다.
+          relatedPosts.value = await postSearchService.recommendRelatedPosts(postResponse.id, postResponse.title, { size: 3 });
+        } catch (relatedErr) {
+          // 추천은 상세 본문을 보조하는 영역이다.
+          // ES 장애나 색인 지연이 있어도 본문/댓글 읽기 자체를 실패 처리하지 않고 관련 글 영역만 비운다.
+          console.error('관련 게시글 추천 조회 실패:', relatedErr);
+          relatedPosts.value = [];
+        }
+      }
     } catch (err) {
       console.error('게시글 조회 실패:', err);
       post.value = null;
       comments.value = [];
+      relatedPosts.value = [];
       error.value = true;
     } finally {
       loading.value = false;
@@ -516,6 +551,45 @@ const restorePost = async () => {
 
 .action-error {
   color: #c62828;
+}
+
+.related-posts {
+  border-top: 1px solid #e0e0e0;
+  margin-top: 18px;
+  padding-top: 14px;
+}
+
+.related-posts h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+
+.related-post-row {
+  border: 1px solid #d8e1ea;
+  margin-top: 8px;
+  padding: 10px;
+}
+
+.related-post-row a {
+  color: #057dbc;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.related-post-row p {
+  color: #555555;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 6px 0;
+}
+
+.related-post-row span,
+.related-post-row small {
+  color: #777777;
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .comment-list {

@@ -38,6 +38,10 @@ export interface PostSearchOptions {
   source?: PostSearchSource
 }
 
+export interface RelatedPostSearchOptions {
+  size?: number
+}
+
 const isHighlightMap = (data: unknown): data is Record<string, string[]> => {
   if (typeof data !== 'object' || data === null || Array.isArray(data)) {
     return false
@@ -132,5 +136,27 @@ export const postSearchService = {
     // 검색 쿼리는 백엔드에서 display=true를 필터링한다.
     // 그래도 ES 문서 갱신 지연이나 목업 응답이 섞일 수 있어 프론트 경계에서도 숨김 결과를 제외한다.
     return response.data.filter(result => result.display)
+  },
+
+  recommendRelatedPosts: async (
+    postId: number,
+    keyword: string,
+    options: RelatedPostSearchOptions = {}
+  ): Promise<PostSearchResult[]> => {
+    const size = options.size ?? 3
+    const response = await axios.get<PostSearchResult[]>(`/api/search/posts/${postId}/related`, {
+      params: {
+        keyword,
+        size,
+      },
+    })
+
+    // 관련 글 추천도 검색 결과와 같은 DTO를 사용한다.
+    // scoreExplanation/scoringSignals를 그대로 검증하면 상세 화면에서 "왜 이 글이 추천됐는지"를 검색 학습 자료처럼 보여줄 수 있다.
+    if (!Array.isArray(response.data) || !response.data.every(isPostSearchResult)) {
+      throw new Error('Invalid post search response')
+    }
+
+    return response.data.filter(result => result.display && result.postId !== postId)
   },
 }

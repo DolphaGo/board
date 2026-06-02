@@ -91,6 +91,54 @@ describe('# Post search service', function () {
     })
   })
 
+  it('should request related post recommendations with current post id and keyword', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [
+        {
+          postId: 11,
+          title: '코틀린 BM25 추천',
+          contentPreview: '현재 글과 같은 검색 스코어링 계열',
+          display: true,
+          score: 8.5,
+          highlights: {
+            title: ['<em>코틀린</em> BM25 추천'],
+          },
+          scoringSignals: [
+            {
+              field: 'title',
+              category: 'BM25_TEXT',
+              categoryDescription: 'BM25는 제목/본문 원문 일치의 기본 관련도입니다.',
+              label: '제목 원문',
+              boost: 3,
+              keyword: '코틀린 검색',
+              description: '제목 원문 match는 사용자의 의도와 가장 가까운 BM25 신호다.',
+              applied: true,
+            },
+          ],
+          scoreExplanation: {
+            formula: 'final_score = bm25_text_score + function_score_bonus',
+            finalScore: 8.5,
+            appliedSignalCount: 1,
+            totalSignalCount: 1,
+            functionScoreApplied: false,
+            description: '관련 글 추천 점수 설명',
+          },
+        },
+      ],
+    })
+
+    const results = await postSearchService.recommendRelatedPosts(10, '코틀린 검색', { size: 4 })
+
+    expect(mockedAxios.get).toBeCalledWith('/api/search/posts/10/related', {
+      params: {
+        keyword: '코틀린 검색',
+        size: 4,
+      },
+    })
+    expect(results).toHaveLength(1)
+    expect(results[0].postId).toBe(11)
+  })
+
   it('should ignore hidden post search results when the API returns mixed display states', async function () {
     mockedAxios.get.mockResolvedValue({
       data: [
