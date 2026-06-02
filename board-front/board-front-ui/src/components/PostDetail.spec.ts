@@ -176,9 +176,32 @@ describe('# Post detail component', () => {
     expect(wrapper.findAll('[data-testid="post-content"] img')).toHaveLength(1)
     expect(wrapper.findAll('.post-image-list img')).toHaveLength(1)
     expect(wrapper.findAll('[data-testid="post-image-flow-row"]').map(row => row.text())).toEqual([
-      '1. 본문 Markdown: 첨부 이미지 1은 글 흐름 위치에 렌더링되어 하단 첨부 목록에서 숨깁니다.',
+      '1. 본문 Markdown: 첨부 이미지 1은 글 흐름 위치에 렌더링되어 하단 첨부 목록에서 숨깁니다. 배치: 1번째 문단 뒤.',
       '2. 하단 첨부: 첨부 이미지 2은 Markdown 본문에 없어 하단 첨부 이미지로 보여줍니다.',
     ])
+  })
+
+  it('should explain which paragraph each markdown body image follows', async () => {
+    mockedPostService.getPost.mockResolvedValue({
+      id: 10,
+      title: '본문 이미지 문단 배치',
+      content:
+        '첫 문단\n\n' +
+        '![첨부 이미지 1](https://cdn.example.com/body.png)\n' +
+        '둘째 문단',
+      imageUrls: ['https://cdn.example.com/body.png'],
+      viewCount: 3,
+      display: true,
+      notice: false,
+    })
+    mockedPostService.listComments.mockResolvedValue([])
+
+    const wrapper = mount(PostDetail)
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="post-image-flow-row"]').text()).toContain(
+      '배치: 1번째 문단 뒤'
+    )
   })
 
   it('should remove unsafe html from rendered markdown content', async () => {

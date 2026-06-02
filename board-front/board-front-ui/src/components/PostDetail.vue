@@ -140,6 +140,31 @@ const detailRecommendCount = computed(() => post.value?.recommendCount ?? 0);
 
 const isImageUrlInBody = (imageUrl: string) => post.value?.content.includes(`](${imageUrl})`) ?? false;
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const imagePlacementLabel = (imageUrl: string): string => {
+  if (!post.value) {
+    return '본문 밖';
+  }
+
+  const markdownPattern = new RegExp(`!\\[첨부 이미지 \\d+\\]\\(${escapeRegExp(imageUrl)}\\)`);
+  const match = markdownPattern.exec(post.value.content);
+
+  if (!match) {
+    return '본문 밖';
+  }
+
+  const textBeforeImage = post.value.content.slice(0, match.index);
+  const paragraphCount = textBeforeImage
+    .split(/\n{2,}|\n/)
+    .map(paragraph => paragraph.trim())
+    .filter(paragraph => paragraph.length > 0).length;
+
+  // 상세 화면은 저장된 Markdown을 그대로 읽기 흐름으로 보여준다.
+  // 이미지 앞의 문단 수를 세면 작성 화면에서 의도한 "문단 -> 사진 -> 문단" 배치가 상세에서도 보존됐는지 설명할 수 있다.
+  return paragraphCount === 0 ? '글 첫머리' : `${paragraphCount}번째 문단 뒤`;
+};
+
 const renderedPostContent = computed(() => {
   if (!post.value?.display) {
     return '';
@@ -167,6 +192,7 @@ const postImageFlowRows = computed(() => {
 
   return post.value.imageUrls.map((imageUrl, index) => {
     const includedInBody = isImageUrlInBody(imageUrl);
+    const placementLabel = imagePlacementLabel(imageUrl);
 
     return {
       index: index + 1,
@@ -175,7 +201,7 @@ const postImageFlowRows = computed(() => {
       // 상세 화면은 글쓰기에서 저장된 Markdown 본문과 imageUrls 배열을 같이 받는다.
       // Markdown 안에 있는 이미지는 정확한 문단 위치를 보존하고, 배열에만 남은 이미지는 누락되지 않도록 하단에 보인다.
       description: includedInBody
-        ? `첨부 이미지 ${index + 1}은 글 흐름 위치에 렌더링되어 하단 첨부 목록에서 숨깁니다.`
+        ? `첨부 이미지 ${index + 1}은 글 흐름 위치에 렌더링되어 하단 첨부 목록에서 숨깁니다. 배치: ${placementLabel}.`
         : `첨부 이미지 ${index + 1}은 Markdown 본문에 없어 하단 첨부 이미지로 보여줍니다.`,
     };
   });
