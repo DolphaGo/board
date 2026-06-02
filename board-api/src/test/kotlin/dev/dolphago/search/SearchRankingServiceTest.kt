@@ -19,11 +19,54 @@ class SearchRankingServiceTest {
         every {
             zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
         } returns 1.0
+        every {
+            zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "direct", 1.0)
+        } returns 1.0
 
         searchRankingService.record("  Kotlin   SpringBoot  ")
 
         verify(exactly = 1) {
             zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
+        }
+        verify(exactly = 1) {
+            zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "direct", 1.0)
+        }
+    }
+
+    @Test
+    fun `검색어 기록 시 검색 유입 경로 점수도 1 증가시킨다`() {
+        every { redisTemplate.opsForZSet() } returns zSetOperations
+        every {
+            zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
+        } returns 1.0
+        every {
+            zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "suggestion", 1.0)
+        } returns 1.0
+
+        searchRankingService.record("  Kotlin   SpringBoot  ", "suggestion")
+
+        verify(exactly = 1) {
+            zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
+        }
+        verify(exactly = 1) {
+            zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "suggestion", 1.0)
+        }
+    }
+
+    @Test
+    fun `검색 유입 경로가 알 수 없는 값이면 직접 검색으로 기록한다`() {
+        every { redisTemplate.opsForZSet() } returns zSetOperations
+        every {
+            zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
+        } returns 1.0
+        every {
+            zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "direct", 1.0)
+        } returns 1.0
+
+        searchRankingService.record("  Kotlin   SpringBoot  ", "unknown")
+
+        verify(exactly = 1) {
+            zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "direct", 1.0)
         }
     }
 

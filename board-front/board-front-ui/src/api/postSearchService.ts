@@ -31,6 +31,13 @@ export interface PostSearchScoreSignal {
   applied: boolean
 }
 
+export type PostSearchSource = 'direct' | 'header' | 'ranking' | 'suggestion'
+
+export interface PostSearchOptions {
+  size?: number
+  source?: PostSearchSource
+}
+
 const isHighlightMap = (data: unknown): data is Record<string, string[]> => {
   if (typeof data !== 'object' || data === null || Array.isArray(data)) {
     return false
@@ -100,11 +107,14 @@ const isPostSearchScoreSignal = (data: unknown): data is PostSearchScoreSignal =
 }
 
 export const postSearchService = {
-  search: async (keyword: string, size = 20): Promise<PostSearchResult[]> => {
+  search: async (keyword: string, options: PostSearchOptions = {}): Promise<PostSearchResult[]> => {
+    const size = options.size ?? 20
+    const source = options.source ?? 'direct'
     const response = await axios.get<PostSearchResult[]>('/api/search/posts', {
       params: {
         keyword,
         size,
+        source,
       },
     })
 

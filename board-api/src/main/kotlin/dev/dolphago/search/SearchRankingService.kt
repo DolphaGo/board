@@ -21,17 +21,41 @@ enum class SearchKeywordSuggestionMatchType {
     INITIAL_PREFIX,
 }
 
+enum class SearchRankingSource(
+    val value: String,
+) {
+    DIRECT("direct"),
+    HEADER("header"),
+    RANKING("ranking"),
+    SUGGESTION("suggestion"),
+    ;
+
+    companion object {
+        fun from(rawSource: String?): SearchRankingSource =
+            entries.firstOrNull { it.value == rawSource?.trim()?.lowercase() } ?: DIRECT
+    }
+}
+
 @Service
 class SearchRankingService(
     private val redisTemplate: StringRedisTemplate,
 ) {
-    fun record(rawKeyword: String) {
+    fun record(
+        rawKeyword: String,
+        rawSource: String = SearchRankingSource.DIRECT.value,
+    ) {
         val keyword = SearchKeyword.from(rawKeyword)
+        val source = SearchRankingSource.from(rawSource)
+        val zSetOperations = redisTemplate.opsForZSet()
 
         // Redis sorted set은 "값마다 점수를 가진 정렬 컬렉션"이다.
         // 검색어 랭킹은 같은 검색어가 들어올 때마다 점수를 1씩 올리고,
         // 점수가 높은 순서로 읽으면 되기 때문에 ZSET이 가장 단순한 모델이다.
-        redisTemplate.opsForZSet().incrementScore(RANKING_KEY, keyword.value, 1.0)
+        zSetOperations.incrementScore(RANKING_KEY, keyword.value, 1.0)
+
+        // source 랭킹은 "어디에서 검색이 시작됐는지"를 보는 학습용 이벤트 집계다.
+        // 검색어 랭킹과 같은 ZSET 패턴을 쓰면 header/suggestion/ranking/direct 유입 비중을 같은 방식으로 읽을 수 있다.
+        zSetOperations.incrementScore(SOURCE_RANKING_KEY, source.value, 1.0)
     }
 
     fun getTopKeywords(limit: Long): List<SearchRankingItem> {
@@ -135,5 +159,6 @@ class SearchRankingService(
 
     companion object {
         const val RANKING_KEY = "board:search:keyword-ranking"
+        const val SOURCE_RANKING_KEY = "board:search:source-ranking"
     }
 }

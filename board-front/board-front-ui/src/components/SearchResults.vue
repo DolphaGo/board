@@ -177,6 +177,7 @@ import {
   postSearchService,
   type PostSearchResult,
   type PostSearchScoreSignal,
+  type PostSearchSource,
 } from 'src/api/postSearchService'
 import { normalizeSearchKeyword } from 'src/search/normalizeSearchKeyword'
 import { collectSearchResultHighlights } from './searchResultHighlights'
@@ -194,14 +195,24 @@ const searchKeyword = computed(() => {
   return typeof keyword === 'string' ? normalizeSearchKeyword(keyword) : ''
 })
 
-const isRankingSourceSearch = computed(() => route.query.source === 'ranking' && searchKeyword.value.length > 0)
+const normalizePostSearchSource = (source: unknown): PostSearchSource => {
+  if (source === 'header' || source === 'ranking' || source === 'suggestion') {
+    return source
+  }
+
+  return 'direct'
+}
+
+const searchSource = computed<PostSearchSource>(() => normalizePostSearchSource(route.query.source))
+
+const isRankingSourceSearch = computed(() => searchSource.value === 'ranking' && searchKeyword.value.length > 0)
 
 const searchSourceAnalysisRows = computed(() => {
   if (searchKeyword.value.length === 0) {
     return []
   }
 
-  if (route.query.source === 'header') {
+  if (searchSource.value === 'header') {
     return [
       {
         label: '유입 경로',
@@ -214,7 +225,7 @@ const searchSourceAnalysisRows = computed(() => {
     ]
   }
 
-  if (route.query.source === 'ranking') {
+  if (searchSource.value === 'ranking') {
     return [
       {
         label: '유입 경로',
@@ -227,7 +238,7 @@ const searchSourceAnalysisRows = computed(() => {
     ]
   }
 
-  if (route.query.source === 'suggestion') {
+  if (searchSource.value === 'suggestion') {
     return [
       {
         label: '유입 경로',
@@ -504,7 +515,7 @@ watch(
     try {
       loading.value = true
       error.value = false
-      const searchedResults = await postSearchService.search(keyword)
+      const searchedResults = await postSearchService.search(keyword, { source: searchSource.value })
       if (requestId !== searchRequestId) {
         return
       }

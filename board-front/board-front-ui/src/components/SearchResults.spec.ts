@@ -105,7 +105,7 @@ describe('# Search results component', () => {
     const wrapper = mountSearchResults()
     await flushPromises()
 
-    expect(mockedPostSearchService.search).toBeCalledWith('kotlin')
+    expect(mockedPostSearchService.search).toBeCalledWith('kotlin', { source: 'direct' })
     expect(wrapper.get('.result-title').text()).toBe('코프링 검색 구현')
     expect(wrapper.get('.result-meta').text()).toContain('점수 12.35')
     expect(wrapper.get('.result-meta').text()).toContain('하이라이트 2개')
@@ -133,6 +133,7 @@ describe('# Search results component', () => {
     expect(wrapper.get('[data-testid="ranking-source-study-note"]').text()).toBe(
       '실시간 검색어에서 선택한 키워드입니다. 이 화면의 검색 API가 성공하면 같은 키워드가 다시 랭킹 기록 이벤트를 발생시켜 사이드바 순위 갱신으로 이어집니다.'
     )
+    expect(mockedPostSearchService.search).toBeCalledWith('kotlin', { source: 'ranking' })
   })
 
   it('should explain when the search comes from the header search box', async () => {
@@ -914,7 +915,7 @@ describe('# Search results component', () => {
     mountSearchResults()
     await flushPromises()
 
-    expect(mockedPostSearchService.search).toBeCalledWith('kotlin spring')
+    expect(mockedPostSearchService.search).toBeCalledWith('kotlin spring', { source: 'direct' })
   })
 
   it('should explain that hidden posts are excluded when a searched keyword has no results', async () => {

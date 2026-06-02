@@ -34,12 +34,12 @@ class PostSearchControllerTest {
                 ),
             )
         every { postSearchService.search("  Kotlin Spring  ", 5) } returns results
-        every { searchRankingService.record("  Kotlin Spring  ") } returns Unit
+        every { searchRankingService.record("  Kotlin Spring  ", "suggestion") } returns Unit
 
-        val response = controller.search(keyword = "  Kotlin Spring  ", size = 5)
+        val response = controller.search(keyword = "  Kotlin Spring  ", size = 5, source = "suggestion")
 
         assertEquals(results, response.body)
         verify(exactly = 1) { postSearchService.search("  Kotlin Spring  ", 5) }
-        verify(exactly = 1) { searchRankingService.record("  Kotlin Spring  ") }
+        verify(exactly = 1) { searchRankingService.record("  Kotlin Spring  ", "suggestion") }
     }
 }

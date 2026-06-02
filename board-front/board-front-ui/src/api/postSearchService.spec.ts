@@ -48,6 +48,7 @@ describe('# Post search service', function () {
       params: {
         keyword: 'kotlin spring',
         size: 20,
+        source: 'direct',
       },
     })
     expect(results).toHaveLength(1)
@@ -71,6 +72,22 @@ describe('# Post search service', function () {
       totalSignalCount: 1,
       functionScoreApplied: false,
       description: 'Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 운영 가산점을 더한 값이다.',
+    })
+  })
+
+  it('should include the search source when requesting post search results', async function () {
+    mockedAxios.get.mockResolvedValue({
+      data: [],
+    })
+
+    await postSearchService.search('kotlin spring', { source: 'suggestion' })
+
+    expect(mockedAxios.get).toBeCalledWith('/api/search/posts', {
+      params: {
+        keyword: 'kotlin spring',
+        size: 20,
+        source: 'suggestion',
+      },
     })
   })
 
