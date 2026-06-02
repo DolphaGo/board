@@ -139,6 +139,28 @@ describe('# Chat room component', () => {
     expect((input.element as HTMLInputElement).value).toBe('')
   })
 
+  it('should keep the input and render a feedback message when publishing a talk message fails', async () => {
+    const wrapper = mountChatRoom()
+    const error = jest.spyOn(console, 'error').mockImplementation()
+    mockPublish.mockClear()
+    mockPublish.mockImplementationOnce(() => {
+      throw new Error('publish failed')
+    })
+
+    const input = wrapper.get('input[placeholder="메시지를 입력하세요..."]')
+    await input.setValue('실패해도 남아야 하는 메시지')
+
+    await wrapper.get('.message-input button').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect((input.element as HTMLInputElement).value).toBe('실패해도 남아야 하는 메시지')
+    expect(wrapper.get('.connection-feedback').text()).toBe(
+      '메시지 전송에 실패했습니다. 연결 상태를 확인한 뒤 다시 시도해주세요.'
+    )
+    expect(error).toHaveBeenCalledWith('채팅 메시지 전송 실패:', expect.any(Error))
+    error.mockRestore()
+  })
+
   it('should render messages received from the subscription', async () => {
     const wrapper = mountChatRoom()
 

@@ -191,12 +191,23 @@ export default defineComponent({
       // TALK/LEAVE는 세션 저장 없이 방 topic으로 발행하면 충분해서 sendMessage 매핑을 사용한다.
       const destination = type === 'ENTER' ? '/app/chat.addUser' : '/app/chat.sendMessage'
 
-      stompClient.value.publish({
-        destination,
-        body: JSON.stringify(chatMessage)
-      })
+      try {
+        stompClient.value.publish({
+          destination,
+          body: JSON.stringify(chatMessage)
+        })
+      } catch (error) {
+        console.error('채팅 메시지 전송 실패:', error)
+        if (type === 'TALK') {
+          // publish()가 실패했을 때 입력값까지 지우면 사용자는 같은 메시지를 다시 작성해야 한다.
+          // 전송 성공을 확인한 뒤에만 입력을 비우는 구조가 채팅 UX에서는 더 안전하다.
+          connectionFeedback.value = '메시지 전송에 실패했습니다. 연결 상태를 확인한 뒤 다시 시도해주세요.'
+        }
+        return
+      }
 
       if (type === 'TALK') {
+        connectionFeedback.value = ''
         newMessage.value = ''
       }
     }
