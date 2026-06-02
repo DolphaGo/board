@@ -30,9 +30,10 @@
             type="button"
             class="recommend-button"
             data-testid="recommend-button"
+            :disabled="recommendSubmitted"
             @click="submitRecommend"
           >
-            추천
+            {{ recommendSubmitted ? '추천 완료' : '추천' }}
           </button>
           <button
             v-if="isAdminViewer"
@@ -118,6 +119,7 @@ const error = ref(false);
 const commentContent = ref('');
 const commentMessage = ref('');
 const recommendMessage = ref('');
+const recommendSubmitted = ref(false);
 const moderationMessage = ref('');
 const actionError = ref('');
 const comments = ref<CommentResponse[]>([]);
@@ -231,6 +233,9 @@ const submitRecommend = async () => {
     // 추천 수 증가는 목록 메타 API에서 다시 읽는다.
     // 여기서는 사용자가 클릭 결과를 알 수 있도록 성공 메시지만 표시한다.
     await postService.createRecommend(id);
+    // 백엔드도 같은 회원의 중복 추천을 막지만, 성공 직후 버튼을 닫아 두면 사용자가 같은 액션을 반복 전송하지 않는다.
+    // 추천 수를 서버에서 다시 내려받는 계약이 붙기 전까지는 "완료" 상태가 가장 단순한 즉시 피드백이다.
+    recommendSubmitted.value = true;
     recommendMessage.value = '추천을 반영했습니다.';
   } catch (err) {
     console.error('추천 실패:', err);

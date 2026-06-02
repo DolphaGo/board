@@ -96,6 +96,8 @@ describe('# Post detail component', () => {
     expect(wrapper.get('.post-meta').text()).toContain('2026.06.02')
     expect(wrapper.get('.post-meta').text()).toContain('댓글 2')
     expect(wrapper.get('[data-testid="comment-content"]').element).toHaveProperty('value', '')
+    expect(wrapper.get('[data-testid="recommend-button"]').text()).toBe('추천 완료')
+    expect(wrapper.get('[data-testid="recommend-button"]').attributes('disabled')).toBeDefined()
     expect(wrapper.text()).toContain('이미 저장된 댓글')
     expect(wrapper.text()).toContain('검색 스코어링 설명이 좋아요')
     expect(wrapper.text()).toContain('댓글이 저장되었습니다.')
