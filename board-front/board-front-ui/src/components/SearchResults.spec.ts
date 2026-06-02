@@ -161,7 +161,7 @@ describe('# Search results component', () => {
       .map(row => row.text())
     expect(sourceRows).toEqual([
       '유입 경로: 헤더 검색창',
-      '랭킹 기록: 헤더 submit이 검색어를 Redis ZSET에 먼저 기록한 뒤 검색 결과로 이동',
+      '랭킹 기록: 검색 결과 API 성공 시 source=header로 Redis ZSET에 한 번 기록',
     ])
   })
 
@@ -180,7 +180,7 @@ describe('# Search results component', () => {
       .map(row => row.text())
     expect(sourceRows).toEqual([
       '유입 경로: 실시간 검색어 추천 선택',
-      '랭킹 기록: 추천어는 Redis ZSET에서 prefix/초성/음절로 걸러낸 인기 검색어이고, 선택 후 다시 검색 기록으로 누적',
+      '랭킹 기록: 추천어 선택 후 검색 결과 API 성공 시 source=suggestion으로 Redis ZSET에 한 번 기록',
     ])
   })
 

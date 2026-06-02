@@ -329,7 +329,7 @@ describe('# Header component', () => {
     await wrapper.get('[data-testid="search-suggestion"]').trigger('click')
     await flushPromises()
 
-    expect(mockedSearchRankingService.recordKeyword).toBeCalledWith('kotlin spring')
+    expect(mockedSearchRankingService.recordKeyword).not.toBeCalled()
     expect(routerPush).toBeCalledWith({
       path: '/search',
       query: {
@@ -339,9 +339,7 @@ describe('# Header component', () => {
     })
   })
 
-  it('should show that only ranking recording failed while search continues', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation()
-    mockedSearchRankingService.recordKeyword.mockRejectedValue(new Error('redis unavailable'))
+  it('should route header searches without recording ranking twice in the header', async () => {
     const wrapper = mount(Header, {
       global: {
         stubs: {
@@ -350,24 +348,18 @@ describe('# Header component', () => {
       },
     })
 
-    try {
-      await wrapper.get('.header-search-input').setValue('kotlin')
-      await wrapper.get('.header-search').trigger('submit')
-      await flushPromises()
+    await wrapper.get('.header-search-input').setValue('kotlin')
+    await wrapper.get('.header-search').trigger('submit')
+    await flushPromises()
 
-      expect(routerPush).toBeCalledWith({
-        path: '/search',
-        query: {
-          keyword: 'kotlin',
-          source: 'header',
-        },
-      })
-      expect(wrapper.get('[data-testid="ranking-record-error"]').text()).toBe(
-        '검색은 진행했지만 실시간 검색어 기록은 실패했습니다.'
-      )
-    } finally {
-      consoleError.mockRestore()
-    }
+    expect(mockedSearchRankingService.recordKeyword).not.toBeCalled()
+    expect(routerPush).toBeCalledWith({
+      path: '/search',
+      query: {
+        keyword: 'kotlin',
+        source: 'header',
+      },
+    })
   })
 
   it('should search with the highlighted suggestion keyword from the keyboard', async () => {
@@ -394,7 +386,7 @@ describe('# Header component', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="search-suggestion"]').exists()).toBe(false)
-    expect(mockedSearchRankingService.recordKeyword).toBeCalledWith('kotlin spring')
+    expect(mockedSearchRankingService.recordKeyword).not.toBeCalled()
     expect(routerPush).toBeCalledWith({
       path: '/search',
       query: {
