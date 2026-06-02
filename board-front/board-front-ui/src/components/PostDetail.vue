@@ -123,6 +123,20 @@
             · 적용 {{ relatedPost.scoreExplanation?.appliedSignalCount ?? 0 }}/{{ relatedPost.scoreExplanation?.totalSignalCount ?? 0 }}
           </span>
           <small v-if="relatedPost.scoreExplanation">{{ relatedPost.scoreExplanation.description }}</small>
+          <dl
+            v-if="relatedScoreFormulaTermRows(relatedPost).length > 0"
+            class="related-score-formula-terms"
+            data-testid="related-score-formula-terms"
+          >
+            <div
+              v-for="row in relatedScoreFormulaTermRows(relatedPost)"
+              :key="`${relatedPost.postId}:${row.term}`"
+              data-testid="related-score-formula-term-row"
+            >
+              <dt>{{ row.term }}</dt>
+              <dd>: {{ row.description }}</dd>
+            </div>
+          </dl>
         </article>
       </section>
     </article>
@@ -134,7 +148,11 @@ import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { marked } from 'marked';
 import { postService, type CommentResponse, type PostResponse } from 'src/api/postService';
-import { postSearchService, type PostSearchResult } from 'src/api/postSearchService';
+import {
+  postSearchService,
+  type PostSearchResult,
+  type PostSearchScoreFormulaTerm,
+} from 'src/api/postSearchService';
 import { sanitizeRenderedMarkdown } from 'src/markdown/sanitizeRenderedMarkdown';
 
 type AuthorRole = 'user' | 'admin';
@@ -291,6 +309,18 @@ watch(
 );
 
 const formatCreatedAt = (createdAt: string) => createdAt.slice(0, 10).replaceAll('-', '.');
+
+const relatedScoreFormulaTermRows = (relatedPost: PostSearchResult): PostSearchScoreFormulaTerm[] => {
+  const explanation = relatedPost.scoreExplanation;
+
+  if (!explanation?.formulaTerms) {
+    return [];
+  }
+
+  // 관련 글 추천은 검색 결과와 같은 scoreExplanation DTO를 받는다.
+  // 공식에 실제로 등장한 용어만 보여주면 "왜 이 추천 점수가 나왔는지"를 검색 화면과 같은 기준으로 학습할 수 있다.
+  return explanation.formulaTerms.filter(row => explanation.formula.includes(row.term));
+};
 
 const findApiErrorMessage = (err: unknown) => {
   if (typeof err !== 'object' || err === null || !('response' in err)) {
@@ -636,6 +666,32 @@ const restorePost = async () => {
   display: block;
   font-size: 12px;
   line-height: 1.4;
+}
+
+.related-score-formula-terms {
+  background: #f7f9fb;
+  border: 1px solid #e1e8ef;
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 8px;
+}
+
+.related-score-formula-terms div {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.related-score-formula-terms dt {
+  color: #394f63;
+  font-weight: 700;
+}
+
+.related-score-formula-terms dd {
+  color: #555555;
+  margin: 0;
 }
 
 .comment-list {

@@ -220,6 +220,16 @@ describe('# Post detail component', () => {
           totalSignalCount: 1,
           functionScoreApplied: false,
           description: '관련 글 추천 점수 설명',
+          formulaTerms: [
+            {
+              term: 'bm25_text_score',
+              description: '제목/본문 원문 match가 만드는 BM25 관련도입니다.',
+            },
+            {
+              term: 'function_score_bonus',
+              description: '공지 같은 운영 신호를 BM25 점수 위에 작은 가산점으로 더합니다.',
+            },
+          ],
         },
       },
     ])
@@ -233,6 +243,10 @@ describe('# Post detail component', () => {
     expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('score 8.50')
     expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('적용 1/1')
     expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('관련 글 추천 점수 설명')
+    expect(wrapper.findAll('[data-testid="related-score-formula-term-row"]').map(row => row.text())).toEqual([
+      'bm25_text_score: 제목/본문 원문 match가 만드는 BM25 관련도입니다.',
+      'function_score_bonus: 공지 같은 운영 신호를 BM25 점수 위에 작은 가산점으로 더합니다.',
+    ])
   })
 
   it('should not repeat markdown body images in the fallback image list', async () => {
