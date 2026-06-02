@@ -166,6 +166,36 @@ describe('# Header component', () => {
     })
   })
 
+  it('should show that only ranking recording failed while search continues', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation()
+    mockedSearchRankingService.recordKeyword.mockRejectedValue(new Error('redis unavailable'))
+    const wrapper = mount(Header, {
+      global: {
+        stubs: {
+          RouterLink: routerLinkStub,
+        },
+      },
+    })
+
+    try {
+      await wrapper.get('.header-search-input').setValue('kotlin')
+      await wrapper.get('.header-search').trigger('submit')
+      await flushPromises()
+
+      expect(routerPush).toBeCalledWith({
+        path: '/search',
+        query: {
+          keyword: 'kotlin',
+        },
+      })
+      expect(wrapper.get('[data-testid="ranking-record-error"]').text()).toBe(
+        '검색은 진행했지만 실시간 검색어 기록은 실패했습니다.'
+      )
+    } finally {
+      consoleError.mockRestore()
+    }
+  })
+
   it('should search with the highlighted suggestion keyword from the keyboard', async () => {
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([
       { keyword: 'kotlin spring', score: 7 },

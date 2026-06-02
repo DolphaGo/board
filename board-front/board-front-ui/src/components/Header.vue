@@ -17,6 +17,13 @@
         @keydown="handleSearchKeydown"
       >
       <button type="submit" class="header-search-button">검색</button>
+      <p
+        v-if="rankingRecordError"
+        class="ranking-record-error"
+        data-testid="ranking-record-error"
+      >
+        검색은 진행했지만 실시간 검색어 기록은 실패했습니다.
+      </p>
       <ul
         v-if="suggestions.length > 0"
         id="header-search-suggestions"
@@ -66,7 +73,7 @@ const suggestions = ref<SearchRankingItem[]>([])
 const highlightedSuggestionIndex = ref(-1)
 let suggestionRequestSequence = 0
 let skipNextSuggestionLookup = false
-const { keyword, submitSearch } = createHeaderSearch({
+const { keyword, rankingRecordError, submitSearch } = createHeaderSearch({
   onSearch: searchKeyword => router.push({
     path: '/search',
     query: {
@@ -234,6 +241,21 @@ const submitSuggestion = async (suggestionKeyword: string) => {
   background: #fff;
   list-style: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.ranking-record-error {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  color: #b3261e;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.ranking-record-error + .search-suggestions {
+  top: calc(100% + 24px);
 }
 
 .search-suggestion-guide {

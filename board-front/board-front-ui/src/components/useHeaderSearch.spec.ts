@@ -41,7 +41,7 @@ describe('# Header search behavior', function () {
     const consoleError = jest.spyOn(console, 'error').mockImplementation()
     const recordKeyword = jest.fn().mockRejectedValue(new Error('redis unavailable'))
     const notifyRankingChanged = jest.fn()
-    const { keyword, submitSearch } = createHeaderSearch({
+    const { keyword, rankingRecordError, submitSearch } = createHeaderSearch({
       recorder: { recordKeyword },
       notifyRankingChanged,
     })
@@ -52,6 +52,32 @@ describe('# Header search behavior', function () {
       await expect(submitSearch()).resolves.toBeUndefined()
       expect(consoleError).toBeCalled()
       expect(notifyRankingChanged).not.toBeCalled()
+      expect(rankingRecordError.value).toBe(true)
+    } finally {
+      consoleError.mockRestore()
+    }
+  })
+
+  it('should clear ranking record failure after the next successful keyword recording', async function () {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation()
+    const recordKeyword = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('redis unavailable'))
+      .mockResolvedValueOnce(undefined)
+    const { keyword, rankingRecordError, submitSearch } = createHeaderSearch({
+      recorder: { recordKeyword },
+    })
+
+    try {
+      keyword.value = 'kotlin'
+      await submitSearch()
+
+      expect(rankingRecordError.value).toBe(true)
+
+      keyword.value = 'spring'
+      await submitSearch()
+
+      expect(rankingRecordError.value).toBe(false)
     } finally {
       consoleError.mockRestore()
     }
