@@ -1,6 +1,6 @@
 import type { SearchRankingItem } from './searchRankingService'
 
-const scoreDescription = 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.'
+const scoreDescription = 'Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다.'
 
 const baseRankings: SearchRankingItem[] = [
   { keyword: 'kotlin spring', score: 12, scoreDescription },

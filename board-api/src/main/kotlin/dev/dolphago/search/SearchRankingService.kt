@@ -242,6 +242,6 @@ class SearchRankingService(
         const val LIVE_RANKING_KEY = "board:search:keyword-ranking:live"
         const val SOURCE_RANKING_KEY = "board:search:source-ranking"
         private val LIVE_RANKING_TTL: Duration = Duration.ofMinutes(30)
-        private const val KEYWORD_SCORE_DESCRIPTION = "Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다."
+        private const val KEYWORD_SCORE_DESCRIPTION = "Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다."
     }
 }

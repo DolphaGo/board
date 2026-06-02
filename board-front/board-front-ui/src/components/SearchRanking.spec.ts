@@ -77,7 +77,7 @@ describe('# Search ranking component', function () {
       {
         keyword: 'kotlin spring',
         score: 7,
-        scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+        scoreDescription: 'Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다.',
       },
     ]
 
@@ -86,7 +86,7 @@ describe('# Search ranking component', function () {
     expect(wrapper.get('.rank-keyword').text()).toBe('kotlin spring')
     expect(wrapper.get('[data-testid="rank-score-count"]').text()).toBe('검색 7회')
     expect(wrapper.get('[data-testid="rank-score-description"]').text()).toBe(
-      'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.'
+      'Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다.'
     )
 
     wrapper.unmount()
@@ -113,7 +113,7 @@ describe('# Search ranking component', function () {
       {
         keyword: 'kotlin spring',
         score: 7,
-        scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+        scoreDescription: 'Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다.',
       },
     ]
     const wrapper = mount(SearchRanking)

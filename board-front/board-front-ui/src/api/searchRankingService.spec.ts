@@ -12,12 +12,12 @@ describe('# Search ranking service', function () {
         {
           keyword: 'kotlin',
           score: 7,
-          scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+          scoreDescription: 'Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다.',
         },
         {
           keyword: 'spring boot',
           score: 3,
-          scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+          scoreDescription: 'Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다.',
         },
       ],
     })
@@ -31,12 +31,12 @@ describe('# Search ranking service', function () {
       {
         keyword: 'kotlin',
         score: 7,
-        scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+        scoreDescription: 'Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다.',
       },
       {
         keyword: 'spring boot',
         score: 3,
-        scoreDescription: 'Redis ZSET score는 정규화된 검색어가 기록된 횟수입니다.',
+        scoreDescription: 'Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다.',
       },
     ])
   })
