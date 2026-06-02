@@ -3,6 +3,13 @@
     <p v-if="loading">게시글을 불러오는 중...</p>
     <p v-else-if="error">게시글을 불러오지 못했습니다.</p>
     <article v-else-if="post" class="post-detail">
+      <nav class="detail-navigation" aria-label="상세 화면 이동">
+        <router-link to="/" class="detail-list-link" data-testid="detail-list-link">목록</router-link>
+        <router-link to="/post/edit" class="detail-write-link" data-testid="detail-write-link">
+          글쓰기
+        </router-link>
+      </nav>
+
       <template v-if="post.display">
         <h1>
           <span v-if="post.notice" class="notice-badge">공지</span>
@@ -401,6 +408,45 @@ const restorePost = async () => {
   border-top: 2px solid #000000;
   color: #000000;
   padding: 12px;
+}
+
+.detail-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.detail-list-link,
+.detail-write-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  border: 1px solid #cfd7de;
+  padding: 0 12px;
+  color: #1f2933;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.detail-list-link:hover,
+.detail-write-link:hover {
+  border-color: #057dbc;
+  color: #057dbc;
+}
+
+.detail-write-link {
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
+}
+
+.detail-write-link:hover {
+  background: #057dbc;
+  color: #ffffff;
 }
 
 .post-detail h1 {

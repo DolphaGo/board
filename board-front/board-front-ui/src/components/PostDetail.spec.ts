@@ -34,6 +34,23 @@ const mockedPostService = postService as jest.Mocked<typeof postService>
 const mockedPostSearchService = postSearchService as jest.Mocked<typeof postSearchService>
 
 describe('# Post detail component', () => {
+  const routerLinkStub = {
+    props: ['to'],
+    template: '<a :data-to="to"><slot /></a>',
+  }
+
+  const mountPostDetail = (options: Parameters<typeof mount>[1] = {}) =>
+    mount(PostDetail, {
+      ...options,
+      global: {
+        ...options.global,
+        stubs: {
+          RouterLink: routerLinkStub,
+          ...options.global?.stubs,
+        },
+      },
+    })
+
   beforeEach(() => {
     jest.clearAllMocks()
     mockedPostSearchService.recommendRelatedPosts.mockResolvedValue([])
@@ -41,6 +58,27 @@ describe('# Post detail component', () => {
 
   afterEach(() => {
     jest.restoreAllMocks()
+  })
+
+  it('should expose detail-local navigation to board list and writing screen', async () => {
+    mockedPostService.getPost.mockResolvedValue({
+      id: 10,
+      title: '상세 이동 동선',
+      content: '상세에서 목록과 글쓰기로 이동할 수 있어야 한다',
+      imageUrls: [],
+      viewCount: 3,
+      display: true,
+      notice: false,
+    })
+    mockedPostService.listComments.mockResolvedValue([])
+
+    const wrapper = mountPostDetail()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="detail-list-link"]').text()).toBe('목록')
+    expect(wrapper.get('[data-testid="detail-list-link"]').attributes('data-to')).toBe('/')
+    expect(wrapper.get('[data-testid="detail-write-link"]').text()).toBe('글쓰기')
+    expect(wrapper.get('[data-testid="detail-write-link"]').attributes('data-to')).toBe('/post/edit')
   })
 
   it('should connect comment submit and recommend click to post service', async () => {
@@ -85,7 +123,7 @@ describe('# Post detail component', () => {
       createdAt: '2026-06-02T04:12:00',
     })
 
-    const wrapper = mount(PostDetail)
+    const wrapper = mountPostDetail()
     await flushPromises()
 
     await wrapper.get('[data-testid="comment-content"]').setValue('검색 스코어링 설명이 좋아요')
@@ -131,7 +169,7 @@ describe('# Post detail component', () => {
     })
     mockedPostService.listComments.mockResolvedValue([])
 
-    const wrapper = mount(PostDetail)
+    const wrapper = mountPostDetail()
     await flushPromises()
 
     expect(wrapper.get('[data-testid="post-content"]').text()).toContain('첫 문단')
@@ -186,7 +224,7 @@ describe('# Post detail component', () => {
       },
     ])
 
-    const wrapper = mount(PostDetail)
+    const wrapper = mountPostDetail()
     await flushPromises()
 
     expect(mockedPostSearchService.recommendRelatedPosts).toBeCalledWith(10, { size: 3 })
@@ -212,7 +250,7 @@ describe('# Post detail component', () => {
     })
     mockedPostService.listComments.mockResolvedValue([])
 
-    const wrapper = mount(PostDetail)
+    const wrapper = mountPostDetail()
     await flushPromises()
 
     expect(wrapper.findAll('[data-testid="post-content"] img')).toHaveLength(1)
@@ -234,7 +272,7 @@ describe('# Post detail component', () => {
     })
     mockedPostService.listComments.mockResolvedValue([])
 
-    const wrapper = mount(PostDetail)
+    const wrapper = mountPostDetail()
     await flushPromises()
 
     expect(wrapper.findAll('[data-testid="post-content"] img')).toHaveLength(1)
@@ -260,7 +298,7 @@ describe('# Post detail component', () => {
     })
     mockedPostService.listComments.mockResolvedValue([])
 
-    const wrapper = mount(PostDetail)
+    const wrapper = mountPostDetail()
     await flushPromises()
 
     expect(wrapper.get('[data-testid="post-image-flow-row"]').text()).toContain(
@@ -283,7 +321,7 @@ describe('# Post detail component', () => {
     })
     mockedPostService.listComments.mockResolvedValue([])
 
-    const wrapper = mount(PostDetail)
+    const wrapper = mountPostDetail()
     await flushPromises()
 
     expect(wrapper.get('[data-testid="post-content"] img').attributes('alt')).toBe('대표 사진')
@@ -308,7 +346,7 @@ describe('# Post detail component', () => {
     })
     mockedPostService.listComments.mockResolvedValue([])
 
-    const wrapper = mount(PostDetail)
+    const wrapper = mountPostDetail()
     await flushPromises()
 
     expect(wrapper.get('[data-testid="post-content"]').text()).toContain('본문')
@@ -340,12 +378,12 @@ describe('# Post detail component', () => {
       notice: false,
     })
 
-    const userWrapper = mount(PostDetail)
+    const userWrapper = mountPostDetail()
     await flushPromises()
 
     expect(userWrapper.find('[data-testid="hide-post"]').exists()).toBe(false)
 
-    const adminWrapper = mount(PostDetail, {
+    const adminWrapper = mountPostDetail({
       props: {
         authorRole: 'admin',
       },
@@ -381,7 +419,7 @@ describe('# Post detail component', () => {
       },
     })
 
-    const wrapper = mount(PostDetail, {
+    const wrapper = mountPostDetail({
       props: {
         authorRole: 'admin',
       },
@@ -417,7 +455,7 @@ describe('# Post detail component', () => {
       },
     ])
 
-    const wrapper = mount(PostDetail)
+    const wrapper = mountPostDetail()
     await flushPromises()
 
     expect(wrapper.get('[data-testid="hidden-post"]').text()).toBe('숨김 처리된 게시글입니다.')
@@ -450,12 +488,12 @@ describe('# Post detail component', () => {
       notice: false,
     })
 
-    const userWrapper = mount(PostDetail)
+    const userWrapper = mountPostDetail()
     await flushPromises()
 
     expect(userWrapper.find('[data-testid="restore-post"]').exists()).toBe(false)
 
-    const adminWrapper = mount(PostDetail, {
+    const adminWrapper = mountPostDetail({
       props: {
         authorRole: 'admin',
       },
@@ -483,7 +521,7 @@ describe('# Post detail component', () => {
     })
     mockedPostService.listComments.mockResolvedValue([])
 
-    const wrapper = mount(PostDetail, {
+    const wrapper = mountPostDetail({
       props: {
         authorRole: 'admin',
       },
@@ -516,7 +554,7 @@ describe('# Post detail component', () => {
       },
     })
 
-    const wrapper = mount(PostDetail, {
+    const wrapper = mountPostDetail({
       props: {
         authorRole: 'admin',
       },
