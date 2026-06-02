@@ -38,6 +38,9 @@
               <span class="signal-category">{{ signal.category }}</span>
               <span class="signal-field">{{ signal.label }} x{{ signal.boost.toFixed(2) }}</span>
               <span class="signal-state">{{ signal.applied ? '적용' : '대기' }}</span>
+              <span class="signal-keyword" data-testid="scoring-signal-keyword">
+                검색 토큰: {{ signal.keyword }}
+              </span>
               <span class="signal-description">{{ signal.description }}</span>
             </li>
           </ul>
@@ -237,7 +240,7 @@ watch(
 
 .scoring-signal-list li {
   display: grid;
-  grid-template-columns: 120px minmax(92px, auto) 40px 1fr;
+  grid-template-columns: 120px minmax(92px, auto) 40px minmax(140px, auto) 1fr;
   gap: 8px;
   margin-top: 4px;
   color: #444444;
@@ -256,6 +259,11 @@ watch(
 
 .signal-state {
   color: #777777;
+}
+
+.signal-keyword {
+  color: #555555;
+  word-break: keep-all;
 }
 
 .signal-description {

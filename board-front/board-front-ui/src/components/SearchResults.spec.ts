@@ -224,6 +224,48 @@ describe('# Search results component', () => {
     )
   })
 
+  it('should render scoring signal search tokens for syllable and initial recall fields', async () => {
+    mockedPostSearchService.search.mockResolvedValue([
+      {
+        postId: 7,
+        title: '코프링 검색 구현',
+        contentPreview: '초성 검색과 음절 검색을 같이 보여준다',
+        display: true,
+        score: 12.3456,
+        highlights: {},
+        scoringSignals: [
+          {
+            field: 'titleSyllables',
+            category: 'SYLLABLE_RECALL',
+            label: '제목 음절',
+            boost: 1.5,
+            keyword: 'ㅋ ㅗ ㅍ ㅡ ㄹ ㅣ ㅇ',
+            description: '음절 분해 제목 필드는 한글 부분 기억과 오타성 검색을 보조한다.',
+            applied: true,
+          },
+          {
+            field: 'titleInitials',
+            category: 'INITIAL_RECALL',
+            label: '제목 초성',
+            boost: 1,
+            keyword: 'ㅋ ㅍ ㄹ',
+            description: '제목 초성 필드는 ㅋㅌㄹ 같은 초성 입력을 위한 보조 신호다.',
+            applied: true,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountSearchResults()
+    await flushPromises()
+
+    const tokenTexts = wrapper.findAll('[data-testid="scoring-signal-keyword"]').map(token => token.text())
+    expect(tokenTexts).toEqual([
+      '검색 토큰: ㅋ ㅗ ㅍ ㅡ ㄹ ㅣ ㅇ',
+      '검색 토큰: ㅋ ㅍ ㄹ',
+    ])
+  })
+
   it('should clear failed search state when keyword becomes empty', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
