@@ -150,6 +150,27 @@ describe('# Post editor component', () => {
     expect(push).toBeCalledWith('/post/79')
   })
 
+  it('should preview image URLs as thumbnails in the same order as the image list', async () => {
+    const wrapper = mount(PostEditor)
+
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/first.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/second.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+
+    expect(wrapper.findAll('[data-testid="image-url-thumbnail"]').map(image => image.attributes('src'))).toEqual([
+      'https://cdn.example.com/first.png',
+      'https://cdn.example.com/second.png',
+    ])
+
+    await wrapper.findAll('[data-testid="move-image-up"]')[1].trigger('click')
+
+    expect(wrapper.findAll('[data-testid="image-url-thumbnail"]').map(image => image.attributes('src'))).toEqual([
+      'https://cdn.example.com/second.png',
+      'https://cdn.example.com/first.png',
+    ])
+  })
+
   it('should upload pasted images and submit the returned image URL', async () => {
     mockedRequest.postForm.mockResolvedValue({
       data: {

@@ -83,6 +83,13 @@
       </div>
       <ol v-if="imageUrls.length > 0" class="image-url-list" aria-label="본문 이미지 URL">
         <li v-for="(imageUrl, index) in imageUrls" :key="`${imageUrl}:${index}`" class="image-url-item">
+          <img
+              class="image-url-thumbnail"
+              data-testid="image-url-thumbnail"
+              :src="imageUrl"
+              :alt="`첨부 이미지 ${index + 1} 미리보기`"
+              loading="lazy"
+          />
           <span>{{ index + 1 }}. {{ imageUrl }}</span>
           <button
               type="button"
@@ -509,6 +516,15 @@ const submit = async () => {
   display: flex;
   gap: 6px;
   margin: 4px 0;
+}
+
+.image-url-thumbnail {
+  aspect-ratio: 1;
+  border: 1px solid #d1d5da;
+  flex: 0 0 48px;
+  height: 48px;
+  object-fit: cover;
+  width: 48px;
 }
 
 .image-url-item span {
