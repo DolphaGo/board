@@ -55,6 +55,9 @@
 
       <div v-else class="hidden-post" data-testid="hidden-post">
         <p>숨김 처리된 게시글입니다.</p>
+        <p v-if="isAdminViewer" class="hidden-post-guide" data-testid="hidden-post-admin-guide">
+          관리자는 복구 버튼으로 게시글을 다시 노출할 수 있습니다.
+        </p>
         <button
           v-if="isAdminViewer"
           type="button"
@@ -332,6 +335,11 @@ const restorePost = async () => {
 
 .hidden-post p {
   margin: 0;
+}
+
+.hidden-post-guide {
+  color: #555555;
+  margin-top: 8px;
 }
 
 .post-actions {

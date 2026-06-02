@@ -323,6 +323,30 @@ describe('# Post detail component', () => {
     expect(adminWrapper.text()).toContain('복구 후 다시 본문을 보여준다')
   })
 
+  it('should explain hidden post restore action to admin viewer', async () => {
+    mockedPostService.getPost.mockResolvedValue({
+      id: 10,
+      title: '관리자 복구 안내',
+      content: '숨김 본문은 관리자도 복구 전까지 보지 않는다',
+      imageUrls: [],
+      viewCount: 3,
+      display: false,
+      notice: false,
+    })
+    mockedPostService.listComments.mockResolvedValue([])
+
+    const wrapper = mount(PostDetail, {
+      props: {
+        authorRole: 'admin',
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="hidden-post-admin-guide"]').text()).toBe(
+      '관리자는 복구 버튼으로 게시글을 다시 노출할 수 있습니다.'
+    )
+  })
+
   it('should show backend restore error message for admin viewer', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
 
