@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { request } from 'src'
 import { postService } from 'src/api/postService'
+import { nextTick } from 'vue'
 import PostEditor from './PostEditor.vue'
 
 const push = jest.fn()
@@ -183,6 +184,52 @@ describe('# Post editor component', () => {
     expect(wrapper.get('#issue-body').element).toHaveProperty(
       'value',
       '첫 문단\n\n![첨부 이미지 1](https://cdn.example.com/middle.png)\n둘째 문단',
+    )
+  })
+
+  it('should move the body cursor after inserted image URL markdown', async () => {
+    const wrapper = mount(PostEditor)
+
+    await wrapper.get('#issue-body').setValue('첫 문단\n\n둘째 문단')
+    const bodyTextarea = wrapper.get<HTMLTextAreaElement>('#issue-body').element
+    const insertPosition = '첫 문단\n\n'.length
+    bodyTextarea.setSelectionRange(insertPosition, insertPosition)
+    await wrapper.get('[data-testid="image-url-input"]').setValue('https://cdn.example.com/middle.png')
+    await wrapper.get('[data-testid="add-image-url"]').trigger('click')
+    await nextTick()
+
+    const expectedCursorPosition = '첫 문단\n\n![첨부 이미지 1](https://cdn.example.com/middle.png)\n'.length
+    expect(bodyTextarea.selectionStart).toBe(expectedCursorPosition)
+    expect(bodyTextarea.selectionEnd).toBe(expectedCursorPosition)
+  })
+
+  it('should insert pasted image upload markdown at the current body cursor position', async () => {
+    mockedRequest.postForm.mockResolvedValue({
+      data: {
+        url: '/api/images/middle.png',
+      },
+    })
+    const wrapper = mount(PostEditor)
+    const imageFile = new File(['image-bytes'], 'middle.png', { type: 'image/png' })
+
+    await wrapper.get('#issue-body').setValue('첫 문단\n\n둘째 문단')
+    const bodyTextarea = wrapper.get<HTMLTextAreaElement>('#issue-body').element
+    bodyTextarea.setSelectionRange('첫 문단\n\n'.length, '첫 문단\n\n'.length)
+    await wrapper.get('#issue-body').trigger('paste', {
+      clipboardData: {
+        items: [
+          {
+            type: 'image/png',
+            getAsFile: () => imageFile,
+          },
+        ],
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.get('#issue-body').element).toHaveProperty(
+      'value',
+      '첫 문단\n\n![첨부 이미지 1](/api/images/middle.png)\n둘째 문단',
     )
   })
 

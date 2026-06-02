@@ -139,7 +139,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { marked } from 'marked';
 import { request } from 'src';  // 'request' 객체를 사용하여 서버에 요청
@@ -223,6 +223,12 @@ const uploadImage = async (file: File): Promise<string> => {
   return uploaded.url;
 };
 
+const moveBodyCursorAfterRender = (position: number) => {
+  void nextTick(() => {
+    bodyTextarea.value?.setSelectionRange(position, position);
+  });
+};
+
 // Insert image URL as Markdown
 const insertImageMarkdown = (url: string) => {
   const imageNumber = imageUrls.value.length + 1;
@@ -237,9 +243,11 @@ const insertImageMarkdown = (url: string) => {
     // 블로그형 글쓰기는 이미지를 글 끝에만 몰아넣지 않고 문단 사이에 끼워 넣는 흐름이 중요하다.
     // textarea selection을 기준으로 Markdown을 삽입하면 "본문 -> 이미지 -> 본문" 순서를 직접 조립하며 배울 수 있다.
     bodyText.value = `${beforeSelection}${beforeSeparator}${markdownImage}\n${afterSelection}`;
+    moveBodyCursorAfterRender(beforeSelection.length + beforeSeparator.length + markdownImage.length + 1);
   } else {
     const separator = bodyText.value.length === 0 || bodyText.value.endsWith('\n') ? '' : '\n';
     bodyText.value += `${separator}${markdownImage}\n`;
+    moveBodyCursorAfterRender(bodyText.value.length);
   }
   imageUrls.value = [...imageUrls.value, url];
   imageUploadMessage.value = '';
