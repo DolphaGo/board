@@ -175,6 +175,12 @@ class PostSearchService(
         scoringSignals: List<PostSearchScoreSignal>,
     ): PostSearchScoreExplanation {
         val appliedSignals = scoringSignals.filter { it.applied }
+        val appliedCategorySummary =
+            appliedSignals
+                .map { scoreCategoryLabelOf(it.category) }
+                .distinct()
+                .joinToString(", ")
+                .ifBlank { "없음" }
 
         return PostSearchScoreExplanation(
             formula = "final_score = bm25_text_score + syllable_recall_score + initial_recall_score + function_score_bonus",
@@ -184,9 +190,20 @@ class PostSearchService(
             functionScoreApplied = appliedSignals.any { it.category == "FUNCTION_SCORE" },
             // 실제 ES explain API 전체 트리를 그대로 노출하면 너무 길고 버전별 차이가 크다.
             // 학습용 샘플에서는 우리가 구성한 query plan 기준으로 최종 점수의 큰 재료를 먼저 설명한다.
-            description = "Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 음절/초성 recall 신호와 공지 가산점을 더한 값이다.",
+            // 적용 계열 요약은 최종 점수 숫자와 scoringSignals 사이의 연결고리다.
+            // 같은 공식이라도 이번 문서가 원문 BM25로 올라왔는지, 음절/초성 recall로 보완됐는지 바로 읽을 수 있다.
+            description = "Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 음절/초성 recall 신호와 공지 가산점을 더한 값이다. 이번 결과 적용 계열: $appliedCategorySummary.",
         )
     }
+
+    private fun scoreCategoryLabelOf(category: String): String =
+        when (category) {
+            "BM25_TEXT" -> "원문/BM25"
+            "SYLLABLE_RECALL" -> "음절 recall"
+            "INITIAL_RECALL" -> "초성 recall"
+            "FUNCTION_SCORE" -> "function_score"
+            else -> category
+        }
 
     private fun createScoringSignals(
         keyword: SearchKeyword,

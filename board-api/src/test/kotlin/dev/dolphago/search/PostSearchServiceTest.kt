@@ -152,12 +152,59 @@ class PostSearchServiceTest {
                 appliedSignalCount = 2,
                 totalSignalCount = 7,
                 functionScoreApplied = true,
-                description = "Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 음절/초성 recall 신호와 공지 가산점을 더한 값이다.",
+                description = "Elasticsearch 최종 점수는 BM25 기반 텍스트 관련도에 음절/초성 recall 신호와 공지 가산점을 더한 값이다. 이번 결과 적용 계열: 원문/BM25, function_score.",
             ),
             results.single().scoreExplanation,
         )
         assertEquals(3, querySlot.captured.pageable.pageSize)
         verify(exactly = 1) { elasticsearchOperations.search(any<NativeQuery>(), PostSearchDocument::class.java) }
+    }
+
+    @Test
+    fun `게시글 검색 점수 설명은 실제 적용된 점수 계열을 함께 요약한다`() {
+        every {
+            elasticsearchOperations.search(any<NativeQuery>(), PostSearchDocument::class.java)
+        } returns
+            SearchHitsImpl(
+                1,
+                TotalHitsRelation.EQUAL_TO,
+                9.0f,
+                Duration.ofMillis(9),
+                null,
+                null,
+                listOf(
+                    SearchHit(
+                        "board-posts",
+                        "10",
+                        null,
+                        9.0f,
+                        emptyArray(),
+                        mapOf(
+                            "titleSyllables" to listOf("<em>ㅋ ㅗ ㅍ</em>"),
+                            "contentInitials" to listOf("<em>ㅋ ㅍ</em>"),
+                        ),
+                        emptyMap(),
+                        null,
+                        null,
+                        emptyMap(),
+                        PostSearchDocument(
+                            id = 10L,
+                            title = "코프링 검색",
+                            content = "음절과 초성 recall이 함께 적용되는 검색 예시",
+                            viewCount = 1,
+                            display = true,
+                            notice = false,
+                        ),
+                    ),
+                ),
+                null,
+                null,
+                null,
+            )
+
+        val result = postSearchService.search("코프링", 10).single()
+
+        assertTrue(result.scoreExplanation.description.contains("이번 결과 적용 계열: 음절 recall, 초성 recall."))
     }
 
     @Test
