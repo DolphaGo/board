@@ -7,7 +7,59 @@ on:
   pull_request:
 
 jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Set up JDK 27
+        uses: actions/setup-java@v6.0.1
+        with:
+          java-version: '27'
+          distribution: 'temurin'
+
+      - name: Test and build backend
+        run: ./gradlew :board-api:test :board-api:bootJar
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Set up JDK 27
+        uses: actions/setup-java@v6.0.1
+        with:
+          java-version: '27'
+          distribution: 'temurin'
+
+      - name: Set up pnpm 12
+        uses: pnpm/action-setup@v6.1.0
+        with:
+          version: '12.8.1'
+
+      - name: Set up Node.js 26
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '26.10.0'
+          cache: pnpm
+          cache-dependency-path: board-front/board-front-ui/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        working-directory: board-front/board-front-ui
+        run: pnpm install --frozen-lockfile
+
+      - name: Test frontend
+        working-directory: board-front/board-front-ui
+        run: pnpm test
+
+      - name: Type-check and build frontend application
+        run: ./gradlew :board-front:board-front-api:bootJar
+
   build:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    needs: [backend, frontend]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -18,19 +70,33 @@ jobs:
             imageName: 'board-front-board-front-api'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: Set up JDK 27
+        uses: actions/setup-java@v6.0.1
         with:
-          java-version: '21'
+          java-version: '27'
           distribution: 'temurin'
+
+      - name: Set up pnpm 12
+        if: matrix.module == 'board-front:board-front-api'
+        uses: pnpm/action-setup@v6.1.0
+        with:
+          version: '12.8.1'
+
+      - name: Set up Node.js 26
+        if: matrix.module == 'board-front:board-front-api'
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '26.10.0'
+          cache: pnpm
+          cache-dependency-path: board-front/board-front-ui/pnpm-lock.yaml
 
       - name: Build and Push Image using Jib
         env:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GHCR_TOKEN }}
-          FROM_IMAGE: khipu/openjdk21-alpine:latest
+          FROM_IMAGE: amazoncorretto:27.0.0-al2023-headless
           TO_IMAGE: ghcr.io/dolphago/${{ matrix.imageName }}:latest
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
