@@ -1,7 +1,7 @@
 # 0006. 프론트엔드 최신 안정 버전과 테스트 도구 이전
 
-- 상태: 구현·로컬 검증 완료, PR 준비
-- PR: 준비 중
+- 상태: PR 공개 (미병합)
+- PR: [#12](https://github.com/DolphaGo/board/pull/12)
 - 기준 커밋: `ce07a9e` (`feature/board-post-detail`)
 - 최초 도구 이전 검증 기준: `92d5447` (`feature/board-post-list`)
 
