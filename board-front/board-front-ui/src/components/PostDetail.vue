@@ -1,15 +1,17 @@
 <template>
   <div>
+    <nav class="detail-navigation" aria-label="상세 화면 이동">
+      <router-link :to="listPath" class="detail-list-link" data-testid="detail-list-link">목록</router-link>
+      <router-link to="/post/edit" class="detail-write-link" data-testid="detail-write-link">
+        글쓰기
+      </router-link>
+    </nav>
     <p v-if="loading">게시글을 불러오는 중...</p>
-    <p v-else-if="error">게시글을 불러오지 못했습니다.</p>
+    <div v-else-if="error" role="alert">
+      <p>{{ error === 'not-found' ? '게시글을 찾을 수 없습니다.' : '게시글을 불러오지 못했습니다.' }}</p>
+      <button v-if="error === 'load'" type="button" data-testid="detail-retry" @click="loadPost(postId)">다시 시도</button>
+    </div>
     <article v-else-if="post" class="post-detail">
-      <nav class="detail-navigation" aria-label="상세 화면 이동">
-        <router-link to="/" class="detail-list-link" data-testid="detail-list-link">목록</router-link>
-        <router-link to="/post/edit" class="detail-write-link" data-testid="detail-write-link">
-          글쓰기
-        </router-link>
-      </nav>
-
       <template v-if="post.display">
         <h1>
           <span v-if="post.notice" class="notice-badge">공지</span>
@@ -116,7 +118,7 @@
       >
         <h2>관련 글</h2>
         <article v-for="relatedPost in relatedPosts" :key="relatedPost.postId" class="related-post-row">
-          <a :href="`/post/${relatedPost.postId}`">{{ relatedPost.title }}</a>
+          <router-link :to="{ path: `/post/${relatedPost.postId}`, query: route.query }">{{ relatedPost.title }}</router-link>
           <p>{{ relatedPost.contentPreview }}</p>
           <span>
             score {{ relatedPost.score.toFixed(2) }}
@@ -162,7 +164,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { marked } from 'marked';
 import { postService, type CommentResponse, type PostResponse } from 'src/api/postService';
@@ -187,7 +189,13 @@ const props = withDefaults(
 const route = useRoute();
 const post = ref<PostResponse | null>(null);
 const loading = ref(false);
-const error = ref(false);
+const error = ref<'not-found' | 'load' | null>(null);
+let requestVersion = 0;
+
+const listPath = computed(() => {
+  const page = Number(route.query.page);
+  return Number.isSafeInteger(page) && page > 0 ? `/?page=${page}` : '/';
+});
 const commentContent = ref('');
 const commentMessage = ref('');
 const recommendMessage = ref('');
@@ -276,55 +284,59 @@ const postImageFlowRows = computed(() => {
 const postId = computed(() => {
   const id = Number(route.params.id);
 
-  return Number.isFinite(id) ? id : null;
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
 });
 
-watch(
-  postId,
-  async id => {
-    if (id === null) {
-      post.value = null;
-      error.value = true;
-      return;
-    }
+const loadPost = async (id: number | null) => {
+  const version = ++requestVersion;
+  post.value = null;
+  comments.value = [];
+  relatedPosts.value = [];
+  commentContent.value = '';
+  commentMessage.value = '';
+  recommendMessage.value = '';
+  recommendSubmitted.value = false;
+  moderationMessage.value = '';
+  actionError.value = '';
+  error.value = null;
+  loading.value = false;
 
-    try {
-      loading.value = true;
-      error.value = false;
-      // 상세 진입 시 본문과 댓글을 같은 postId 기준으로 읽는다.
-      // 댓글 API가 실패하면 화면 전체 계약이 깨진 것이므로 상세 오류 상태로 처리한다.
-      const [postResponse, commentResponses] = await Promise.all([
-        postService.getPost(id),
-        postService.listComments(id),
-      ]);
-      post.value = postResponse;
-      comments.value = commentResponses;
-      relatedPosts.value = [];
+  if (id === null) {
+    error.value = 'not-found';
+    return;
+  }
 
-      if (postResponse.display) {
-        try {
-          // 관련 글 추천 기준은 백엔드가 원본 게시글 제목/본문에서 만든다.
-          // 프론트는 postId만 넘기고, 검색 결과와 같은 scoreExplanation을 받아 추천 이유를 화면에 보여준다.
-          relatedPosts.value = await postSearchService.recommendRelatedPosts(postResponse.id, { size: 3 });
-        } catch (relatedErr) {
-          // 추천은 상세 본문을 보조하는 영역이다.
-          // ES 장애나 색인 지연이 있어도 본문/댓글 읽기 자체를 실패 처리하지 않고 관련 글 영역만 비운다.
-          console.error('관련 게시글 추천 조회 실패:', relatedErr);
-          relatedPosts.value = [];
-        }
-      }
-    } catch (err) {
-      console.error('게시글 조회 실패:', err);
-      post.value = null;
-      comments.value = [];
-      relatedPosts.value = [];
-      error.value = true;
-    } finally {
-      loading.value = false;
+  try {
+    loading.value = true;
+    const [postResponse, commentResponses] = await Promise.all([
+      postService.getPost(id),
+      postService.listComments(id),
+    ]);
+    // 같은 컴포넌트에서 다른 글로 이동해도 이전 요청은 끝날 수 있다.
+    // 현재 조회 번호와 일치하는 응답만 반영해 본문과 URL이 어긋나지 않게 한다.
+    if (version !== requestVersion) return;
+    post.value = postResponse;
+    comments.value = commentResponses;
+
+    if (postResponse.display) {
+      // 관련 글은 부가 정보다. 검색 서버의 지연이 본문 읽기를 막지 않도록 별도로 완료한다.
+      void postSearchService.recommendRelatedPosts(postResponse.id, { size: 3 })
+        .then(results => { if (version === requestVersion) relatedPosts.value = results; })
+        .catch(err => {
+          if (version === requestVersion) console.error('관련 게시글 추천 조회 실패:', err);
+        });
     }
-  },
-  { immediate: true }
-);
+  } catch (err) {
+    if (version !== requestVersion) return;
+    const status = (err as { response?: { status?: number } } | null)?.response?.status;
+    error.value = status === 404 ? 'not-found' : 'load';
+  } finally {
+    if (version === requestVersion) loading.value = false;
+  }
+};
+
+watch(postId, id => { void loadPost(id); }, { immediate: true });
+onBeforeUnmount(() => { requestVersion += 1; });
 
 const formatCreatedAt = (createdAt: string) => createdAt.slice(0, 10).replaceAll('-', '.');
 
@@ -360,6 +372,7 @@ const findApiErrorMessage = (err: unknown) => {
 
 const submitComment = async () => {
   const id = postId.value;
+  const version = requestVersion;
   const content = commentContent.value.trim();
 
   if (id === null || content.length === 0) {
@@ -371,6 +384,7 @@ const submitComment = async () => {
     // 작성 API가 반환한 댓글을 현재 목록 끝에 붙여 즉시 피드백한다.
     // 서버 목록은 id 오름차순으로 내려오므로 새 댓글을 뒤에 추가하면 같은 읽기 순서를 유지할 수 있다.
     const comment = await postService.createComment(id, { content });
+    if (version !== requestVersion) return;
     comments.value = [...comments.value, comment];
     if (post.value) {
       // 상세 API의 commentCount는 목록과 같은 서버 집계 기준이다.
@@ -383,6 +397,7 @@ const submitComment = async () => {
     commentContent.value = '';
     commentMessage.value = '댓글이 저장되었습니다.';
   } catch (err) {
+    if (version !== requestVersion) return;
     console.error('댓글 작성 실패:', err);
     actionError.value = findApiErrorMessage(err);
   }
@@ -390,6 +405,7 @@ const submitComment = async () => {
 
 const submitRecommend = async () => {
   const id = postId.value;
+  const version = requestVersion;
 
   if (id === null) {
     return;
@@ -398,6 +414,7 @@ const submitRecommend = async () => {
   try {
     actionError.value = '';
     await postService.createRecommend(id);
+    if (version !== requestVersion) return;
     if (post.value) {
       // 상세 API가 내려준 recommendCount는 현재 화면의 기준값이다.
       // 추천 성공 직후에는 같은 게시글을 다시 조회하지 않고 로컬 값만 1 올려 버튼 피드백과 메타 수치를 함께 맞춘다.
@@ -411,6 +428,7 @@ const submitRecommend = async () => {
     recommendSubmitted.value = true;
     recommendMessage.value = '추천을 반영했습니다.';
   } catch (err) {
+    if (version !== requestVersion) return;
     console.error('추천 실패:', err);
     actionError.value = findApiErrorMessage(err);
   }
@@ -418,6 +436,7 @@ const submitRecommend = async () => {
 
 const hidePost = async () => {
   const id = postId.value;
+  const version = requestVersion;
 
   if (id === null || !isAdminViewer.value) {
     return;
@@ -427,9 +446,12 @@ const hidePost = async () => {
     actionError.value = '';
     // 숨김 처리 결과는 백엔드가 권한과 display=false 상태를 확정한 뒤 반환한다.
     // 화면은 반환 DTO로 교체해서 버튼을 즉시 없애고 실제 서버 상태와 맞춘다.
-    post.value = await postService.hidePost(id);
+    const response = await postService.hidePost(id);
+    if (version !== requestVersion) return;
+    post.value = response;
     moderationMessage.value = '게시글을 숨겼습니다.';
   } catch (err) {
+    if (version !== requestVersion) return;
     console.error('게시글 숨김 실패:', err);
     actionError.value = findApiErrorMessage(err);
   }
@@ -437,6 +459,7 @@ const hidePost = async () => {
 
 const restorePost = async () => {
   const id = postId.value;
+  const version = requestVersion;
 
   if (id === null || !isAdminViewer.value) {
     return;
@@ -446,9 +469,12 @@ const restorePost = async () => {
     actionError.value = '';
     // 복구도 백엔드가 권한과 display=true 상태를 확정한 DTO로 화면을 교체한다.
     // 성공하면 기존 마스킹 안내가 사라지고 일반 상세 본문/액션 영역이 다시 보인다.
-    post.value = await postService.restorePost(id);
+    const response = await postService.restorePost(id);
+    if (version !== requestVersion) return;
+    post.value = response;
     moderationMessage.value = '게시글을 복구했습니다.';
   } catch (err) {
+    if (version !== requestVersion) return;
     console.error('게시글 복구 실패:', err);
     actionError.value = findApiErrorMessage(err);
   }
@@ -457,6 +483,7 @@ const restorePost = async () => {
 
 <style scoped>
 .post-detail {
+  overflow-wrap: anywhere;
   background: #ffffff;
   border-top: 2px solid #000000;
   color: #000000;
