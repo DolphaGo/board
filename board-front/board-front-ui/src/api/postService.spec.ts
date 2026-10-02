@@ -1,9 +1,10 @@
+import { describe, expect, it, vi, type Mocked } from 'vitest'
 import axios from 'axios'
 import { postService } from './postService'
 
-jest.mock('axios')
+vi.mock('axios')
 
-const mockedAxios = axios as jest.Mocked<typeof axios>
+const mockedAxios = axios as Mocked<typeof axios>
 
 describe('# Post service', function () {
   it('should fetch a post by id', async function () {
@@ -21,7 +22,7 @@ describe('# Post service', function () {
 
     const post = await postService.getPost(10)
 
-    expect(mockedAxios.get).toBeCalledWith('/api/posts/10')
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/posts/10')
     expect(post.title).toBe('코프링 게시글')
   })
 
@@ -52,7 +53,7 @@ describe('# Post service', function () {
 
     const page = await postService.listPosts({ page: 1, size: 10 })
 
-    expect(mockedAxios.get).toBeCalledWith('/api/posts', {
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/posts', {
       params: {
         page: 1,
         size: 10,
@@ -180,7 +181,7 @@ describe('# Post service', function () {
 
     const posts = await postService.listNoticePosts()
 
-    expect(mockedAxios.get).toBeCalledWith('/api/posts/notices')
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/posts/notices')
     expect(posts).toHaveLength(1)
     expect(posts[0].title).toBe('점검 공지')
     expect(posts[0].notice).toBe(true)
@@ -208,7 +209,7 @@ describe('# Post service', function () {
 
     const posts = await postService.listHiddenPosts()
 
-    expect(mockedAxios.get).toBeCalledWith('/api/posts/hidden', {
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/posts/hidden', {
       params: {
         actorMemberId: 1,
       },
@@ -274,7 +275,7 @@ describe('# Post service', function () {
       imageUrls: ['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'],
     })
 
-    expect(mockedAxios.post).toBeCalledWith('/api/posts', {
+    expect(mockedAxios.post).toHaveBeenCalledWith('/api/posts', {
       memberId: 2,
       title: '코프링 게시글',
       content: 'Elasticsearch 색인까지 연결한다',
@@ -305,7 +306,7 @@ describe('# Post service', function () {
       actorRole: 'admin',
     })
 
-    expect(mockedAxios.post).toBeCalledWith('/api/posts', {
+    expect(mockedAxios.post).toHaveBeenCalledWith('/api/posts', {
       memberId: 1,
       title: '점검 공지',
       content: '관리자가 공지를 작성한다',
@@ -331,7 +332,7 @@ describe('# Post service', function () {
       content: '검색 스코어링 설명이 좋아요',
     })
 
-    expect(mockedAxios.post).toBeCalledWith('/api/posts/10/comments', {
+    expect(mockedAxios.post).toHaveBeenCalledWith('/api/posts/10/comments', {
       memberId: 2,
       content: '검색 스코어링 설명이 좋아요',
     })
@@ -356,7 +357,7 @@ describe('# Post service', function () {
 
     const comments = await postService.listComments(10)
 
-    expect(mockedAxios.get).toBeCalledWith('/api/posts/10/comments')
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/posts/10/comments')
     expect(comments).toHaveLength(1)
     expect(comments[0].content).toBe('첫 댓글')
   })
@@ -374,7 +375,7 @@ describe('# Post service', function () {
 
     const recommend = await postService.createRecommend(10)
 
-    expect(mockedAxios.post).toBeCalledWith('/api/posts/10/recommends', {
+    expect(mockedAxios.post).toHaveBeenCalledWith('/api/posts/10/recommends', {
       memberId: 2,
     })
     expect(recommend.id).toBe(30)
@@ -396,7 +397,7 @@ describe('# Post service', function () {
 
     const post = await postService.hidePost(10)
 
-    expect(mockedAxios.patch).toBeCalledWith('/api/posts/10/hide', {
+    expect(mockedAxios.patch).toHaveBeenCalledWith('/api/posts/10/hide', {
       actorMemberId: 1,
     })
     expect(post.display).toBe(false)
@@ -417,7 +418,7 @@ describe('# Post service', function () {
 
     const post = await postService.restorePost(10)
 
-    expect(mockedAxios.patch).toBeCalledWith('/api/posts/10/restore', {
+    expect(mockedAxios.patch).toHaveBeenCalledWith('/api/posts/10/restore', {
       actorMemberId: 1,
     })
     expect(post.display).toBe(true)

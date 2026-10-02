@@ -6,12 +6,17 @@
     </header>
 
     <p v-if="loading" class="board-message">게시글을 불러오는 중...</p>
-    <p v-else-if="error" class="board-message">게시글 목록을 불러오지 못했습니다.</p>
+    <div v-else-if="error" class="board-message" role="alert">
+      <p>게시글 목록을 불러오지 못했습니다.</p>
+      <button type="button" class="board-page-button" data-testid="board-retry" @click="fetchPosts(requestedPage)">
+        다시 시도
+      </button>
+    </div>
     <p v-else-if="posts.length === 0" class="board-message">게시글이 없습니다.</p>
 
     <div v-else class="board-rows">
       <article v-for="post in posts" :key="post.id" class="board-row">
-        <router-link class="board-title-link" :to="`/post/${post.id}`">
+        <router-link class="board-title-link" :to="{ path: `/post/${post.id}`, query: { page: String(currentPage) } }">
           <span v-if="post.notice" class="notice-badge">공지</span>
           <span class="board-title-text">{{ post.title }}</span>
         </router-link>
@@ -109,9 +114,12 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { postService, type PostListItemResponse } from 'src/api/postService'
 
+const route = useRoute()
+const router = useRouter()
 const posts = ref<PostListItemResponse[]>([])
 const loading = ref(false)
 const error = ref(false)
@@ -120,6 +128,13 @@ const totalElements = ref(0)
 const serverTotalPages = ref(1)
 const PAGE_SIZE = 10
 const MAX_VISIBLE_PAGE_NUMBERS = 5
+let requestVersion = 0
+
+const requestedPage = computed(() => {
+  const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page
+  const page = Number(raw)
+  return Number.isSafeInteger(page) && page > 0 ? page : 1
+})
 
 const totalPages = computed(() => Math.max(1, serverTotalPages.value))
 
@@ -135,7 +150,7 @@ const pageNumbers = computed(() => {
 })
 
 const boardSummary = computed(() =>
-  totalElements.value > 0
+  loading.value ? '불러오는 중' : error.value ? '목록 조회 실패' : totalElements.value > 0
     ? `최신순 ${totalElements.value}건 · ${currentPage.value}/${totalPages.value}페이지`
     : '최신순 0건'
 )
@@ -151,7 +166,7 @@ const goToPage = async (nextPage: number) => {
     return
   }
 
-  await fetchPosts(nextPage)
+  await router.push({ path: route.path, query: { ...route.query, page: String(nextPage) } })
 }
 
 const formatCreatedAt = (createdAt: string) => {
@@ -160,7 +175,8 @@ const formatCreatedAt = (createdAt: string) => {
   return createdAt.slice(0, 10).replaceAll('-', '.')
 }
 
-const fetchPosts = async (page = 1) => {
+const fetchPosts = async (page: number) => {
+  const version = ++requestVersion
   try {
     loading.value = true
     error.value = false
@@ -168,22 +184,32 @@ const fetchPosts = async (page = 1) => {
     // 서버 page는 0부터 시작하고, 화면 page는 사용자가 읽기 쉬운 1부터 시작한다.
     // 이 경계 변환을 컴포넌트에 모아두면 버튼 UI는 1/2페이지처럼 자연스럽게 보이고 API 계약은 Spring PageRequest와 맞는다.
     const response = await postService.listPosts({ page: page - 1, size: PAGE_SIZE })
+    // 페이지 이동보다 응답이 늦어질 수 있다. 마지막 요청만 화면을 갱신해야
+    // URL은 2페이지인데 1페이지 글이 보이는 응답 역전을 막을 수 있다.
+    if (version !== requestVersion) return
+    if (page > Math.max(1, response.totalPages)) {
+      await router.replace({ path: route.path, query: { ...route.query, page: String(Math.max(1, response.totalPages)) } })
+      return
+    }
     posts.value = response.items
     totalElements.value = response.totalElements
     serverTotalPages.value = response.totalPages
     currentPage.value = response.page + 1
   } catch (err) {
+    if (version !== requestVersion) return
     console.error('게시글 목록 조회 실패:', err)
     posts.value = []
     totalElements.value = 0
     serverTotalPages.value = 1
     error.value = true
   } finally {
-    loading.value = false
+    if (version === requestVersion) loading.value = false
   }
 }
 
-onMounted(fetchPosts)
+// URL을 목록 상태의 기준으로 삼으면 새로고침과 브라우저 뒤로가기도 같은 요청을 재현한다.
+watch(requestedPage, page => { void fetchPosts(page) }, { immediate: true })
+onBeforeUnmount(() => { requestVersion += 1 })
 </script>
 
 <style scoped>
@@ -231,6 +257,7 @@ onMounted(fetchPosts)
 
 .board-title-link {
   display: inline-flex;
+  max-width: 100%;
   align-items: center;
   gap: 6px;
   color: #000;
@@ -238,6 +265,11 @@ onMounted(fetchPosts)
   font-weight: 700;
   line-height: 1.35;
   text-decoration: none;
+}
+
+.board-title-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .board-title-link:hover {
@@ -259,6 +291,7 @@ onMounted(fetchPosts)
   color: #5f6368;
   font-size: 14px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .meta-row {

@@ -1,37 +1,47 @@
-import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi, type Mocked } from 'vitest'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { postService } from 'src/api/postService'
 import { postSearchService } from 'src/api/postSearchService'
 import PostDetail from './PostDetail.vue'
 
-const mockRoute = {
-  params: {
-    id: '10',
-  },
-}
+enableAutoUnmount(afterEach)
 
-jest.mock('vue-router', () => ({
+const { mockRoute } = await vi.hoisted(async () => {
+  const { reactive } = await import('vue')
+
+  return {
+    mockRoute: reactive({
+      params: {
+        id: '10',
+      },
+      query: { page: undefined as string | undefined },
+    }),
+  }
+})
+
+vi.mock('vue-router', () => ({
   useRoute: () => mockRoute,
 }))
 
-jest.mock('src/api/postService', () => ({
+vi.mock('src/api/postService', () => ({
   postService: {
-    getPost: jest.fn(),
-    listComments: jest.fn(),
-    createComment: jest.fn(),
-    createRecommend: jest.fn(),
-    hidePost: jest.fn(),
-    restorePost: jest.fn(),
+    getPost: vi.fn(),
+    listComments: vi.fn(),
+    createComment: vi.fn(),
+    createRecommend: vi.fn(),
+    hidePost: vi.fn(),
+    restorePost: vi.fn(),
   },
 }))
 
-jest.mock('src/api/postSearchService', () => ({
+vi.mock('src/api/postSearchService', () => ({
   postSearchService: {
-    recommendRelatedPosts: jest.fn(),
+    recommendRelatedPosts: vi.fn(),
   },
 }))
 
-const mockedPostService = postService as jest.Mocked<typeof postService>
-const mockedPostSearchService = postSearchService as jest.Mocked<typeof postSearchService>
+const mockedPostService = postService as Mocked<typeof postService>
+const mockedPostSearchService = postSearchService as Mocked<typeof postSearchService>
 
 describe('# Post detail component', () => {
   const routerLinkStub = {
@@ -52,12 +62,15 @@ describe('# Post detail component', () => {
     })
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.resetAllMocks()
+    mockRoute.params.id = '10'
+    mockRoute.query.page = undefined
+    mockedPostService.listComments.mockResolvedValue([])
     mockedPostSearchService.recommendRelatedPosts.mockResolvedValue([])
   })
 
   afterEach(() => {
-    jest.restoreAllMocks()
+    vi.restoreAllMocks()
   })
 
   it('should expose detail-local navigation to board list and writing screen', async () => {
@@ -131,12 +144,12 @@ describe('# Post detail component', () => {
     await wrapper.get('[data-testid="recommend-button"]').trigger('click')
     await flushPromises()
 
-    expect(mockedPostService.getPost).toBeCalledWith(10)
-    expect(mockedPostService.listComments).toBeCalledWith(10)
-    expect(mockedPostService.createComment).toBeCalledWith(10, {
+    expect(mockedPostService.getPost).toHaveBeenCalledWith(10)
+    expect(mockedPostService.listComments).toHaveBeenCalledWith(10)
+    expect(mockedPostService.createComment).toHaveBeenCalledWith(10, {
       content: '검색 스코어링 설명이 좋아요',
     })
-    expect(mockedPostService.createRecommend).toBeCalledWith(10)
+    expect(mockedPostService.createRecommend).toHaveBeenCalledWith(10)
     expect(wrapper.get('.notice-badge').text()).toBe('공지')
     expect(wrapper.findAll('.post-image-list img')).toHaveLength(2)
     expect(wrapper.findAll('.post-image-list img')[0].attributes('src')).toBe('https://cdn.example.com/first.png')
@@ -247,7 +260,7 @@ describe('# Post detail component', () => {
     const wrapper = mountPostDetail()
     await flushPromises()
 
-    expect(mockedPostSearchService.recommendRelatedPosts).toBeCalledWith(10, { size: 3 })
+    expect(mockedPostSearchService.recommendRelatedPosts).toHaveBeenCalledWith(10, { size: 3 })
     expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('관련 글')
     expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('코틀린 BM25 추천')
     expect(wrapper.get('[data-testid="related-posts"]').text()).toContain('score 8.50')
@@ -422,13 +435,13 @@ describe('# Post detail component', () => {
     await adminWrapper.get('[data-testid="hide-post"]').trigger('click')
     await flushPromises()
 
-    expect(mockedPostService.hidePost).toBeCalledWith(10)
+    expect(mockedPostService.hidePost).toHaveBeenCalledWith(10)
     expect(adminWrapper.find('[data-testid="hide-post"]').exists()).toBe(false)
     expect(adminWrapper.get('[data-testid="post-action-message"]').text()).toBe('게시글을 숨겼습니다.')
   })
 
   it('should show backend hide error message for admin viewer', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
     mockedPostService.getPost.mockResolvedValue({
       id: 10,
@@ -458,7 +471,7 @@ describe('# Post detail component', () => {
     await wrapper.get('[data-testid="hide-post"]').trigger('click')
     await flushPromises()
 
-    expect(consoleError).toBeCalledWith('게시글 숨김 실패:', expect.anything())
+    expect(consoleError).toHaveBeenCalledWith('게시글 숨김 실패:', expect.anything())
     expect(wrapper.get('[data-testid="post-action-error"]').text()).toBe('관리자만 게시글을 숨길 수 있습니다.')
   })
 
@@ -532,7 +545,7 @@ describe('# Post detail component', () => {
     await adminWrapper.get('[data-testid="restore-post"]').trigger('click')
     await flushPromises()
 
-    expect(mockedPostService.restorePost).toBeCalledWith(10)
+    expect(mockedPostService.restorePost).toHaveBeenCalledWith(10)
     expect(adminWrapper.find('[data-testid="hidden-post"]').exists()).toBe(false)
     expect(adminWrapper.get('[data-testid="post-action-message"]').text()).toBe('게시글을 복구했습니다.')
     expect(adminWrapper.text()).toContain('복구 후 다시 본문을 보여준다')
@@ -563,7 +576,7 @@ describe('# Post detail component', () => {
   })
 
   it('should show backend restore error message for admin viewer', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
     mockedPostService.getPost.mockResolvedValue({
       id: 10,
@@ -593,7 +606,104 @@ describe('# Post detail component', () => {
     await wrapper.get('[data-testid="restore-post"]').trigger('click')
     await flushPromises()
 
-    expect(consoleError).toBeCalledWith('게시글 복구 실패:', expect.anything())
+    expect(consoleError).toHaveBeenCalledWith('게시글 복구 실패:', expect.anything())
     expect(wrapper.get('[data-testid="post-action-error"]').text()).toBe('게시글 복구는 관리자만 할 수 있습니다.')
   })
+  const postResponse = (id: number) => ({
+    id, title: `글 ${id}`, content: `본문 ${id}`, imageUrls: [], viewCount: 1,
+    display: true, notice: false, commentCount: 0, recommendCount: 0,
+  })
+
+  it('keeps the source page link when the post is missing', async () => {
+    mockRoute.query.page = '2'
+    mockedPostService.getPost.mockRejectedValue({ response: { status: 404 } })
+    const wrapper = mountPostDetail()
+    await flushPromises()
+    expect(wrapper.text()).toContain('게시글을 찾을 수 없습니다.')
+    expect(wrapper.get('[data-testid="detail-list-link"]').attributes('data-to')).toBe('/?page=2')
+  })
+
+  it.each(['abc', '0', '-1', '1.5'])('rejects invalid post id %s without an API request', async id => {
+    mockRoute.params.id = id
+    const wrapper = mountPostDetail()
+    await flushPromises()
+    expect(mockedPostService.getPost).not.toHaveBeenCalled()
+    expect(mockedPostService.listComments).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('게시글을 찾을 수 없습니다.')
+    expect(wrapper.find('[data-testid="detail-list-link"]').exists()).toBe(true)
+  })
+
+  it('retries a failed detail request while keeping a route back to the list', async () => {
+    mockedPostService.getPost.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(postResponse(10))
+    const wrapper = mountPostDetail()
+    await flushPromises()
+    expect(wrapper.find('[data-testid="detail-list-link"]').exists()).toBe(true)
+    await wrapper.get('[data-testid="detail-retry"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('h1').text()).toBe('글 10')
+  })
+
+  it('shows the article while related search is still pending', async () => {
+    mockedPostService.getPost.mockResolvedValue(postResponse(10))
+    mockedPostSearchService.recommendRelatedPosts.mockImplementation(() => new Promise(() => {}))
+    const wrapper = mountPostDetail()
+    await flushPromises()
+    expect(wrapper.get('[data-testid="post-content"]').text()).toBe('본문 10')
+  })
+
+  it('ignores a previous article response after the route changes', async () => {
+    let resolveOld!: (value: ReturnType<typeof postResponse>) => void
+    mockedPostService.getPost.mockImplementationOnce(() => new Promise(resolve => { resolveOld = resolve }))
+      .mockResolvedValueOnce(postResponse(11))
+    const wrapper = mountPostDetail()
+    mockRoute.params.id = '11'
+    await flushPromises()
+    resolveOld(postResponse(10))
+    await flushPromises()
+    expect(wrapper.get('h1').text()).toBe('글 11')
+    expect(wrapper.get('[data-testid="post-content"]').text()).toBe('본문 11')
+  })
+
+  it('clears article action state when another article is opened', async () => {
+    mockedPostService.getPost.mockResolvedValueOnce(postResponse(10)).mockResolvedValueOnce(postResponse(11))
+    mockedPostService.createRecommend.mockResolvedValue({ id: 1, postId: 10, memberId: 2, display: true, createdAt: '2026-10-03T00:00:00' })
+    const wrapper = mountPostDetail()
+    await flushPromises()
+    await wrapper.get('[data-testid="recommend-button"]').trigger('click')
+    await flushPromises()
+    await wrapper.get('[data-testid="comment-content"]').setValue('이전 글 댓글 초안')
+    mockRoute.params.id = '11'
+    await flushPromises()
+    expect(wrapper.get('[data-testid="recommend-button"]').attributes('disabled')).toBeUndefined()
+    expect(wrapper.get('[data-testid="comment-content"]').element).toHaveProperty('value', '')
+    expect(wrapper.text()).not.toContain('추천을 반영했습니다.')
+  })
+
+  it('does not apply an old recommend response to the new article', async () => {
+    let finish!: (value: Awaited<ReturnType<typeof postService.createRecommend>>) => void
+    mockedPostService.getPost.mockResolvedValueOnce(postResponse(10)).mockResolvedValueOnce(postResponse(11))
+    mockedPostService.createRecommend.mockImplementation(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = mountPostDetail()
+    await flushPromises()
+    await wrapper.get('[data-testid="recommend-button"]').trigger('click')
+    mockRoute.params.id = '11'
+    await flushPromises()
+    finish({ id: 1, postId: 10, memberId: 2, display: true, createdAt: '2026-10-03T00:00:00' })
+    await flushPromises()
+    expect(wrapper.get('.post-meta').text()).toContain('추천 0')
+    expect(wrapper.get('[data-testid="recommend-button"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('keeps an invalid route empty even if the previous request succeeds later', async () => {
+    let finish!: (value: ReturnType<typeof postResponse>) => void
+    mockedPostService.getPost.mockImplementation(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = mountPostDetail()
+    mockRoute.params.id = 'invalid'
+    await flushPromises()
+    finish(postResponse(10))
+    await flushPromises()
+    expect(wrapper.text()).toContain('게시글을 찾을 수 없습니다.')
+    expect(wrapper.find('[data-testid="post-content"]').exists()).toBe(false)
+  })
+
 })

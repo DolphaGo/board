@@ -1,3 +1,5 @@
+import { vi } from 'vitest'
+
 interface FetchResponseBody {
   type: 'body'
 }
@@ -23,5 +25,5 @@ export default function mockFetch (data: FetchResponseBody | FetchResponseFull):
     response = body
   }
 
-  global.fetch = jest.fn().mockResolvedValue(response)
+  globalThis.fetch = vi.fn().mockResolvedValue(response)
 }

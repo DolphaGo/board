@@ -1,14 +1,15 @@
+import { describe, expect, it, vi, type Mocked } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { postService } from 'src/api/postService'
 import NoticePostList from './NoticePostList.vue'
 
-jest.mock('src/api/postService', () => ({
+vi.mock('src/api/postService', () => ({
   postService: {
-    listNoticePosts: jest.fn(),
+    listNoticePosts: vi.fn(),
   },
 }))
 
-const mockedPostService = postService as jest.Mocked<typeof postService>
+const mockedPostService = postService as Mocked<typeof postService>
 
 const routerLinkStub = {
   props: ['to'],
@@ -46,7 +47,7 @@ describe('# Notice post list component', () => {
 
     expect(wrapper.get('h2').text()).toBe('공지사항')
     expect(wrapper.get('.board-summary').text()).toBe('고정 공지 1건')
-    expect(mockedPostService.listNoticePosts).toBeCalledTimes(1)
+    expect(mockedPostService.listNoticePosts).toHaveBeenCalledTimes(1)
     expect(row.get('.notice-badge').text()).toBe('공지')
     expect(row.get('.board-title-text').text()).toBe('점검 공지')
     expect(row.get('.board-title-link').attributes('data-to')).toBe('/post/10')
@@ -76,7 +77,7 @@ describe('# Notice post list component', () => {
   })
 
   it('should render an error message when notices cannot be loaded', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockedPostService.listNoticePosts.mockRejectedValue(new Error('API failure'))
 
     const wrapper = mount(NoticePostList, {

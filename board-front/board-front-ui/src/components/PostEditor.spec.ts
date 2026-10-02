@@ -1,31 +1,32 @@
+import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { request } from 'src'
 import { postService } from 'src/api/postService'
 import { nextTick } from 'vue'
 import PostEditor from './PostEditor.vue'
 
-const push = jest.fn()
+const { push } = vi.hoisted(() => ({ push: vi.fn() }))
 
-jest.mock('vue-router', () => ({
+vi.mock('vue-router', () => ({
   useRouter: () => ({
     push,
   }),
 }))
 
-jest.mock('src/api/postService', () => ({
+vi.mock('src/api/postService', () => ({
   postService: {
-    createPost: jest.fn(),
+    createPost: vi.fn(),
   },
 }))
 
-jest.mock('src', () => ({
+vi.mock('src', () => ({
   request: {
-    postForm: jest.fn(),
+    postForm: vi.fn(),
   },
 }))
 
-const mockedPostService = postService as jest.Mocked<typeof postService>
-const mockedRequest = request as jest.Mocked<typeof request>
+const mockedPostService = postService as Mocked<typeof postService>
+const mockedRequest = request as Mocked<typeof request>
 
 describe('# Post editor component', () => {
   beforeEach(() => {
@@ -69,7 +70,7 @@ describe('# Post editor component', () => {
     await flushPromises()
 
     expect(wrapper.findAll('.image-url-item')).toHaveLength(2)
-    expect(mockedPostService.createPost).toBeCalledWith({
+    expect(mockedPostService.createPost).toHaveBeenCalledWith({
       title: '이미지 글쓰기',
       content:
         '본문과 이미지 URL을 함께 저장한다\n' +
@@ -78,7 +79,7 @@ describe('# Post editor component', () => {
       imageUrls: ['https://cdn.example.com/first.png', 'https://cdn.example.com/second.png'],
       actorRole: 'user',
     })
-    expect(push).toBeCalledWith('/post/77')
+    expect(push).toHaveBeenCalledWith('/post/77')
   })
 
   it('should remove image URL markdown and renumber the remaining images', async () => {
@@ -110,7 +111,7 @@ describe('# Post editor component', () => {
       'value',
       '본문과 이미지 URL을 함께 저장한다\n![첨부 이미지 1](https://cdn.example.com/second.png)\n',
     )
-    expect(mockedPostService.createPost).toBeCalledWith({
+    expect(mockedPostService.createPost).toHaveBeenCalledWith({
       title: '이미지 삭제 글쓰기',
       content:
         '본문과 이미지 URL을 함께 저장한다\n' +
@@ -118,7 +119,7 @@ describe('# Post editor component', () => {
       imageUrls: ['https://cdn.example.com/second.png'],
       actorRole: 'user',
     })
-    expect(push).toBeCalledWith('/post/78')
+    expect(push).toHaveBeenCalledWith('/post/78')
   })
 
   it('should move image URL markdown up and submit the reordered image URLs', async () => {
@@ -152,7 +153,7 @@ describe('# Post editor component', () => {
         '![첨부 이미지 1](https://cdn.example.com/second.png)\n' +
         '![첨부 이미지 2](https://cdn.example.com/first.png)\n',
     )
-    expect(mockedPostService.createPost).toBeCalledWith({
+    expect(mockedPostService.createPost).toHaveBeenCalledWith({
       title: '이미지 순서 변경 글쓰기',
       content:
         '본문과 이미지 URL을 함께 저장한다\n' +
@@ -161,7 +162,7 @@ describe('# Post editor component', () => {
       imageUrls: ['https://cdn.example.com/second.png', 'https://cdn.example.com/first.png'],
       actorRole: 'user',
     })
-    expect(push).toBeCalledWith('/post/79')
+    expect(push).toHaveBeenCalledWith('/post/79')
   })
 
   it('should submit only image URLs that still remain in the edited markdown body', async () => {
@@ -191,7 +192,7 @@ describe('# Post editor component', () => {
     await wrapper.get('[data-testid="post-submit"]').trigger('click')
     await flushPromises()
 
-    expect(mockedPostService.createPost).toBeCalledWith({
+    expect(mockedPostService.createPost).toHaveBeenCalledWith({
       title: '본문 기준 이미지 저장',
       content:
         '본문에서 첫 이미지를 직접 지웠다\n' +
@@ -199,7 +200,7 @@ describe('# Post editor component', () => {
       imageUrls: ['https://cdn.example.com/second.png'],
       actorRole: 'user',
     })
-    expect(push).toBeCalledWith('/post/80')
+    expect(push).toHaveBeenCalledWith('/post/80')
   })
 
   it('should show whether each image URL will be saved from the markdown body', async () => {
@@ -462,18 +463,18 @@ describe('# Post editor component', () => {
     await wrapper.get('[data-testid="post-submit"]').trigger('click')
     await flushPromises()
 
-    expect(mockedRequest.postForm).toBeCalledWith('/images', expect.any(FormData))
-    expect(mockedPostService.createPost).toBeCalledWith({
+    expect(mockedRequest.postForm).toHaveBeenCalledWith('/images', expect.any(FormData))
+    expect(mockedPostService.createPost).toHaveBeenCalledWith({
       title: '붙여넣기 이미지',
       content: '본문\n![첨부 이미지 1](/api/images/stored.png)\n',
       imageUrls: ['/api/images/stored.png'],
       actorRole: 'user',
     })
-    expect(push).toBeCalledWith('/post/88')
+    expect(push).toHaveBeenCalledWith('/post/88')
   })
 
   it('should show a user-facing message when pasted image upload fails', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockedRequest.postForm.mockRejectedValue(new Error('이미지는 5MB까지만 업로드할 수 있습니다.'))
     const wrapper = mount(PostEditor)
     const imageFile = new File(['image-bytes'], 'large.png', { type: 'image/png' })
@@ -497,8 +498,8 @@ describe('# Post editor component', () => {
       'PNG, JPEG, GIF, WebP 이미지만 업로드할 수 있고 5MB까지 가능합니다.',
     )
     expect(wrapper.text()).not.toContain('large.png')
-    expect(mockedPostService.createPost).not.toBeCalled()
-    expect(consoleError).toBeCalledWith('Image upload failed', expect.any(Error))
+    expect(mockedPostService.createPost).not.toHaveBeenCalled()
+    expect(consoleError).toHaveBeenCalledWith('Image upload failed', expect.any(Error))
 
     consoleError.mockRestore()
   })
@@ -528,7 +529,7 @@ describe('# Post editor component', () => {
     await pasteImage()
 
     expect(wrapper.get('[data-testid="image-upload-message"]').text()).toContain('이미지 업로드 중입니다.')
-    expect(mockedRequest.postForm).toBeCalledTimes(1)
+    expect(mockedRequest.postForm).toHaveBeenCalledTimes(1)
 
     finishUpload({
       data: {
@@ -570,14 +571,14 @@ describe('# Post editor component', () => {
     await adminWrapper.get('[data-testid="post-submit"]').trigger('click')
     await flushPromises()
 
-    expect(mockedPostService.createPost).toBeCalledWith({
+    expect(mockedPostService.createPost).toHaveBeenCalledWith({
       title: '공지 작성',
       content: '운영 공지',
       imageUrls: [],
       notice: true,
       actorRole: 'admin',
     })
-    expect(push).toBeCalledWith('/post/99')
+    expect(push).toHaveBeenCalledWith('/post/99')
   })
 
   it('should switch editor role in the form and reset notice when switching back to user', async () => {
@@ -603,7 +604,7 @@ describe('# Post editor component', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="notice-checkbox"]').exists()).toBe(false)
-    expect(mockedPostService.createPost).toBeCalledWith({
+    expect(mockedPostService.createPost).toHaveBeenCalledWith({
       title: '일반 글',
       content: '공지 아님',
       imageUrls: [],
@@ -635,7 +636,7 @@ describe('# Post editor component', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="notice-checkbox"]').exists()).toBe(false)
-    expect(mockedPostService.createPost).toBeCalledWith({
+    expect(mockedPostService.createPost).toHaveBeenCalledWith({
       title: '라우트 권한 변경',
       content: '쿼리가 user로 바뀌면 일반 글로 저장한다',
       imageUrls: [],
@@ -644,7 +645,7 @@ describe('# Post editor component', () => {
   })
 
   it('should show backend permission error when notice creation is rejected', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockedPostService.createPost.mockRejectedValue({
       response: {
         status: 400,
@@ -668,9 +669,62 @@ describe('# Post editor component', () => {
     expect(wrapper.get('[data-testid="submit-message"]').text()).toBe(
       '공지 게시글은 관리자만 작성할 수 있습니다.',
     )
-    expect(push).not.toBeCalled()
-    expect(consoleError).toBeCalledWith('Post submit failed', expect.any(Object))
+    expect(push).not.toHaveBeenCalled()
+    expect(consoleError).toHaveBeenCalledWith('Post submit failed', expect.any(Object))
 
     consoleError.mockRestore()
   })
+  it('keeps the draft after save failure and allows a successful retry', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    mockedPostService.createPost.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({
+      id: 101, title: '재시도', content: '보존할 본문', imageUrls: [], viewCount: 0, display: true, notice: false,
+    })
+    const wrapper = mount(PostEditor)
+    await wrapper.get('#issue-title').setValue('재시도')
+    await wrapper.get('#issue-body').setValue('보존할 본문')
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('#issue-title').element).toHaveProperty('value', '재시도')
+    expect(wrapper.get('#issue-body').element).toHaveProperty('value', '보존할 본문')
+    expect(wrapper.get('[data-testid="post-submit"]').attributes('disabled')).toBeUndefined()
+    expect(push).not.toHaveBeenCalled()
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    await flushPromises()
+    expect(push).toHaveBeenCalledWith('/post/101')
+    consoleError.mockRestore()
+  })
+
+  it('sends one request for two submit events in the same tick', async () => {
+    let finish!: (value: Awaited<ReturnType<typeof postService.createPost>>) => void
+    mockedPostService.createPost.mockImplementation(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = mount(PostEditor)
+    await wrapper.get('#issue-title').setValue('중복 방지')
+    await wrapper.get('#issue-body').setValue('한 번 저장')
+    const button = wrapper.get('[data-testid="post-submit"]')
+    await Promise.all([button.trigger('click'), button.trigger('click')])
+    expect(mockedPostService.createPost).toHaveBeenCalledTimes(1)
+    finish({ id: 102, title: '중복 방지', content: '한 번 저장', imageUrls: [], viewCount: 0, display: true, notice: false })
+    await flushPromises()
+    expect(push).toHaveBeenCalledTimes(1)
+  })
+
+  it('blocks saving until a pasted image finishes uploading', async () => {
+    let finish!: (value: unknown) => void
+    mockedRequest.postForm.mockImplementation(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = mount(PostEditor)
+    await wrapper.get('#issue-title').setValue('이미지 대기')
+    await wrapper.get('#issue-body').setValue('본문')
+    const image = new File(['image'], 'pending.png', { type: 'image/png' })
+    await wrapper.get('#issue-body').trigger('paste', {
+      clipboardData: { items: [{ type: 'image/png', getAsFile: () => image }] },
+    })
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    expect(mockedPostService.createPost).not.toHaveBeenCalled()
+    expect(wrapper.get('[data-testid="post-submit"]').attributes('disabled')).toBeDefined()
+    finish({ data: { url: '/api/images/pending.png' } })
+    await flushPromises()
+    expect(wrapper.get('[data-testid="post-submit"]').attributes('disabled')).toBeUndefined()
+    expect(wrapper.get('#issue-body').element).toHaveProperty('value', expect.stringContaining('/api/images/pending.png'))
+  })
+
 })

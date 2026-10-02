@@ -1,32 +1,37 @@
+import { beforeEach, describe, expect, it, vi, type Mock, type Mocked } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { useRouter } from 'vue-router'
 import { chatService } from 'src/api/chatService'
 import ChatRoom from './ChatRoom.vue'
 
-const mockPublish = jest.fn()
-const mockSubscribe = jest.fn()
-const mockDeactivate = jest.fn()
-const pushMock = jest.fn()
-let mockConnected = true
-let subscribedMessageHandler: ((message: { body: string }) => void) | undefined
-let stompErrorHandler: (() => void) | undefined
-const mockedChatService = chatService as jest.Mocked<typeof chatService>
-const mockedUseRouter = useRouter as jest.Mock
+const { mockPublish, mockSubscribe, mockDeactivate, pushMock } = vi.hoisted(() => ({
+  mockPublish: vi.fn(),
+  mockSubscribe: vi.fn(),
+  mockDeactivate: vi.fn(),
+  pushMock: vi.fn(),
+}))
+let { mockConnected, subscribedMessageHandler, stompErrorHandler } = vi.hoisted(() => ({
+  mockConnected: true,
+  subscribedMessageHandler: undefined as ((message: { body: string }) => void) | undefined,
+  stompErrorHandler: undefined as (() => void) | undefined,
+}))
+const mockedChatService = chatService as Mocked<typeof chatService>
+const mockedUseRouter = useRouter as Mock
 
 type MockMediaTrack = {
   enabled: boolean
-  stop: jest.Mock
+  stop: Mock
 }
 
-jest.mock('sockjs-client', () => jest.fn())
+vi.mock('sockjs-client', () => ({ default: vi.fn() }))
 
-jest.mock('@stomp/stompjs', () => ({
-  Client: jest.fn().mockImplementation(function MockClient(this: {
+vi.mock('@stomp/stompjs', () => ({
+  Client: vi.fn().mockImplementation(function MockClient(this: {
     connected: boolean
-    publish: jest.Mock
-    subscribe: jest.Mock
-    activate: jest.Mock
-    deactivate: jest.Mock
+    publish: Mock
+    subscribe: Mock
+    activate: Mock
+    deactivate: Mock
     onConnect?: () => void
     onStompError?: () => void
   }) {
@@ -36,22 +41,22 @@ jest.mock('@stomp/stompjs', () => ({
       subscribedMessageHandler = callback
     })
     this.deactivate = mockDeactivate
-    this.activate = jest.fn(() => {
+    this.activate = vi.fn(() => {
       stompErrorHandler = this.onStompError
       this.onConnect?.()
     })
   }),
 }))
 
-jest.mock('src/api/chatService', () => ({
+vi.mock('src/api/chatService', () => ({
   chatService: {
-    getRoom: jest.fn(),
-    leaveRoom: jest.fn(),
+    getRoom: vi.fn(),
+    leaveRoom: vi.fn(),
   },
 }))
 
-jest.mock('vue-router', () => ({
-  useRouter: jest.fn(),
+vi.mock('vue-router', () => ({
+  useRouter: vi.fn(),
 }))
 
 const mountChatRoom = (isVideoEnabled = false) =>
@@ -64,8 +69,8 @@ const mountChatRoom = (isVideoEnabled = false) =>
   })
 
 const createMockMediaStream = () => {
-  const videoTrack: MockMediaTrack = { enabled: true, stop: jest.fn() }
-  const audioTrack: MockMediaTrack = { enabled: true, stop: jest.fn() }
+  const videoTrack: MockMediaTrack = { enabled: true, stop: vi.fn() }
+  const audioTrack: MockMediaTrack = { enabled: true, stop: vi.fn() }
   const stream = {
     getTracks: () => [videoTrack, audioTrack],
     getVideoTracks: () => [videoTrack],
@@ -75,7 +80,7 @@ const createMockMediaStream = () => {
   return { stream, videoTrack, audioTrack }
 }
 
-const mockWebRtcApis = (getUserMedia: jest.Mock, closePeerConnection = jest.fn()) => {
+const mockWebRtcApis = (getUserMedia: Mock, closePeerConnection = vi.fn()) => {
   // jsdom에는 mediaDevices/RTCPeerConnection이 없으므로, 브라우저 API 경계만 테스트용으로 대체한다.
   Object.defineProperty(navigator, 'mediaDevices', {
     configurable: true,
@@ -83,10 +88,12 @@ const mockWebRtcApis = (getUserMedia: jest.Mock, closePeerConnection = jest.fn()
   })
   Object.defineProperty(globalThis, 'RTCPeerConnection', {
     configurable: true,
-    value: jest.fn(() => ({
-      addTrack: jest.fn(),
-      close: closePeerConnection,
-    })),
+    value: vi.fn(function MockPeerConnection() {
+      return {
+        addTrack: vi.fn(),
+        close: closePeerConnection,
+      }
+    }),
   })
 
   return { closePeerConnection }
@@ -175,7 +182,7 @@ describe('# Chat room component', () => {
   })
 
   it('should keep chat usable when room metadata fetch fails', async () => {
-    const error = jest.spyOn(console, 'error').mockImplementation()
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockedChatService.getRoom.mockRejectedValue(new Error('room failed'))
 
     const wrapper = mountChatRoom()
@@ -190,7 +197,7 @@ describe('# Chat room component', () => {
   })
 
   it('should retry room metadata fetch after a detail failure', async () => {
-    const error = jest.spyOn(console, 'error').mockImplementation()
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockedChatService.getRoom
       .mockRejectedValueOnce(new Error('room failed'))
       .mockResolvedValueOnce({
@@ -243,7 +250,7 @@ describe('# Chat room component', () => {
 
   it('should keep the input and render a feedback message when publishing a talk message fails', async () => {
     const wrapper = mountChatRoom()
-    const error = jest.spyOn(console, 'error').mockImplementation()
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockPublish.mockClear()
     mockPublish.mockImplementationOnce(() => {
       throw new Error('publish failed')
@@ -449,7 +456,7 @@ describe('# Chat room component', () => {
 
   it('should ignore invalid JSON messages received from the subscription', async () => {
     const wrapper = mountChatRoom()
-    const warn = jest.spyOn(console, 'warn').mockImplementation()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
     expect(() => {
       subscribedMessageHandler?.({ body: '{invalid-json' })
@@ -463,7 +470,7 @@ describe('# Chat room component', () => {
 
   it('should ignore messages missing required chat fields', async () => {
     const wrapper = mountChatRoom()
-    const warn = jest.spyOn(console, 'warn').mockImplementation()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
     subscribedMessageHandler?.({
       body: JSON.stringify({
@@ -481,7 +488,7 @@ describe('# Chat room component', () => {
 
   it('should ignore messages with unsupported chat type', async () => {
     const wrapper = mountChatRoom()
-    const warn = jest.spyOn(console, 'warn').mockImplementation()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
     subscribedMessageHandler?.({
       body: JSON.stringify({
@@ -585,7 +592,7 @@ describe('# Chat room component', () => {
   it('should stop media tracks when WebRTC setup finishes after unmount', async () => {
     let resolveMedia: (stream: MediaStream) => void = () => undefined
     const { stream, videoTrack, audioTrack } = createMockMediaStream()
-    mockWebRtcApis(jest.fn(() => new Promise<MediaStream>((resolve) => {
+    mockWebRtcApis(vi.fn(() => new Promise<MediaStream>((resolve) => {
       resolveMedia = resolve
     })))
 
@@ -602,7 +609,7 @@ describe('# Chat room component', () => {
 
   it('should stop media tracks and close peer connection after WebRTC setup on unmount', async () => {
     const { stream, videoTrack, audioTrack } = createMockMediaStream()
-    const { closePeerConnection } = mockWebRtcApis(jest.fn(() => Promise.resolve(stream)))
+    const { closePeerConnection } = mockWebRtcApis(vi.fn(() => Promise.resolve(stream)))
 
     const wrapper = mountChatRoom(true)
     await Promise.resolve()
@@ -616,7 +623,7 @@ describe('# Chat room component', () => {
 
   it('should toggle local video track enabled state', async () => {
     const { stream, videoTrack } = createMockMediaStream()
-    mockWebRtcApis(jest.fn(() => Promise.resolve(stream)))
+    mockWebRtcApis(vi.fn(() => Promise.resolve(stream)))
 
     const wrapper = mountChatRoom(true)
     await Promise.resolve()
@@ -629,7 +636,7 @@ describe('# Chat room component', () => {
 
   it('should toggle local audio track enabled state', async () => {
     const { stream, audioTrack } = createMockMediaStream()
-    mockWebRtcApis(jest.fn(() => Promise.resolve(stream)))
+    mockWebRtcApis(vi.fn(() => Promise.resolve(stream)))
 
     const wrapper = mountChatRoom(true)
     await Promise.resolve()

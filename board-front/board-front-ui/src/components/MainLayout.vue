@@ -31,6 +31,7 @@ import Sidebar from './Sidebar.vue';
 
 .content {
   flex: 1;
+  min-width: 0;
   padding: 20px;
 }
 
@@ -46,6 +47,7 @@ import Sidebar from './Sidebar.vue';
   }
 
   .content {
+    order: -1;
     padding: 12px;
   }
 }

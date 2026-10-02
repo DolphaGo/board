@@ -27,7 +27,7 @@ class PostService(
         // ES 문서는 검색 후보를 찾는 용도이고, 실제 본문 표시는 원본 저장소를 기준으로 한다.
         val post =
             postRepository.findById(postId).orElseThrow {
-                IllegalArgumentException("게시글을 찾을 수 없습니다: $postId")
+                PostNotFoundException(postId)
             }
 
         // 목록/검색 노출만으로 조회수를 올리면 스코어링 학습 데이터가 쉽게 오염된다.
@@ -297,3 +297,5 @@ data class PostDetailItem(
     val commentCount: Long,
     val recommendCount: Long,
 )
+
+class PostNotFoundException(postId: Long) : IllegalArgumentException("게시글을 찾을 수 없습니다: $postId")

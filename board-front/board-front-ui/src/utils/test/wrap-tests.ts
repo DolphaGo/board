@@ -1,3 +1,5 @@
+import { describe, it } from 'vitest'
+
 interface WrapTestsProps <Item> {
   task: string
   list: Item[]

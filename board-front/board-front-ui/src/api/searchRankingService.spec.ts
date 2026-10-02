@@ -1,9 +1,10 @@
+import { describe, expect, it, vi, type Mocked } from 'vitest'
 import axios from 'axios'
 import { searchRankingService } from './searchRankingService'
 
-jest.mock('axios')
+vi.mock('axios')
 
-const mockedAxios = axios as jest.Mocked<typeof axios>
+const mockedAxios = axios as Mocked<typeof axios>
 
 describe('# Search ranking service', function () {
   it('should request top 10 search rankings by default', async function () {
@@ -24,7 +25,7 @@ describe('# Search ranking service', function () {
 
     const rankings = await searchRankingService.getRankings()
 
-    expect(mockedAxios.get).toBeCalledWith('/api/search/rankings', {
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/search/rankings', {
       params: { limit: 10 },
     })
     expect(rankings).toEqual([
@@ -55,7 +56,7 @@ describe('# Search ranking service', function () {
 
     const rankings = await searchRankingService.getSourceRankings()
 
-    expect(mockedAxios.get).toBeCalledWith('/api/search/rankings/sources', {
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/search/rankings/sources', {
       params: { limit: 4 },
     })
     expect(rankings).toEqual([
@@ -75,7 +76,7 @@ describe('# Search ranking service', function () {
 
     await searchRankingService.getRankings(limit)
 
-    expect(mockedAxios.get).toBeCalledWith('/api/search/rankings', {
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/search/rankings', {
       params: { limit: 10 },
     })
   })
@@ -96,7 +97,7 @@ describe('# Search ranking service', function () {
 
     const suggestions = await searchRankingService.suggestKeywords('kotlin', 5)
 
-    expect(mockedAxios.get).toBeCalledWith('/api/search/rankings/suggestions', {
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/search/rankings/suggestions', {
       params: {
         keyword: 'kotlin',
         limit: 5,
@@ -117,7 +118,7 @@ describe('# Search ranking service', function () {
   it('should ignore blank search keyword suggestions', async function () {
     const suggestions = await searchRankingService.suggestKeywords('   ')
 
-    expect(mockedAxios.get).not.toBeCalled()
+    expect(mockedAxios.get).not.toHaveBeenCalled()
     expect(suggestions).toEqual([])
   })
 
@@ -243,7 +244,7 @@ describe('# Search ranking service', function () {
 
     await searchRankingService.recordKeyword('kotlin spring')
 
-    expect(mockedAxios.post).toBeCalledWith('/api/search/rankings', {
+    expect(mockedAxios.post).toHaveBeenCalledWith('/api/search/rankings', {
       keyword: 'kotlin spring',
     })
   })
@@ -251,6 +252,6 @@ describe('# Search ranking service', function () {
   it('should ignore blank searched keyword', async function () {
     await searchRankingService.recordKeyword('   ')
 
-    expect(mockedAxios.post).not.toBeCalled()
+    expect(mockedAxios.post).not.toHaveBeenCalled()
   })
 })

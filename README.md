@@ -4,18 +4,28 @@ Kotlin + Spring Boot + Vue 3로 게시판을 공부하기 위한 멀티 모듈 �
 
 단순 CRUD 게시판에서 끝내지 않고, 실제 게시판 서비스에서 자주 만나는 검색/랭킹/추천/채팅 흐름을 함께 공부할 수 있게 구성했습니다. 코드에는 "왜 이렇게 나누었는지"를 따라갈 수 있도록 주석을 비교적 자세히 남겨 두었습니다.
 
+## 기능별 PR과 학습 기록
+
+디시인사이드·에펨코리아 등의 게시판 흐름을 참고해 기능을 하나씩 PR로 개발합니다. 각 PR은 요구사항, 핵심 개념, 구현 이유와 순서, 코드 읽는 법, 검증 결과를 함께 남깁니다.
+
+- [학습 가이드와 다음 PR 후보](docs/STUDY_GUIDE.md)
+- [첫 기록: 기능별 PR과 학습 기록](docs/study/0001-development-workflow.md)
+- [작업 규칙](AGENTS.md) · [PR 양식](.github/pull_request_template.md)
+
 ## 기술 스택
 
 | 영역 | 스택 |
 | --- | --- |
-| Backend | Spring Boot 4.0.6, Kotlin 2.3.21, Java 21 |
-| Frontend | Vue 3.5.35, TypeScript 6.0.3, Vite 8.0.16 |
-| Package Manager | pnpm |
+| Backend | Spring Boot 4.1.1, Kotlin 2.4.20, Java 27 (컴파일 대상 JVM 26) |
+| Frontend | Vue 3.5.43, TypeScript 7.0.2, Vite 8.3.2 |
+| Package Manager | pnpm 12.8.1 |
 | Database | H2(local default), MySQL(prod profile) |
 | Search | Spring Data Elasticsearch |
 | Ranking | Redis ZSET |
 | Chat | Spring WebSocket/STOMP, MongoDB |
-| Build/Test | Gradle, Jest, vue-tsc, Vite |
+| Build/Test | Gradle 9.8.0, Vitest 5.0.3, vue-tsc, Vite |
+
+TypeScript 7 native로 일반 TypeScript 코드를 검사하고, Vue 템플릿과 ESLint는 최신 공식 `@typescript/typescript6` 호환 패키지의 API를 함께 사용합니다. 실행 버전과 선택 이유는 [최신 프론트 도구 학습 기록](docs/study/0006-latest-frontend.md)에 정리했습니다.
 
 ## 모듈 구성
 
@@ -45,9 +55,9 @@ board
 
 필수 도구:
 
-- Java 21
-- Node.js 24 이상 권장
-- pnpm
+- JDK 27 (`JAVA_HOME`을 설치 경로로 설정)
+- Node.js 26.10.0
+- pnpm 12.8.1
 
 선택 인프라:
 
@@ -86,6 +96,15 @@ http://localhost:3000
 
 ## 백엔드 실행
 
+JDK 27을 설치하고 `JAVA_HOME`을 해당 설치 경로로 설정합니다. 다음 명령에서 Java 버전과 Gradle의 Launcher/Daemon JVM이 27인지 확인합니다. Gradle은 별도 설치 없이 wrapper가 9.8.0을 내려받고 checksum을 검증합니다.
+
+```bash
+java -version
+./gradlew --version
+```
+
+최신 Kotlin 2.4.20은 JVM 26까지 출력하므로 실행·컴파일 JDK는 27, Java/Kotlin 컴파일 대상은 26입니다. 공식 지원 범위와 실제 검증 결과는 [최신 백엔드 학습 기록](docs/study/0007-latest-backend.md)에 정리했습니다.
+
 기본 profile은 H2 메모리 DB를 사용합니다. 다만 검색, 랭킹, 채팅 저장 기능은 각각 Elasticsearch, Redis, MongoDB 연결이 필요합니다.
 
 ```bash
@@ -111,32 +130,27 @@ http://localhost:8080
 | 채팅방 목록 | `GET /api/chat/rooms` |
 | WebSocket | `ws://localhost:8080/ws` |
 
-## 프론트와 실제 백엔드 연결 시 주의점
+## 기본 게시판: 실제 H2/API 학습 모드
 
-현재 `board-front-ui`는 Vite 단독 실행에서 local fixture를 우선 사용하도록 되어 있습니다. 그리고 일부 API 호출은 `VITE_FRONT_API_URL`이 아니라 `/api/...` 상대 경로를 직접 사용합니다.
+두 터미널에서 실행합니다. JDK 27을 사용합니다.
 
-따라서 실제 `board-api:8080`에 프론트를 붙이려면 다음 중 하나를 선택해야 합니다.
-
-1. Vite 개발 서버에 `/api`, `/ws` proxy를 추가한다.
-2. 프론트 API 호출부를 모두 `VITE_FRONT_API_URL` 기반으로 통일한다.
-3. 프론트를 정적 파일로 빌드한 뒤 Spring 쪽에서 같은 origin으로 서빙한다.
-
-현재 상태에서 처음 기여하는 개발자에게는 1번 방식이 가장 단순합니다.
-
-예시:
-
-```ts
-server: {
-  port: 3000,
-  proxy: {
-    '/api': 'http://localhost:8080',
-    '/ws': {
-      target: 'http://localhost:8080',
-      ws: true,
-    },
-  },
-}
+```bash
+./gradlew :board-api:bootRun --args='--spring.profiles.active=study'
 ```
+
+```bash
+pnpm --dir board-front/board-front-ui dev:api
+```
+
+`http://localhost:3000`에서 실제 DB의 공지와 일반 글 13개를 읽습니다. 목록의 `?page=2`는 화면의 2페이지이며, API에는 `page=1`로 전달됩니다. 새로고침·뒤로가기로도 해당 페이지를 읽을 수 있습니다.
+
+- `dev`: 기존 프론트 단독 fixture 모드입니다. 응답을 DB에 저장하지 않습니다.
+- `dev:api`: fixture를 끄고 `/api`를 Spring 서버로 전달합니다. 기본 주소는 `http://localhost:8080`이며, 포트가 다르면 `BOARD_API_URL=http://localhost:18080 pnpm --dir board-front/board-front-ui dev:api`처럼 지정합니다.
+- `study`: 전용 H2 메모리 DB와 학습용 관리자(1번)·회원(2번), 공지 1개·일반 글 12개·숨김 글 1개를 준비합니다. 서버를 종료하면 이 프로필의 데이터는 사라집니다. 실제 로그인은 아직 연결하지 않았습니다.
+- 검색·랭킹·채팅은 각각 Elasticsearch·Redis·MongoDB가 필요합니다. `dev:api`는 이 API도 실제 서버로 전달하므로 인프라 없이 실행하면 해당 영역은 실패할 수 있습니다.
+- 현재 글쓰기는 검색 색인도 함께 실행합니다. 외부 Elasticsearch 없이 저장하는 학습 흐름은 후속 글쓰기 PR에서 다룹니다.
+
+설계·개념·검증은 [게시글 목록 학습 기록](docs/study/0002-post-list.md)을 참고하세요. 일반 백엔드와 연결할 때도 `dev:api`를 사용하며, 해당 환경의 DB 데이터와 외부 인프라는 별도로 준비합니다.
 
 ## 프론트 보조 API: 이미지 업로드
 
@@ -166,7 +180,7 @@ POST /api/v1/images/upload
 프론트 단위 테스트:
 
 ```bash
-pnpm --dir board-front/board-front-ui exec jest --runInBand
+pnpm --dir board-front/board-front-ui test
 ```
 
 프론트 타입 체크와 빌드:
@@ -175,10 +189,10 @@ pnpm --dir board-front/board-front-ui exec jest --runInBand
 pnpm --dir board-front/board-front-ui build
 ```
 
-백엔드 전체 테스트:
+게시판 API 전체 테스트, 실행 JAR 생성, 프론트 보조 API 컴파일(JDK 27):
 
 ```bash
-CI=true npm_config_registry=https://registry.npmjs.org/ ./gradlew test
+./gradlew :board-api:test :board-api:bootJar :board-front:board-front-api:compileKotlin
 ```
 
 공백/패치 오류 확인:
@@ -208,13 +222,12 @@ git diff --check
 2. `PostList.vue`, `PostEditor.vue`, `SearchResults.vue`, `SearchRanking.vue`, `ChatRoom.vue`를 읽습니다.
 3. `board-api`의 `PostController`, `PostSearchController`, `SearchRankingController`, `ChatRoomController`를 읽습니다.
 4. Elasticsearch, Redis, MongoDB를 준비한 뒤 `board-api`를 실행합니다.
-5. Vite proxy 또는 API base URL 정리를 한 뒤 실제 API 연동을 확인합니다.
+5. `dev:api` 모드로 실제 API 연동을 확인합니다.
 6. 테스트 명령을 돌려 변경 사항을 검증합니다.
 
 ## 현재 남은 개선 과제
 
 - `docker-compose.yml` 추가로 Elasticsearch/Redis/MongoDB 개발 환경 고정
-- Vite dev proxy 또는 API base URL 통일
 - 실제 Elasticsearch 인덱스 설정과 analyzer 튜닝 문서화
 - WebSocket 채팅의 실제 백엔드 smoke test 문서화
 - GitHub Dependabot 보안 경고 별도 점검

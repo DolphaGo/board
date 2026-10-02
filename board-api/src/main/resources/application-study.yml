@@ -1,0 +1,16 @@
+spring:
+  config:
+    activate:
+      on-profile: "study & !prod"
+  datasource:
+    url: jdbc:h2:mem:board-study
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+board:
+  search:
+    indexing-enabled: false
