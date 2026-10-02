@@ -1,6 +1,7 @@
 # 0002. 실제 API로 게시글 목록 읽기
 
-- 상태: 검증 완료, PR 준비
+- 상태: PR 공개 (미병합)
+- PR: [#10](https://github.com/DolphaGo/board/pull/10)
 - 선행 PR: [#9](https://github.com/DolphaGo/board/pull/9)
 - 기준: `8d588a8`
 
