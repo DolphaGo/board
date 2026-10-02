@@ -6,8 +6,10 @@ import dev.dolphago.mysql.PostRecommend
 import dev.dolphago.service.PostDetailItem
 import dev.dolphago.service.PostListItem
 import dev.dolphago.service.PostListPage
+import dev.dolphago.service.PostNotFoundException
 import dev.dolphago.service.PostService
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -51,6 +53,11 @@ class PostController(
         // 권한 검사는 서비스에 두고, 컨트롤러는 같은 목록 DTO로 변환만 한다.
         return ResponseEntity.ok(postService.listHiddenPosts(actorMemberId).map { it.toListItemResponse() })
     }
+
+    // 없는 자원과 서버 장애를 다른 HTTP 상태로 전달해야 화면이 알맞은 복구 동선을 제공한다.
+    @ExceptionHandler(PostNotFoundException::class)
+    fun postNotFound(exception: PostNotFoundException): ResponseEntity<Map<String, String>> =
+        ResponseEntity.status(404).body(mapOf("message" to exception.message.orEmpty()))
 
     @GetMapping("/{id}")
     fun getPost(
