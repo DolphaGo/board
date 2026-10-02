@@ -1,6 +1,7 @@
 # 0003. 현재 글을 정확히 읽고 목록으로 돌아가기
 
-- 상태: 검증 완료, PR 준비
+- 상태: PR 공개 (미병합)
+- PR: [#11](https://github.com/DolphaGo/board/pull/11)
 - 선행 PR: [#10](https://github.com/DolphaGo/board/pull/10)
 
 ## 요구사항과 완료 조건
