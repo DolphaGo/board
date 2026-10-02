@@ -1,7 +1,7 @@
 # 0001. 기능별 PR과 학습 기록
 
-- 상태: 문서 검증 완료, PR 준비
-- PR: 생성 후 기록
+- 상태: PR 공개 (미병합)
+- PR: [#9](https://github.com/DolphaGo/board/pull/9)
 - 기준 커밋: `fb2d441` (`origin/develop`)
 - 작성일: 2026-10-03
 

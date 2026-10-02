@@ -107,4 +107,4 @@ API 입력/출력, 데이터 모델, 권한/실패 조건은 변경한 경우에
 
 | 기록 | 내용 | PR |
 | --- | --- | --- |
-| [0001. 기능별 PR과 학습 기록](study/0001-development-workflow.md) | 작업 단위, Git/PR 개념, 기록과 검증 기준 | 생성 후 기록 |
+| [0001. 기능별 PR과 학습 기록](study/0001-development-workflow.md) | 작업 단위, Git/PR 개념, 기록과 검증 기준 | [#9](https://github.com/DolphaGo/board/pull/9) |
