@@ -1,9 +1,10 @@
+import { describe, expect, it, vi, type Mocked } from 'vitest'
 import axios from 'axios'
 import { postSearchService } from './postSearchService'
 
-jest.mock('axios')
+vi.mock('axios')
 
-const mockedAxios = axios as jest.Mocked<typeof axios>
+const mockedAxios = axios as Mocked<typeof axios>
 
 describe('# Post search service', function () {
   it('should request post search results with keyword and default size', async function () {
@@ -54,7 +55,7 @@ describe('# Post search service', function () {
 
     const results = await postSearchService.search('kotlin spring')
 
-    expect(mockedAxios.get).toBeCalledWith('/api/search/posts', {
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/search/posts', {
       params: {
         keyword: 'kotlin spring',
         size: 20,
@@ -102,7 +103,7 @@ describe('# Post search service', function () {
 
     await postSearchService.search('kotlin spring', { source: 'suggestion' })
 
-    expect(mockedAxios.get).toBeCalledWith('/api/search/posts', {
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/search/posts', {
       params: {
         keyword: 'kotlin spring',
         size: 20,
@@ -149,7 +150,7 @@ describe('# Post search service', function () {
 
     const results = await postSearchService.recommendRelatedPosts(10, { size: 4 })
 
-    expect(mockedAxios.get).toBeCalledWith('/api/search/posts/10/related', {
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/search/posts/10/related', {
       params: {
         size: 4,
       },

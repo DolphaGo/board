@@ -1,11 +1,12 @@
+import { beforeEach, describe, expect, it, vi, type MockedFunction } from 'vitest'
 import { normalizeSearchKeyword } from '../search/normalizeSearchKeyword'
 import { createPostSearchFixture, createRelatedPostSearchFixture } from './postSearchFixture'
 
-jest.mock('../search/normalizeSearchKeyword', () => ({
-  normalizeSearchKeyword: jest.fn((keyword: string) => keyword.trim().replace(/\s+/g, ' ')),
+vi.mock('../search/normalizeSearchKeyword', () => ({
+  normalizeSearchKeyword: vi.fn((keyword: string) => keyword.trim().replace(/\s+/g, ' ')),
 }))
 
-const mockedNormalizeSearchKeyword = normalizeSearchKeyword as jest.MockedFunction<typeof normalizeSearchKeyword>
+const mockedNormalizeSearchKeyword = normalizeSearchKeyword as MockedFunction<typeof normalizeSearchKeyword>
 
 describe('# Post search fixture', function () {
   beforeEach(() => {
@@ -91,6 +92,6 @@ describe('# Post search fixture', function () {
   it('should normalize fixture keyword with the shared search normalizer', function () {
     createPostSearchFixture('  kotlin   spring  ')
 
-    expect(mockedNormalizeSearchKeyword).toBeCalledWith('  kotlin   spring  ')
+    expect(mockedNormalizeSearchKeyword).toHaveBeenCalledWith('  kotlin   spring  ')
   })
 })

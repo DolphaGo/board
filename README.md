@@ -17,13 +17,15 @@ Kotlin + Spring Boot + Vue 3로 게시판을 공부하기 위한 멀티 모듈 �
 | 영역 | 스택 |
 | --- | --- |
 | Backend | Spring Boot 4.0.6, Kotlin 2.3.21, Java 21 |
-| Frontend | Vue 3.5.35, TypeScript 6.0.3, Vite 8.0.16 |
-| Package Manager | pnpm |
+| Frontend | Vue 3.5.43, TypeScript 7.0.2, Vite 8.3.2 |
+| Package Manager | pnpm 12.8.1 |
 | Database | H2(local default), MySQL(prod profile) |
 | Search | Spring Data Elasticsearch |
 | Ranking | Redis ZSET |
 | Chat | Spring WebSocket/STOMP, MongoDB |
-| Build/Test | Gradle, Jest, vue-tsc, Vite |
+| Build/Test | Gradle, Vitest 5.0.3, vue-tsc, Vite |
+
+TypeScript 7 native로 일반 TypeScript 코드를 검사하고, Vue 템플릿과 ESLint는 최신 공식 `@typescript/typescript6` 호환 패키지의 API를 함께 사용합니다. 실행 버전과 선택 이유는 [최신 프론트 도구 학습 기록](docs/study/0006-latest-frontend.md)에 정리했습니다.
 
 ## 모듈 구성
 
@@ -54,8 +56,8 @@ board
 필수 도구:
 
 - Java 21
-- Node.js 24 이상 권장
-- pnpm
+- Node.js 26.10.0
+- pnpm 12.8.1
 
 선택 인프라:
 
@@ -169,7 +171,7 @@ POST /api/v1/images/upload
 프론트 단위 테스트:
 
 ```bash
-pnpm --dir board-front/board-front-ui exec jest --runInBand
+pnpm --dir board-front/board-front-ui test
 ```
 
 프론트 타입 체크와 빌드:

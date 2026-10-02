@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { buildChatRoomActionErrorMessage } from './chatRoomListFeedback'
 
 describe('# Chat room list feedback', () => {

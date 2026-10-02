@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { isRef } from 'vue'
 import createAsyncProcess from './create-async-process'
 
@@ -31,12 +32,12 @@ describe('# Create async process', function () {
   })
 
   it('should expect original function called with correct params and return correct data', async function () {
-    const someProcess = jest.fn().mockImplementation(a => Promise.resolve({ a, b: null }))
+    const someProcess = vi.fn().mockImplementation(a => Promise.resolve({ a, b: null }))
     const { run } = createAsyncProcess(someProcess)
 
     const result = await run(null)
 
-    expect(someProcess).toBeCalledWith(null)
+    expect(someProcess).toHaveBeenCalledWith(null)
     expect(result).toEqual({ a: null, b: null })
   })
 })

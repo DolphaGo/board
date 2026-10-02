@@ -1,34 +1,41 @@
+import { afterEach, beforeEach, describe, expect, it, vi, type Mocked } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { searchRankingService } from 'src/api/searchRankingService'
 import { postSearchService } from 'src/api/postSearchService'
-import { nextTick, reactive } from 'vue'
+import { nextTick } from 'vue'
 import { onSearchRankingChanged } from './searchRankingRefreshEvent'
 import SearchResults from './SearchResults.vue'
 
-const mockRoute = reactive({
-  query: {
-    keyword: 'kotlin',
-  } as Record<string, unknown>,
+const { mockRoute } = await vi.hoisted(async () => {
+  const { reactive } = await import('vue')
+
+  return {
+    mockRoute: reactive({
+      query: {
+        keyword: 'kotlin',
+      } as Record<string, unknown>,
+    }),
+  }
 })
 
-jest.mock('vue-router', () => ({
+vi.mock('vue-router', () => ({
   useRoute: () => mockRoute,
 }))
 
-jest.mock('src/api/postSearchService', () => ({
+vi.mock('src/api/postSearchService', () => ({
   postSearchService: {
-    search: jest.fn(),
+    search: vi.fn(),
   },
 }))
 
-jest.mock('src/api/searchRankingService', () => ({
+vi.mock('src/api/searchRankingService', () => ({
   searchRankingService: {
-    getSourceRankings: jest.fn(),
+    getSourceRankings: vi.fn(),
   },
 }))
 
-const mockedPostSearchService = postSearchService as jest.Mocked<typeof postSearchService>
-const mockedSearchRankingService = searchRankingService as jest.Mocked<typeof searchRankingService>
+const mockedPostSearchService = postSearchService as Mocked<typeof postSearchService>
+const mockedSearchRankingService = searchRankingService as Mocked<typeof searchRankingService>
 
 const mountedWrappers: Array<ReturnType<typeof mount>> = []
 
@@ -115,7 +122,7 @@ describe('# Search results component', () => {
     const wrapper = mountSearchResults()
     await flushPromises()
 
-    expect(mockedPostSearchService.search).toBeCalledWith('kotlin', { source: 'direct' })
+    expect(mockedPostSearchService.search).toHaveBeenCalledWith('kotlin', { source: 'direct' })
     expect(wrapper.get('.result-title').text()).toBe('코프링 검색 구현')
     expect(wrapper.get('.result-meta').text()).toContain('점수 12.35')
     expect(wrapper.get('.result-meta').text()).toContain('하이라이트 2개')
@@ -143,7 +150,7 @@ describe('# Search results component', () => {
     expect(wrapper.get('[data-testid="ranking-source-study-note"]').text()).toBe(
       '실시간 검색어에서 선택한 키워드입니다. 이 화면의 검색 API가 성공하면 같은 키워드가 다시 랭킹 기록 이벤트를 발생시켜 사이드바 순위 갱신으로 이어집니다.'
     )
-    expect(mockedPostSearchService.search).toBeCalledWith('kotlin', { source: 'ranking' })
+    expect(mockedPostSearchService.search).toHaveBeenCalledWith('kotlin', { source: 'ranking' })
   })
 
   it('should explain when the search comes from the header search box', async () => {
@@ -202,7 +209,7 @@ describe('# Search results component', () => {
     const wrapper = mountSearchResults()
     await flushPromises()
 
-    expect(mockedSearchRankingService.getSourceRankings).toBeCalledWith(4)
+    expect(mockedSearchRankingService.getSourceRankings).toHaveBeenCalledWith(4)
     expect(wrapper.get('[data-testid="search-source-ranking-list"]').text()).toContain(
       '추천어 선택 8회'
     )
@@ -958,7 +965,7 @@ describe('# Search results component', () => {
   })
 
   it('should clear failed search state when keyword becomes empty', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
     try {
       mockedPostSearchService.search.mockRejectedValue(new Error('backend down'))
@@ -985,7 +992,7 @@ describe('# Search results component', () => {
     const wrapper = mountSearchResults()
     await flushPromises()
 
-    expect(mockedPostSearchService.search).not.toBeCalled()
+    expect(mockedPostSearchService.search).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('검색어를 입력해 주세요.')
   })
 
@@ -996,7 +1003,7 @@ describe('# Search results component', () => {
     mountSearchResults()
     await flushPromises()
 
-    expect(mockedPostSearchService.search).toBeCalledWith('kotlin spring', { source: 'direct' })
+    expect(mockedPostSearchService.search).toHaveBeenCalledWith('kotlin spring', { source: 'direct' })
   })
 
   it('should explain that hidden posts are excluded when a searched keyword has no results', async () => {
@@ -1023,7 +1030,7 @@ describe('# Search results component', () => {
   })
 
   it('should notify search ranking refresh after a successful search request', async () => {
-    const rankingRefreshListener = jest.fn()
+    const rankingRefreshListener = vi.fn()
     const unsubscribe = onSearchRankingChanged(rankingRefreshListener)
     mockedPostSearchService.search.mockResolvedValue([])
 
@@ -1031,7 +1038,7 @@ describe('# Search results component', () => {
       mountSearchResults()
       await flushPromises()
 
-      expect(rankingRefreshListener).toBeCalledTimes(1)
+      expect(rankingRefreshListener).toHaveBeenCalledTimes(1)
     } finally {
       unsubscribe()
     }

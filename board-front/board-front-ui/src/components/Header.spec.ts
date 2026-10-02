@@ -1,23 +1,24 @@
+import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { searchRankingService, type SearchKeywordSuggestionItem } from 'src/api/searchRankingService'
 import Header from './Header.vue'
 
-const routerPush = jest.fn()
+const { routerPush } = vi.hoisted(() => ({ routerPush: vi.fn() }))
 
-jest.mock('vue-router', () => ({
+vi.mock('vue-router', () => ({
   useRouter: () => ({
     push: routerPush,
   }),
 }))
 
-jest.mock('src/api/searchRankingService', () => ({
+vi.mock('src/api/searchRankingService', () => ({
   searchRankingService: {
-    recordKeyword: jest.fn(),
-    suggestKeywords: jest.fn(),
+    recordKeyword: vi.fn(),
+    suggestKeywords: vi.fn(),
   },
 }))
 
-const mockedSearchRankingService = searchRankingService as jest.Mocked<typeof searchRankingService>
+const mockedSearchRankingService = searchRankingService as Mocked<typeof searchRankingService>
 
 const routerLinkStub = {
   props: ['to'],
@@ -40,7 +41,7 @@ describe('# Header component', () => {
   beforeEach(() => {
     routerPush.mockReset()
     mockedSearchRankingService.recordKeyword.mockReset()
-    mockedSearchRankingService.recordKeyword.mockResolvedValue()
+    mockedSearchRankingService.recordKeyword.mockResolvedValue(undefined)
     mockedSearchRankingService.suggestKeywords.mockReset()
     mockedSearchRankingService.suggestKeywords.mockResolvedValue([])
   })
@@ -159,7 +160,7 @@ describe('# Header component', () => {
     await wrapper.get('.header-search-input').setValue('kotlin')
     await flushPromises()
 
-    expect(mockedSearchRankingService.suggestKeywords).toBeCalledWith('kotlin', 5)
+    expect(mockedSearchRankingService.suggestKeywords).toHaveBeenCalledWith('kotlin', 5)
     expect(wrapper.findAll('[data-testid="search-suggestion"]')).toHaveLength(2)
     expect(wrapper.text()).toContain('kotlin spring')
     expect(wrapper.text()).toContain('원문 일치')
@@ -329,8 +330,8 @@ describe('# Header component', () => {
     await wrapper.get('[data-testid="search-suggestion"]').trigger('click')
     await flushPromises()
 
-    expect(mockedSearchRankingService.recordKeyword).not.toBeCalled()
-    expect(routerPush).toBeCalledWith({
+    expect(mockedSearchRankingService.recordKeyword).not.toHaveBeenCalled()
+    expect(routerPush).toHaveBeenCalledWith({
       path: '/search',
       query: {
         keyword: 'kotlin spring',
@@ -352,8 +353,8 @@ describe('# Header component', () => {
     await wrapper.get('.header-search').trigger('submit')
     await flushPromises()
 
-    expect(mockedSearchRankingService.recordKeyword).not.toBeCalled()
-    expect(routerPush).toBeCalledWith({
+    expect(mockedSearchRankingService.recordKeyword).not.toHaveBeenCalled()
+    expect(routerPush).toHaveBeenCalledWith({
       path: '/search',
       query: {
         keyword: 'kotlin',
@@ -386,8 +387,8 @@ describe('# Header component', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="search-suggestion"]').exists()).toBe(false)
-    expect(mockedSearchRankingService.recordKeyword).not.toBeCalled()
-    expect(routerPush).toBeCalledWith({
+    expect(mockedSearchRankingService.recordKeyword).not.toHaveBeenCalled()
+    expect(routerPush).toHaveBeenCalledWith({
       path: '/search',
       query: {
         keyword: 'kotlin spring',

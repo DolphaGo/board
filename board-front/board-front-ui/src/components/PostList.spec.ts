@@ -1,15 +1,16 @@
+import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { postService } from 'src/api/postService'
 import PostList from './PostList.vue'
 import { createRouter, createMemoryHistory, type Router } from 'vue-router'
 
-jest.mock('src/api/postService', () => ({
+vi.mock('src/api/postService', () => ({
   postService: {
-    listPosts: jest.fn(),
+    listPosts: vi.fn(),
   },
 }))
 
-const mockedPostService = postService as jest.Mocked<typeof postService>
+const mockedPostService = postService as Mocked<typeof postService>
 
 describe('# Post list component', () => {
   let router: Router
@@ -90,7 +91,7 @@ describe('# Post list component', () => {
     const rows = wrapper.findAll('.board-row')
 
     expect(wrapper.get('h2').text()).toBe('게시글')
-    expect(mockedPostService.listPosts).toBeCalledWith({ page: 0, size: 10 })
+    expect(mockedPostService.listPosts).toHaveBeenCalledWith({ page: 0, size: 10 })
     expect(rows).toHaveLength(2)
     expect(rows[0].get('.board-title-text').text()).toBe('코프링 게시글')
     expect(rows[0].get('.notice-badge').text()).toBe('공지')

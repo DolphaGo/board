@@ -1,23 +1,24 @@
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock, type Mocked } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { useRouter } from 'vue-router'
 import { chatService, type ChatRoom } from 'src/api/chatService'
 import ChatRoomList from './ChatRoomList.vue'
 
-jest.mock('src/api/chatService', () => ({
+vi.mock('src/api/chatService', () => ({
   chatService: {
-    getRoomList: jest.fn(),
-    createRoom: jest.fn(),
-    joinRoom: jest.fn(),
+    getRoomList: vi.fn(),
+    createRoom: vi.fn(),
+    joinRoom: vi.fn(),
   },
 }))
 
-jest.mock('vue-router', () => ({
-  useRouter: jest.fn(),
+vi.mock('vue-router', () => ({
+  useRouter: vi.fn(),
 }))
 
-const mockedChatService = chatService as jest.Mocked<typeof chatService>
-const mockedUseRouter = useRouter as jest.Mock
-const pushMock = jest.fn()
+const mockedChatService = chatService as Mocked<typeof chatService>
+const mockedUseRouter = useRouter as Mock
+const pushMock = vi.fn()
 
 // Vue 컴포넌트는 클릭 후 DOM 갱신과 Promise 처리가 다음 tick에 반영된다.
 // 테스트가 화면 결과를 읽기 전에 비동기 작업이 끝나도록 한 번 기다린다.
@@ -48,11 +49,11 @@ describe('# Chat room list component', () => {
     mockedUseRouter.mockReturnValue({
       push: pushMock,
     })
-    jest.spyOn(console, 'error').mockImplementation()
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
   })
 
   afterEach(() => {
-    jest.restoreAllMocks()
+    vi.restoreAllMocks()
   })
 
   it('should render the create failure message inside the dialog', async () => {
