@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
+    "dev:api": "vite --mode api",
     "format": "prettier-eslint --write \"src/**/*.{vue,ts}\"",
     "build": "vue-tsc --noEmit && vite build",
     "serve": "vite preview",

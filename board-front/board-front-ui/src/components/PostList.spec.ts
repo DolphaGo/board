@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { postService } from 'src/api/postService'
 import PostList from './PostList.vue'
+import { createRouter, createMemoryHistory, type Router } from 'vue-router'
 
 jest.mock('src/api/postService', () => ({
   postService: {
@@ -11,6 +12,16 @@ jest.mock('src/api/postService', () => ({
 const mockedPostService = postService as jest.Mocked<typeof postService>
 
 describe('# Post list component', () => {
+  let router: Router
+  beforeEach(async () => {
+    mockedPostService.listPosts.mockReset()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/:pathMatch(.*)*', component: { template: '<div />' } }],
+    })
+    await router.push('/')
+    await router.isReady()
+  })
   const routerLinkStub = {
     props: ['to'],
     template: '<a :data-to="to"><slot /></a>',
@@ -68,6 +79,7 @@ describe('# Post list component', () => {
 
     const wrapper = mount(PostList, {
       global: {
+        plugins: [router],
         stubs: {
           RouterLink: routerLinkStub,
         },
@@ -110,6 +122,7 @@ describe('# Post list component', () => {
 
     const wrapper = mount(PostList, {
       global: {
+        plugins: [router],
         stubs: {
           RouterLink: routerLinkStub,
         },
@@ -138,6 +151,7 @@ describe('# Post list component', () => {
   })
 
   it('should render compact numbered pagination and jump to first or last page', async () => {
+    await router.push('/?page=4')
     mockedPostService.listPosts
       .mockResolvedValueOnce({
         items: Array.from({ length: 10 }, (_, index) => createPost(index + 31)),
@@ -163,6 +177,7 @@ describe('# Post list component', () => {
 
     const wrapper = mount(PostList, {
       global: {
+        plugins: [router],
         stubs: {
           RouterLink: routerLinkStub,
         },
@@ -195,6 +210,75 @@ describe('# Post list component', () => {
     expect(wrapper.findAll('.board-title-text')[0].text()).toBe('게시글 71')
   })
 
+  it('restores the page from the URL and follows browser history', async () => {
+    mockedPostService.listPosts.mockImplementation(async ({ page = 0 } = {}) => ({
+      items: [createPost(page * 10 + 1)], page, size: 10, totalElements: 30, totalPages: 3,
+    }))
+    await router.push('/?page=2')
+    const wrapper = mount(PostList, { global: { plugins: [router] } })
+    await flushPromises()
+    expect(mockedPostService.listPosts).toHaveBeenLastCalledWith({ page: 1, size: 10 })
+    expect(wrapper.get('.board-title-link').attributes('href')).toBe('/post/11?page=2')
+    await wrapper.get('[data-testid="board-page-next"]').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query.page).toBe('3')
+    router.back()
+    await flushPromises()
+    expect(wrapper.get('.board-title-text').text()).toBe('게시글 11')
+  })
+
+  it('retries the failed page without reporting an empty board', async () => {
+    mockedPostService.listPosts.mockResolvedValueOnce({
+      items: [createPost(1)], page: 0, size: 10, totalElements: 13, totalPages: 2,
+    }).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({
+      items: [createPost(11)], page: 1, size: 10, totalElements: 13, totalPages: 2,
+    })
+    const wrapper = mount(PostList, { global: { plugins: [router] } })
+    await flushPromises()
+    await wrapper.get('[data-testid="board-page-next"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('게시글 목록을 불러오지 못했습니다.')
+    expect(wrapper.text()).not.toContain('게시글이 없습니다.')
+    await wrapper.get('[data-testid="board-retry"]').trigger('click')
+    await flushPromises()
+    expect(mockedPostService.listPosts).toHaveBeenLastCalledWith({ page: 1, size: 10 })
+    expect(wrapper.get('.board-title-text').text()).toBe('게시글 11')
+  })
+
+  it('ignores a previous page response that finishes after the current page', async () => {
+    let resolveFirst!: (value: Awaited<ReturnType<typeof postService.listPosts>>) => void
+    mockedPostService.listPosts.mockImplementationOnce(() => new Promise(resolve => { resolveFirst = resolve }))
+      .mockResolvedValueOnce({ items: [createPost(11)], page: 1, size: 10, totalElements: 13, totalPages: 2 })
+    const wrapper = mount(PostList, { global: { plugins: [router] } })
+    await router.push('/?page=2')
+    await flushPromises()
+    resolveFirst({ items: [createPost(1)], page: 0, size: 10, totalElements: 13, totalPages: 2 })
+    await flushPromises()
+    expect(wrapper.get('.board-title-text').text()).toBe('게시글 11')
+    expect(wrapper.get('.board-page-status').text()).toBe('2 / 2')
+  })
+
+  it('returns an out-of-range URL to the last available page', async () => {
+    mockedPostService.listPosts.mockResolvedValueOnce({
+      items: [], page: 98, size: 10, totalElements: 13, totalPages: 2,
+    }).mockResolvedValueOnce({ items: [createPost(11)], page: 1, size: 10, totalElements: 13, totalPages: 2 })
+    await router.push('/?page=99')
+    const wrapper = mount(PostList, { global: { plugins: [router] } })
+    await flushPromises()
+    expect(router.currentRoute.value.query.page).toBe('2')
+    expect(wrapper.get('.board-title-text').text()).toBe('게시글 11')
+  })
+
+  it.each(['0', '-1', 'abc', '1.5'])('uses the first page for invalid page query %s', async page => {
+    mockedPostService.listPosts.mockResolvedValue({ items: [], page: 0, size: 10, totalElements: 0, totalPages: 0 })
+    await router.push({ path: '/', query: { page } })
+    const wrapper = mount(PostList, { global: { plugins: [router] } })
+    await flushPromises()
+    expect(mockedPostService.listPosts).toHaveBeenLastCalledWith({ page: 0, size: 10 })
+    expect(wrapper.text()).toContain('게시글이 없습니다.')
+    expect(wrapper.find('[data-testid="board-retry"]').exists()).toBe(false)
+  })
+
   it('should expose a board-local writing action below the post rows', async () => {
     mockedPostService.listPosts.mockResolvedValue({
       items: [createPost(1)],
@@ -206,6 +290,7 @@ describe('# Post list component', () => {
 
     const wrapper = mount(PostList, {
       global: {
+        plugins: [router],
         stubs: {
           RouterLink: routerLinkStub,
         },
