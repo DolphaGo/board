@@ -36,6 +36,8 @@
             id="issue-title"
             v-model="title"
             type="text"
+            maxlength="255"
+            aria-label="제목"
             class="form-control title-input"
             placeholder="제목을 입력하세요"
         />
@@ -58,6 +60,7 @@
               id="issue-body"
               ref="bodyTextarea"
               v-model="bodyText"
+              aria-label="본문"
               class="form-control body-input"
               placeholder="본문을 작성하고 원하는 위치에 이미지를 추가하세요"
               rows="8"
@@ -171,8 +174,8 @@
         </div>
         <div class="post-editor-action-rail" data-testid="post-editor-action-rail">
           <span class="post-editor-action-copy">저장 전 미리보기로 이미지 흐름을 확인하세요.</span>
-          <button data-testid="post-submit" @click="submit" class="btn-submit" :disabled="submitting">
-            {{ submitting ? '저장 중...' : '작성하기' }}
+          <button data-testid="post-submit" @click="submit" class="btn-submit" :disabled="submitting || imageUploading">
+            {{ submitting ? '저장 중...' : imageUploading ? '이미지 업로드 중...' : '작성하기' }}
           </button>
         </div>
         <p v-if="submitMessage" class="submit-message" data-testid="submit-message">{{ submitMessage }}</p>
@@ -535,6 +538,8 @@ const findApiErrorMessage = (error: unknown): string | undefined => {
 };
 
 const submit = async () => {
+  // DOM의 disabled 반영 전 같은 tick의 재호출도 막고, 업로드 URL이 준비된 뒤 저장한다.
+  if (submitting.value || imageUploading.value) return;
   submitting.value = true;
   submitMessage.value = '';
 

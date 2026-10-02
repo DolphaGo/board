@@ -674,4 +674,57 @@ describe('# Post editor component', () => {
 
     consoleError.mockRestore()
   })
+  it('keeps the draft after save failure and allows a successful retry', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    mockedPostService.createPost.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({
+      id: 101, title: '재시도', content: '보존할 본문', imageUrls: [], viewCount: 0, display: true, notice: false,
+    })
+    const wrapper = mount(PostEditor)
+    await wrapper.get('#issue-title').setValue('재시도')
+    await wrapper.get('#issue-body').setValue('보존할 본문')
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('#issue-title').element).toHaveProperty('value', '재시도')
+    expect(wrapper.get('#issue-body').element).toHaveProperty('value', '보존할 본문')
+    expect(wrapper.get('[data-testid="post-submit"]').attributes('disabled')).toBeUndefined()
+    expect(push).not.toHaveBeenCalled()
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    await flushPromises()
+    expect(push).toHaveBeenCalledWith('/post/101')
+    consoleError.mockRestore()
+  })
+
+  it('sends one request for two submit events in the same tick', async () => {
+    let finish!: (value: Awaited<ReturnType<typeof postService.createPost>>) => void
+    mockedPostService.createPost.mockImplementation(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = mount(PostEditor)
+    await wrapper.get('#issue-title').setValue('중복 방지')
+    await wrapper.get('#issue-body').setValue('한 번 저장')
+    const button = wrapper.get('[data-testid="post-submit"]')
+    await Promise.all([button.trigger('click'), button.trigger('click')])
+    expect(mockedPostService.createPost).toHaveBeenCalledTimes(1)
+    finish({ id: 102, title: '중복 방지', content: '한 번 저장', imageUrls: [], viewCount: 0, display: true, notice: false })
+    await flushPromises()
+    expect(push).toHaveBeenCalledTimes(1)
+  })
+
+  it('blocks saving until a pasted image finishes uploading', async () => {
+    let finish!: (value: unknown) => void
+    mockedRequest.postForm.mockImplementation(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = mount(PostEditor)
+    await wrapper.get('#issue-title').setValue('이미지 대기')
+    await wrapper.get('#issue-body').setValue('본문')
+    const image = new File(['image'], 'pending.png', { type: 'image/png' })
+    await wrapper.get('#issue-body').trigger('paste', {
+      clipboardData: { items: [{ type: 'image/png', getAsFile: () => image }] },
+    })
+    await wrapper.get('[data-testid="post-submit"]').trigger('click')
+    expect(mockedPostService.createPost).not.toHaveBeenCalled()
+    expect(wrapper.get('[data-testid="post-submit"]').attributes('disabled')).toBeDefined()
+    finish({ data: { url: '/api/images/pending.png' } })
+    await flushPromises()
+    expect(wrapper.get('[data-testid="post-submit"]').attributes('disabled')).toBeUndefined()
+    expect(wrapper.get('#issue-body').element).toHaveProperty('value', expect.stringContaining('/api/images/pending.png'))
+  })
+
 })

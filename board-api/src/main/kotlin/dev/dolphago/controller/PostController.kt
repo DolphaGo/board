@@ -8,6 +8,9 @@ import dev.dolphago.service.PostListItem
 import dev.dolphago.service.PostListPage
 import dev.dolphago.service.PostNotFoundException
 import dev.dolphago.service.PostService
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
@@ -75,7 +78,7 @@ class PostController(
 
     @PostMapping
     fun createPost(
-        @RequestBody request: CreatePostRequest,
+        @Valid @RequestBody request: CreatePostRequest,
     ): ResponseEntity<PostResponse> {
         // 컨트롤러는 HTTP 요청을 서비스 호출로 옮기는 얇은 진입점이다.
         // DB 저장과 ES 색인 순서는 PostService가 책임져야 다른 진입점에서도 재사용할 수 있다.
@@ -159,7 +162,10 @@ class PostController(
 
 data class CreatePostRequest(
     val memberId: Long,
+    @field:NotBlank
+    @field:Size(max = 255)
     val title: String,
+    @field:NotBlank
     val content: String,
     val imageUrls: List<String> = emptyList(),
     val notice: Boolean = false,
