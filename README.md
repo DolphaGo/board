@@ -16,14 +16,14 @@ Kotlin + Spring Boot + Vue 3로 게시판을 공부하기 위한 멀티 모듈 �
 
 | 영역 | 스택 |
 | --- | --- |
-| Backend | Spring Boot 4.0.6, Kotlin 2.3.21, Java 21 |
+| Backend | Spring Boot 4.1.1, Kotlin 2.4.20, Java 27 (컴파일 대상 JVM 26) |
 | Frontend | Vue 3.5.43, TypeScript 7.0.2, Vite 8.3.2 |
 | Package Manager | pnpm 12.8.1 |
 | Database | H2(local default), MySQL(prod profile) |
 | Search | Spring Data Elasticsearch |
 | Ranking | Redis ZSET |
 | Chat | Spring WebSocket/STOMP, MongoDB |
-| Build/Test | Gradle, Vitest 5.0.3, vue-tsc, Vite |
+| Build/Test | Gradle 9.8.0, Vitest 5.0.3, vue-tsc, Vite |
 
 TypeScript 7 native로 일반 TypeScript 코드를 검사하고, Vue 템플릿과 ESLint는 최신 공식 `@typescript/typescript6` 호환 패키지의 API를 함께 사용합니다. 실행 버전과 선택 이유는 [최신 프론트 도구 학습 기록](docs/study/0006-latest-frontend.md)에 정리했습니다.
 
@@ -55,7 +55,7 @@ board
 
 필수 도구:
 
-- Java 21
+- JDK 27 (`JAVA_HOME`을 설치 경로로 설정)
 - Node.js 26.10.0
 - pnpm 12.8.1
 
@@ -96,6 +96,15 @@ http://localhost:3000
 
 ## 백엔드 실행
 
+JDK 27을 설치하고 `JAVA_HOME`을 해당 설치 경로로 설정합니다. 다음 명령에서 Java 버전과 Gradle의 Launcher/Daemon JVM이 27인지 확인합니다. Gradle은 별도 설치 없이 wrapper가 9.8.0을 내려받고 checksum을 검증합니다.
+
+```bash
+java -version
+./gradlew --version
+```
+
+최신 Kotlin 2.4.20은 JVM 26까지 출력하므로 실행·컴파일 JDK는 27, Java/Kotlin 컴파일 대상은 26입니다. 공식 지원 범위와 실제 검증 결과는 [최신 백엔드 학습 기록](docs/study/0007-latest-backend.md)에 정리했습니다.
+
 기본 profile은 H2 메모리 DB를 사용합니다. 다만 검색, 랭킹, 채팅 저장 기능은 각각 Elasticsearch, Redis, MongoDB 연결이 필요합니다.
 
 ```bash
@@ -123,7 +132,7 @@ http://localhost:8080
 
 ## 기본 게시판: 실제 H2/API 학습 모드
 
-두 터미널에서 실행합니다. Java 21을 사용합니다.
+두 터미널에서 실행합니다. JDK 27을 사용합니다.
 
 ```bash
 ./gradlew :board-api:bootRun --args='--spring.profiles.active=study'
@@ -180,10 +189,10 @@ pnpm --dir board-front/board-front-ui test
 pnpm --dir board-front/board-front-ui build
 ```
 
-백엔드 전체 테스트:
+게시판 API 전체 테스트, 실행 JAR 생성, 프론트 보조 API 컴파일(JDK 27):
 
 ```bash
-CI=true npm_config_registry=https://registry.npmjs.org/ ./gradlew test
+./gradlew :board-api:test :board-api:bootJar :board-front:board-front-api:compileKotlin
 ```
 
 공백/패치 오류 확인:

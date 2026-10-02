@@ -97,7 +97,7 @@ API 입력/출력, 데이터 모델, 권한/실패 조건은 변경한 경우에
 
 - 프론트 로직 변경: `pnpm --dir board-front/board-front-ui test`.
 - Vue/TypeScript 변경: `pnpm --dir board-front/board-front-ui build`로 타입 검사와 빌드.
-- 백엔드 변경: `CI=true npm_config_registry=https://registry.npmjs.org/ ./gradlew test` 또는 영향 범위에 맞는 모듈/테스트 선택.
+- 백엔드 변경: JDK 27에서 `./gradlew :board-api:test :board-api:bootJar :board-front:board-front-api:compileKotlin` 또는 영향 범위에 맞는 모듈/테스트 선택. 실행 JDK와 JVM 출력 대상의 차이는 [최신 백엔드 기록](study/0007-latest-backend.md)을 참고한다.
 - 문서 변경: 로컬 링크와 설명이 실제 코드에 맞는지 확인하고, 새 파일까지 stage한 뒤 `git diff --cached --check`.
 - 실제 연동 변경: 위 검사에 더해 필요한 인프라와 API/브라우저 재현 결과를 기록.
 
@@ -111,3 +111,4 @@ API 입력/출력, 데이터 모델, 권한/실패 조건은 변경한 경우에
 | [0002. 실제 API로 게시글 목록 읽기](study/0002-post-list.md) | H2 학습 데이터, proxy, URL 페이지 상태와 응답 순서 | [#10](https://github.com/DolphaGo/board/pull/10) |
 | [0003. 현재 글을 정확히 읽고 목록으로 돌아가기](study/0003-post-detail.md) | 404 계약, 상태 범위, 비동기 응답과 목록 복귀 | [#11](https://github.com/DolphaGo/board/pull/11) |
 | [0006. 프론트엔드 최신 안정 버전과 테스트 도구 이전](study/0006-latest-frontend.md) | 최신 의존성, Vitest, TypeScript 공식 호환 API, 설치 정책 | [#12](https://github.com/DolphaGo/board/pull/12) |
+| [0007. 최신 안정 백엔드 버전으로 이행하기](study/0007-latest-backend.md) | Java 27, JVM 26 출력, 최신 의존성, BOM 정렬, 실제 H2/API 검증 | PR 준비 |

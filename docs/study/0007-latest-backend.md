@@ -77,6 +77,10 @@ wrapper JAR의 SHA-256은 공식 값 `238e777fcddd7e34f9708186085def2abd6e08e658
 
 검증용 서버는 조회·실패 원인 확인 후 정상 종료했다. 원격 push, PR, 이미지 게시, 배포는 이 작업에서 실행하지 않았다.
 
+## 상세·프론트 변경 통합 검증
+
+상세 기능과 최신 프론트 도구가 포함된 `a3e5198` 위로 백엔드 커밋만 rebase했다. 2026-10-03 같은 JDK 27 환경에서 `./gradlew :board-api:test :board-api:bootJar :board-front:board-front-api:compileKotlin --console=plain`을 한 번 실행했고 **97 tests, failures 0, errors 0, skipped 0**, Kover 검증·JAR 생성·보조 API 컴파일이 모두 통과했다(34초). 프론트 의존성 설치는 실행하지 않았다. 이후 프론트 PR 링크를 추가한 문서 전용 커밋은 기능 코드를 바꾸지 않으므로 코드 테스트를 반복하지 않는다.
+
 ## 실패와 해결
 
 1. 첫 빌드는 `Unknown Kotlin JVM target: 27`로 중단됐다. Gradle 9.8.0에 포함된 Kotlin과 KGP 2.4.20의 enum 모두 JVM 26까지만 제공한다. JDK는 27을 유지하고 Java/Kotlin 출력 대상을 26으로 맞췄다. 최신 안정 컴파일러의 출력 한계이며, 실행 JDK를 낮춘 것이 아니다.
