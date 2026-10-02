@@ -1,9 +1,10 @@
+import { describe, expect, it, vi } from 'vitest'
 import { createSearchRanking } from './useSearchRanking'
 
 describe('# Search ranking behavior', function () {
   it('should ignore duplicate refresh requests while loading', async function () {
     let resolveRankings: (value: Array<{ keyword: string; score: number; scoreDescription: string }>) => void = () => {}
-    const getRankings = jest.fn(() => new Promise<Array<{ keyword: string; score: number; scoreDescription: string }>>(resolve => {
+    const getRankings = vi.fn(() => new Promise<Array<{ keyword: string; score: number; scoreDescription: string }>>(resolve => {
       resolveRankings = resolve
     }))
     const { fetchRankings, loading, rankings } = createSearchRanking({ getRankings })
@@ -12,7 +13,7 @@ describe('# Search ranking behavior', function () {
     const second = fetchRankings()
 
     expect(loading.value).toBe(true)
-    expect(getRankings).toBeCalledTimes(1)
+    expect(getRankings).toHaveBeenCalledTimes(1)
 
     resolveRankings([
       {
@@ -34,7 +35,7 @@ describe('# Search ranking behavior', function () {
   })
 
   it('should record when rankings were refreshed successfully', async function () {
-    const getRankings = jest.fn().mockResolvedValue([
+    const getRankings = vi.fn().mockResolvedValue([
       {
         keyword: 'kotlin spring',
         score: 12,

@@ -1,15 +1,16 @@
+import { describe, expect, it, vi } from 'vitest'
 import { submitPostEditorForm } from './postEditorSubmit'
 
 describe('# Post editor submit', () => {
   it('should save the post and move to the created post detail', async () => {
-    const createPost = jest.fn().mockResolvedValue({
+    const createPost = vi.fn().mockResolvedValue({
       id: 77,
       title: '코프링 게시글',
       content: '작성 후 상세 화면으로 이동한다',
       viewCount: 0,
       display: true,
     })
-    const moveToPostDetail = jest.fn()
+    const moveToPostDetail = vi.fn()
 
     const message = await submitPostEditorForm({
       title: '코프링 게시글',
@@ -19,18 +20,18 @@ describe('# Post editor submit', () => {
       moveToPostDetail,
     })
 
-    expect(createPost).toBeCalledWith({
+    expect(createPost).toHaveBeenCalledWith({
       title: '코프링 게시글',
       content: '작성 후 상세 화면으로 이동한다',
       imageUrls: ['https://cdn.example.com/first.png'],
       actorRole: 'user',
     })
-    expect(moveToPostDetail).toBeCalledWith(77)
+    expect(moveToPostDetail).toHaveBeenCalledWith(77)
     expect(message).toBe('게시글 #77 저장 완료')
   })
 
   it('should forward notice flag when admin editor asks to create a notice post', async () => {
-    const createPost = jest.fn().mockResolvedValue({
+    const createPost = vi.fn().mockResolvedValue({
       id: 88,
       title: '공지',
       content: '관리자 공지',
@@ -46,10 +47,10 @@ describe('# Post editor submit', () => {
       notice: true,
       actorRole: 'admin',
       createPost,
-      moveToPostDetail: jest.fn(),
+      moveToPostDetail: vi.fn(),
     })
 
-    expect(createPost).toBeCalledWith({
+    expect(createPost).toHaveBeenCalledWith({
       title: '공지',
       content: '관리자 공지',
       imageUrls: [],

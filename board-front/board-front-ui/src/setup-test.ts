@@ -1,16 +1,18 @@
-import 'jest'
+import { afterEach, beforeEach, vi } from 'vitest'
 
-jest.spyOn(window.Storage.prototype, 'getItem').mockReturnValue('')
-jest.spyOn(window.Storage.prototype, 'setItem').mockImplementation()
-jest.mock('src/config', () => ({
+beforeEach(() => {
+  vi.spyOn(window.Storage.prototype, 'getItem').mockReturnValue('')
+  vi.spyOn(window.Storage.prototype, 'setItem').mockImplementation(() => undefined)
+})
+vi.mock('src/config', () => ({
   CONFIG: {
     API_HOST: '',
   },
 }))
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-global.fetch = jest.fn().mockImplementation(() => new Promise(() => {}))
+globalThis.fetch = vi.fn().mockImplementation(() => new Promise(() => {}))
 
 afterEach(() => {
-  jest.clearAllMocks()
+  vi.clearAllMocks()
 })

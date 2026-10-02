@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { createSearchRankingFixture } from './searchRankingFixture'
 
 describe('# Search ranking fixture', function () {

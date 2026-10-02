@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { collectSearchResultHighlights } from './searchResultHighlights'
 
 describe('# Search result highlights', function () {

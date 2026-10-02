@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { normalizeSearchKeyword } from './normalizeSearchKeyword'
 
 describe('# Search keyword normalizer', () => {

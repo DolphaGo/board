@@ -1,13 +1,14 @@
+import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest'
 import axios from 'axios'
 import { chatService } from './chatService'
 
-jest.mock('axios')
+vi.mock('axios')
 
-const mockedAxios = axios as jest.Mocked<typeof axios>
+const mockedAxios = axios as Mocked<typeof axios>
 
 describe('# Chat service', function () {
   beforeEach(function () {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   it('should fetch chat rooms and convert participants to a count', async function () {
@@ -30,7 +31,7 @@ describe('# Chat service', function () {
 
     const rooms = await chatService.getRoomList()
 
-    expect(mockedAxios.get).toBeCalledWith('/api/chat/rooms')
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/chat/rooms')
     expect(rooms).toEqual([
       {
         id: 'room-1',
@@ -65,7 +66,7 @@ describe('# Chat service', function () {
 
     const room = await chatService.getRoom('room-1')
 
-    expect(mockedAxios.get).toBeCalledWith('/api/chat/rooms/room-1')
+    expect(mockedAxios.get).toHaveBeenCalledWith('/api/chat/rooms/room-1')
     expect(room).toEqual({
       id: 'room-1',
       name: '코프링 채팅방',
@@ -94,7 +95,7 @@ describe('# Chat service', function () {
 
     const room = await chatService.createRoom('새 채팅방')
 
-    expect(mockedAxios.post).toBeCalledWith('/api/chat/rooms', {
+    expect(mockedAxios.post).toHaveBeenCalledWith('/api/chat/rooms', {
       name: '새 채팅방',
       description: null,
       createdBy: 2,
@@ -122,7 +123,7 @@ describe('# Chat service', function () {
       maxParticipants: 20,
     })
 
-    expect(mockedAxios.post).toBeCalledWith('/api/chat/rooms', {
+    expect(mockedAxios.post).toHaveBeenCalledWith('/api/chat/rooms', {
       name: '스터디 채팅방',
       description: '코프링 검색 기능을 같이 공부한다',
       createdBy: 2,
@@ -147,7 +148,7 @@ describe('# Chat service', function () {
   it('should ignore blank room name when creating a chat room', async function () {
     await expect(chatService.createRoom('   ')).rejects.toThrow('Chat room name is required')
 
-    expect(mockedAxios.post).not.toBeCalled()
+    expect(mockedAxios.post).not.toHaveBeenCalled()
   })
 
   it('should reject malformed chat room list responses', async function () {
@@ -181,7 +182,7 @@ describe('# Chat service', function () {
   ])('should ignore blank room id for %s', async function (_, action) {
     await action()
 
-    expect(mockedAxios.get).not.toBeCalled()
-    expect(mockedAxios.post).not.toBeCalled()
+    expect(mockedAxios.get).not.toHaveBeenCalled()
+    expect(mockedAxios.post).not.toHaveBeenCalled()
   })
 })

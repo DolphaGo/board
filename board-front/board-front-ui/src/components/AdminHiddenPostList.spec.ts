@@ -1,15 +1,16 @@
+import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { postService } from 'src/api/postService'
 import AdminHiddenPostList from './AdminHiddenPostList.vue'
 
-jest.mock('src/api/postService', () => ({
+vi.mock('src/api/postService', () => ({
   postService: {
-    listHiddenPosts: jest.fn(),
-    restorePost: jest.fn(),
+    listHiddenPosts: vi.fn(),
+    restorePost: vi.fn(),
   },
 }))
 
-const mockedPostService = postService as jest.Mocked<typeof postService>
+const mockedPostService = postService as Mocked<typeof postService>
 
 const routerLinkStub = {
   props: ['to'],
@@ -18,7 +19,7 @@ const routerLinkStub = {
 
 describe('# Admin hidden post list component', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   it('should render hidden posts as admin recovery candidates', async () => {
@@ -51,7 +52,7 @@ describe('# Admin hidden post list component', () => {
 
     expect(wrapper.get('h2').text()).toBe('숨김 게시글')
     expect(wrapper.get('.board-summary').text()).toBe('복구 대기 1건')
-    expect(mockedPostService.listHiddenPosts).toBeCalledTimes(1)
+    expect(mockedPostService.listHiddenPosts).toHaveBeenCalledTimes(1)
     expect(row.get('.hidden-badge').text()).toBe('숨김')
     expect(row.get('.board-title-text').text()).toBe('숨김 게시글')
     expect(row.get('.post-preview').text()).toBe('관리자가 복구할 대상')
@@ -100,7 +101,7 @@ describe('# Admin hidden post list component', () => {
     await wrapper.get('[data-testid="restore-hidden-post"]').trigger('click')
     await flushPromises()
 
-    expect(mockedPostService.restorePost).toBeCalledWith(10)
+    expect(mockedPostService.restorePost).toHaveBeenCalledWith(10)
     expect(wrapper.find('.board-row').exists()).toBe(false)
     expect(wrapper.get('.board-message').text()).toBe('숨김 게시글이 없습니다.')
     expect(wrapper.get('.action-message').text()).toBe('게시글을 복구했습니다.')
@@ -122,7 +123,7 @@ describe('# Admin hidden post list component', () => {
   })
 
   it('should render an error message when hidden posts cannot be loaded', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockedPostService.listHiddenPosts.mockRejectedValue(new Error('API failure'))
 
     const wrapper = mount(AdminHiddenPostList, {

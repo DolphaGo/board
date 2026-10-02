@@ -1,24 +1,29 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import SearchRanking from './SearchRanking.vue'
 
-const fetchRankings = jest.fn()
-const routerPush = jest.fn()
-const unsubscribeSearchRankingChanged = jest.fn()
-let mockSearchRankingChangedListener: (() => void) | undefined
-let mockRankings: Array<{ keyword: string; score: number; scoreDescription: string }> = []
+const { fetchRankings, routerPush, unsubscribeSearchRankingChanged, mockState } = vi.hoisted(() => ({
+  fetchRankings: vi.fn(),
+  routerPush: vi.fn(),
+  unsubscribeSearchRankingChanged: vi.fn(),
+  mockState: {
+    searchRankingChangedListener: undefined as (() => void) | undefined,
+    rankings: [] as Array<{ keyword: string; score: number; scoreDescription: string }>,
+  },
+}))
 
-jest.mock('vue-router', () => ({
+vi.mock('vue-router', () => ({
   useRouter: () => ({
     push: routerPush,
   }),
 }))
 
-jest.mock('./useSearchRanking', () => {
-  const { ref } = require('vue')
+vi.mock('./useSearchRanking', async () => {
+  const { ref } = await import('vue')
 
   return {
     createSearchRanking: () => ({
-      rankings: ref(mockRankings),
+      rankings: ref(mockState.rankings),
       loading: ref(false),
       error: ref(false),
       lastUpdatedAt: ref(null),
@@ -27,9 +32,9 @@ jest.mock('./useSearchRanking', () => {
   }
 })
 
-jest.mock('./searchRankingRefreshEvent', () => ({
-  onSearchRankingChanged: jest.fn(listener => {
-    mockSearchRankingChangedListener = listener
+vi.mock('./searchRankingRefreshEvent', () => ({
+  onSearchRankingChanged: vi.fn(listener => {
+    mockState.searchRankingChangedListener = listener
 
     return unsubscribeSearchRankingChanged
   }),
@@ -37,16 +42,16 @@ jest.mock('./searchRankingRefreshEvent', () => ({
 
 describe('# Search ranking component', function () {
   beforeEach(() => {
-    jest.useFakeTimers()
+    vi.useFakeTimers()
     routerPush.mockReset()
     fetchRankings.mockClear()
     unsubscribeSearchRankingChanged.mockClear()
-    mockSearchRankingChangedListener = undefined
-    mockRankings = []
+    mockState.searchRankingChangedListener = undefined
+    mockState.rankings = []
   })
 
   afterEach(() => {
-    jest.useRealTimers()
+    vi.useRealTimers()
   })
 
   it('should explain how real-time ranking is recorded and refreshed', function () {
@@ -73,7 +78,7 @@ describe('# Search ranking component', function () {
   })
 
   it('should label ranking scores as search counts', function () {
-    mockRankings = [
+    mockState.rankings = [
       {
         keyword: 'kotlin spring',
         score: 7,
@@ -97,10 +102,10 @@ describe('# Search ranking component', function () {
 
     expect(wrapper.find('[data-testid="ranking-live-refresh-feedback"]').exists()).toBe(false)
 
-    mockSearchRankingChangedListener?.()
+    mockState.searchRankingChangedListener?.()
     await wrapper.vm.$nextTick()
 
-    expect(fetchRankings).toBeCalledTimes(2)
+    expect(fetchRankings).toHaveBeenCalledTimes(2)
     expect(wrapper.get('[data-testid="ranking-live-refresh-feedback"]').text()).toBe(
       '방금 검색어가 기록되어 순위를 다시 읽었습니다.'
     )
@@ -109,7 +114,7 @@ describe('# Search ranking component', function () {
   })
 
   it('should search with the clicked ranked keyword', async function () {
-    mockRankings = [
+    mockState.rankings = [
       {
         keyword: 'kotlin spring',
         score: 7,
@@ -120,7 +125,7 @@ describe('# Search ranking component', function () {
 
     await wrapper.get('[data-testid="ranking-keyword-search"]').trigger('click')
 
-    expect(routerPush).toBeCalledWith({
+    expect(routerPush).toHaveBeenCalledWith({
       path: '/search',
       query: {
         keyword: 'kotlin spring',

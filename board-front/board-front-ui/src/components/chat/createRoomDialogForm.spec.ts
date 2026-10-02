@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { buildCreateRoomRequest } from './createRoomDialogForm'
 
 describe('# Create room dialog form', () => {

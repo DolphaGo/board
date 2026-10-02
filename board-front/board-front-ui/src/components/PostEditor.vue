@@ -227,7 +227,7 @@ const createImageMarkdownPattern = (imageUrl: string, flags = '') =>
 
 const normalizeImageAltText = (altText: string, fallback: string): string => {
   const normalizedAltText = altText
-      .replace(/[\[\]\r\n]+/g, ' ')
+      .replace(/[[\]\r\n]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
 
