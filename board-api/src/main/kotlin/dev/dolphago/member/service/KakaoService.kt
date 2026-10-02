@@ -6,7 +6,7 @@ import dev.dolphago.member.dto.KakaoToken
 import dev.dolphago.member.repository.MemberRepository
 import dev.dolphago.mysql.Authority
 import dev.dolphago.mysql.Member
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import java.net.URI
 

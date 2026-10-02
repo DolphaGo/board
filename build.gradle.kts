@@ -50,7 +50,7 @@ allprojects {
         finalizedBy("koverVerify")
     }
 
-    sonarqube.properties {
+    sonar.properties {
         property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/kover/report.xml")
         property("sonar.gradle.skipCompile", "true")
     }
@@ -59,23 +59,31 @@ allprojects {
         options.compilerArgs.add("-parameters")
     }
 
+    // Kotlin 최신 안정판은 JVM 26까지 생성한다. 실행 JDK 27과 출력 바이트코드를 구분한다.
     kotlin{
         target {
             compilerOptions {
                 freeCompilerArgs = listOf("-Xjsr305=strict")
-                jvmTarget = JvmTarget.JVM_21
+                jvmTarget = JvmTarget.JVM_26
             }
         }
     }
 
     java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        toolchain.languageVersion.set(JavaLanguageVersion.of(27))
+        sourceCompatibility = JavaVersion.VERSION_26
+        targetCompatibility = JavaVersion.VERSION_26
     }
+
+    extra["kotlin.version"] = Versions.kotlinVersion
+    extra["kotlin-coroutines.version"] = Versions.coroutineVersion
+    extra["jackson-bom.version"] = Versions.jacksonVersion
 
     dependencyManagement {
         imports {
             mavenBom("org.springframework.cloud:spring-cloud-dependencies:${Versions.springCloudDependenciesVersion}")
+            // Jackson 2/3가 공유하는 annotations도 Jackson 3 BOM과 같은 버전으로 정렬한다.
+            mavenBom("tools.jackson:jackson-bom:${Versions.jacksonVersion}")
         }
     }
 
@@ -86,8 +94,8 @@ allprojects {
         kapt("org.springframework.boot:spring-boot-configuration-processor")
     }
 
-    koverReport {
-        defaults {
+    kover {
+        reports {
             filters {
                 excludes {
                     classes("*.*Config*", "*.*Application*")
@@ -96,34 +104,14 @@ allprojects {
                 }
             }
 
-            xml {
-                onCheck = true
-                filters {
-                    excludes {
-                        classes("*.*Config*", "*.*Application*")
-                        packages("*.configuration.*")
-                        annotatedBy("*Generated*")
-                    }
+            total {
+                xml {
+                    onCheck = true
                 }
-            }
-
-            verify {
-                onCheck = true
-                rule {
-                    isEnabled = true
-                    entity = kotlinx.kover.gradle.plugin.dsl.GroupingEntityType.APPLICATION
-                    filters {
-                        excludes {
-                            classes("*.*Config*", "*.*Application*")
-                            packages("*.configuration.*")
-                            annotatedBy("*Generated*")
-                        }
-                    }
-
-                    bound {
-                        minValue = 0
-                        metric = kotlinx.kover.gradle.plugin.dsl.MetricType.LINE
-                        aggregation = kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
+                verify {
+                    onCheck = true
+                    rule {
+                        minBound(0)
                     }
                 }
             }

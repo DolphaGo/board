@@ -10,7 +10,7 @@ class JibConfigPlugin : Plugin<Project> {
             project.extensions.configure<JibExtension> {
                 val mainClassName: String by project
 
-                from.image = System.getenv("FROM_IMAGE")
+                from.image = System.getenv("FROM_IMAGE") ?: "amazoncorretto:27.0.0-al2023-headless"
                 to {
                     image = System.getenv("TO_IMAGE")
                     auth {
@@ -20,9 +20,8 @@ class JibConfigPlugin : Plugin<Project> {
                 }
 
                 container {
-                    environment = mapOf("MAIN_CLASS" to mainClassName)
+                    mainClass = mainClassName
                     creationTime.set("USE_CURRENT_TIMESTAMP")
-                    entrypoint = listOf("INHERIT")
                 }
             }
         }

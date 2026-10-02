@@ -19,13 +19,13 @@ object Dependencies {
     )
 
     val MYSQL = listOf(
-        "mysql:mysql-connector-java:8.0.32",
-        "com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.2"
+        "com.mysql:mysql-connector-j:${Versions.mysqlVersion}",
+        "com.github.gavlyukovskiy:p6spy-spring-boot-starter:${Versions.p6spyVersion}"
     )
 
     val H2 = listOf(
         "com.h2database:h2",
-        "com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.2"
+        "com.github.gavlyukovskiy:p6spy-spring-boot-starter:${Versions.p6spyVersion}"
     )
 
     val REDIS = listOf(
@@ -50,16 +50,15 @@ object Dependencies {
     )
 
     val JACKSON = listOf(
-        "com.fasterxml.jackson.module:jackson-module-kotlin",
-        "org.jetbrains.kotlin:kotlin-reflect",
-        "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.4"
+        "tools.jackson.module:jackson-module-kotlin",
+        "org.jetbrains.kotlin:kotlin-reflect"
     )
 
-    val LOGGING = "io.github.microutils:kotlin-logging-jvm:3.0.5"
+    val LOGGING = "io.github.oshai:kotlin-logging-jvm:${Versions.kotlinLoggingVersion}"
 
     val TEST = listOf(
         "org.jetbrains.kotlin:kotlin-test",
-        "io.mockk:mockk:1.12.3",
+        "io.mockk:mockk:${Versions.mockkVersion}",
         "org.springframework.boot:spring-boot-starter-test"
     )
 
