@@ -119,32 +119,27 @@ http://localhost:8080
 | 채팅방 목록 | `GET /api/chat/rooms` |
 | WebSocket | `ws://localhost:8080/ws` |
 
-## 프론트와 실제 백엔드 연결 시 주의점
+## 기본 게시판: 실제 H2/API 학습 모드
 
-현재 `board-front-ui`는 Vite 단독 실행에서 local fixture를 우선 사용하도록 되어 있습니다. 그리고 일부 API 호출은 `VITE_FRONT_API_URL`이 아니라 `/api/...` 상대 경로를 직접 사용합니다.
+두 터미널에서 실행합니다. Java 21을 사용합니다.
 
-따라서 실제 `board-api:8080`에 프론트를 붙이려면 다음 중 하나를 선택해야 합니다.
-
-1. Vite 개발 서버에 `/api`, `/ws` proxy를 추가한다.
-2. 프론트 API 호출부를 모두 `VITE_FRONT_API_URL` 기반으로 통일한다.
-3. 프론트를 정적 파일로 빌드한 뒤 Spring 쪽에서 같은 origin으로 서빙한다.
-
-현재 상태에서 처음 기여하는 개발자에게는 1번 방식이 가장 단순합니다.
-
-예시:
-
-```ts
-server: {
-  port: 3000,
-  proxy: {
-    '/api': 'http://localhost:8080',
-    '/ws': {
-      target: 'http://localhost:8080',
-      ws: true,
-    },
-  },
-}
+```bash
+./gradlew :board-api:bootRun --args='--spring.profiles.active=study'
 ```
+
+```bash
+pnpm --dir board-front/board-front-ui dev:api
+```
+
+`http://localhost:3000`에서 실제 DB의 공지와 일반 글 13개를 읽습니다. 목록의 `?page=2`는 화면의 2페이지이며, API에는 `page=1`로 전달됩니다. 새로고침·뒤로가기로도 해당 페이지를 읽을 수 있습니다.
+
+- `dev`: 기존 프론트 단독 fixture 모드입니다. 응답을 DB에 저장하지 않습니다.
+- `dev:api`: fixture를 끄고 `/api`를 Spring 서버로 전달합니다. 기본 주소는 `http://localhost:8080`이며, 포트가 다르면 `BOARD_API_URL=http://localhost:18080 pnpm --dir board-front/board-front-ui dev:api`처럼 지정합니다.
+- `study`: 전용 H2 메모리 DB와 학습용 관리자(1번)·회원(2번), 공지 1개·일반 글 12개·숨김 글 1개를 준비합니다. 서버를 종료하면 이 프로필의 데이터는 사라집니다. 실제 로그인은 아직 연결하지 않았습니다.
+- 검색·랭킹·채팅은 각각 Elasticsearch·Redis·MongoDB가 필요합니다. `dev:api`는 이 API도 실제 서버로 전달하므로 인프라 없이 실행하면 해당 영역은 실패할 수 있습니다.
+- 현재 글쓰기는 검색 색인도 함께 실행합니다. 외부 Elasticsearch 없이 저장하는 학습 흐름은 후속 글쓰기 PR에서 다룹니다.
+
+설계·개념·검증은 [게시글 목록 학습 기록](docs/study/0002-post-list.md)을 참고하세요. 일반 백엔드와 연결할 때도 `dev:api`를 사용하며, 해당 환경의 DB 데이터와 외부 인프라는 별도로 준비합니다.
 
 ## 프론트 보조 API: 이미지 업로드
 
@@ -216,13 +211,12 @@ git diff --check
 2. `PostList.vue`, `PostEditor.vue`, `SearchResults.vue`, `SearchRanking.vue`, `ChatRoom.vue`를 읽습니다.
 3. `board-api`의 `PostController`, `PostSearchController`, `SearchRankingController`, `ChatRoomController`를 읽습니다.
 4. Elasticsearch, Redis, MongoDB를 준비한 뒤 `board-api`를 실행합니다.
-5. Vite proxy 또는 API base URL 정리를 한 뒤 실제 API 연동을 확인합니다.
+5. `dev:api` 모드로 실제 API 연동을 확인합니다.
 6. 테스트 명령을 돌려 변경 사항을 검증합니다.
 
 ## 현재 남은 개선 과제
 
 - `docker-compose.yml` 추가로 Elasticsearch/Redis/MongoDB 개발 환경 고정
-- Vite dev proxy 또는 API base URL 통일
 - 실제 Elasticsearch 인덱스 설정과 analyzer 튜닝 문서화
 - WebSocket 채팅의 실제 백엔드 smoke test 문서화
 - GitHub Dependabot 보안 경고 별도 점검

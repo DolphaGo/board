@@ -19,7 +19,7 @@ import {createPostSearchFixture, createRelatedPostSearchFixture} from "./src/api
 import {createSearchRankingFixture} from "./src/api/searchRankingFixture";
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       'src': resolve(__dirname, 'src'),
@@ -27,12 +27,18 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    // api 모드에서는 브라우저의 같은 origin 요청을 Spring 서버로 전달한다.
+    // fixture가 실제 응답을 가리지 않도록 아래 middleware도 함께 끈다.
+    proxy: mode === 'api' ? {
+      '/api': process.env.BOARD_API_URL ?? 'http://localhost:8080',
+    } : undefined,
   },
   plugins: [
     vue(),
     {
       name: 'board-local-api-fixture',
       configureServer(server) {
+        if (mode === 'api') return
         server.middlewares.use('/api/search/posts', (req, res, next) => {
           if (req.method !== 'GET') {
             next()
@@ -171,4 +177,4 @@ export default defineConfig({
     },
     analyzer(),
   ]
-})
+}))
