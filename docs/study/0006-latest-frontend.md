@@ -2,13 +2,14 @@
 
 - 상태: 구현·로컬 검증 완료, PR 준비
 - PR: 준비 중
-- 기준 커밋: `92d5447` (`feature/board-post-list`)
+- 기준 커밋: `ce07a9e` (`feature/board-post-detail`)
+- 최초 도구 이전 검증 기준: `92d5447` (`feature/board-post-list`)
 
 ## 요구사항과 완료 조건
 
 사용자의 "모든지 최신 버전 무조건" 요구에 따라 프론트 직접 의존성과 실행 도구를 2026-10-03 npm Registry의 최신 안정 릴리스로 맞췄다. 시험판은 제외하고, `latest` 태그가 이전 메이저를 가리키면 안정 버전 전체와 peer dependency를 함께 확인했다.
 
-기존 화면 기능은 유지한다. 직접 의존성 조회, 재현 가능한 lockfile, 기존 28개 파일의 255개 테스트, TypeScript·Vue 타입 검사, 프로덕션 빌드가 완료 조건이다. 최신 제품끼리 공식 API가 호환되지 않는 경우 공식 호환 패키지를 사용하고 각 검사의 실제 실행 버전을 구분한다.
+기존 화면 기능은 유지한다. 직접 의존성 조회, 재현 가능한 lockfile, 기존 28개 파일의 255개 테스트와 상세 기능에서 추가한 11개 테스트, TypeScript·Vue 타입 검사, 프로덕션 빌드가 완료 조건이다. 최신 제품끼리 공식 API가 호환되지 않는 경우 공식 호환 패키지를 사용하고 각 검사의 실제 실행 버전을 구분한다.
 
 ## 개념과 선택 이유
 
@@ -126,6 +127,8 @@ pnpm_config_registry=https://registry.npmjs.org \
   --package=node@26.10.0 --package=pnpm@12.8.1 -- pnpm <명령>
 ```
 
+### 최초 도구 이전 검증: 목록 기능 기준
+
 | 명령 | 실제 결과 |
 | --- | --- |
 | `pnpm install --registry=https://registry.npmjs.org --no-frozen-lockfile` | 설치 성공, 공급망 정책 검사 통과 |
@@ -139,7 +142,22 @@ pnpm_config_registry=https://registry.npmjs.org \
 
 독립 diff 검토에서도 테스트 파일 28개와 `expect` 604개가 보존됐고 구현 회귀를 발견하지 못했다. 검토자가 Node 26.8.2에서 별도로 실행한 `vitest run --coverage`도 255개 테스트를 통과했다(lines 88.77%, branches 87.13%). 이 보조 coverage 실행은 위 Node 26.10.0 기준 검증과 실행 환경을 구분한다.
 
-단위 테스트는 mock/jsdom 환경이며 실제 API·DB·WebSocket 또는 실브라우저 검증과 다르다. 이번 이전 자체의 화면 기능 변경은 정규식의 동등한 표현 한 곳뿐이며 실브라우저 QA는 실행하지 않았다. 병합 후 추가되는 상세/글쓰기 테스트와 통합 브랜치의 검증은 별도로 실행해야 한다.
+### 상세 기능 통합 검증
+
+최신 도구 이전 커밋을 `ce07a9e` 위로 rebase했다. 충돌은 `PostDetail.spec.ts` 한 곳이었다. 상세 기능의 reactive 경로·query page·자동 unmount·테스트 초기화를 보존하고 Vitest mock 호이스팅으로 옮겼다. 상세 테스트 본문은 Jest/Vitest API 이름 차이를 정규화하면 원본과 같으며 테스트 선언 23개와 assertion 88개를 유지한다. `PostDetail.vue`는 상세 기능 기준 커밋과 동일하다.
+
+Node 26.10.0·pnpm 12.8.1에서 통합 후 각 검증을 한 번 실행했다. `build`가 native TypeScript와 Vue 타입 검사를 함께 실행하므로 같은 타입 검사 명령을 추가 반복하지 않았다.
+
+| 명령 | 통합 후 결과 |
+| --- | --- |
+| `pnpm test` | 종료 코드 0, **28개 파일·266개 테스트 통과** |
+| `pnpm build` | 종료 코드 0, `tsc --noEmit`·`vue-tsc --noEmit`·Vite 빌드 통과, 257개 모듈 변환 |
+| `pnpm lint` | 종료 코드 0, **오류 0개·기존 경고 491개** |
+| 문서 링크·`git diff --check` | 통과 |
+
+README의 현재 버전과 실행 명령, 학습 가이드의 현재 테스트 명령·기록 목록을 갱신했다. 기존 학습 기록의 검증 당시 도구·명령은 그 시점의 증거이므로 수정하지 않았다.
+
+단위 테스트는 mock/jsdom 환경이며 실제 API·DB·WebSocket 또는 실브라우저 검증과 다르다. 이번 이전 자체의 화면 기능 변경은 정규식의 동등한 표현 한 곳뿐이며 실브라우저 QA는 실행하지 않았다. 상세 기능의 기존 브라우저/API 검증은 [0003 기록](0003-post-detail.md)에 있고, 이후 글쓰기 기능을 추가한 통합 브랜치는 별도로 재검증해야 한다.
 
 ## 실패와 해결
 
@@ -152,7 +170,7 @@ pnpm_config_registry=https://registry.npmjs.org \
 
 - Vue 템플릿·ESLint API는 공식 TypeScript 6 호환 패키지를 사용한다. TypeScript 7 native 검사와 이를 구분해야 한다.
 - Vite는 현재 `vite.config.ts`와 fixture가 CommonJS 패키지에서 ESM 문법을 사용한다는 **향후 native config loader 전환 경고**를 낸다. 현재 기본 loader와 빌드는 정상이며 경고를 끄지 않았다.
-- ESLint 486개 기존 경고는 주로 Vue 줄바꿈·속성 순서·trailing comma다. 전체 포맷 변경은 이번 버전 이전 범위를 넘는다.
+- ESLint 기존 경고는 최초 도구 이전에서 486개, 상세 기능 통합 후 491개이며 주로 Vue 줄바꿈·속성 순서·trailing comma다. 전체 포맷 변경은 이번 버전 이전 범위를 넘는다.
 - 왜 npm `latest` 태그만 보고 메이저 버전을 선택하면 안 되는가?
 - TypeScript 7 실행기와 Vue checker가 서로 다른 API 구현을 쓰는 이유는 무엇인가?
 - `vi.mock`의 호이스팅과 default export 형식은 Jest 이전에서 왜 중요한가?
