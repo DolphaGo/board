@@ -1,6 +1,7 @@
 # 0008. 검색어 랭킹의 실제 최근 30분 집계
 
-- 상태: 구현·로컬 검증 완료, PR 준비
+- 상태: PR 공개, 로컬 검증·독립 리뷰 완료, CI 확인 중
+- PR: [#20](https://github.com/DolphaGo/board/pull/20)
 - 이슈: [#19](https://github.com/DolphaGo/board/issues/19)
 - 선행 PR: [#16](https://github.com/DolphaGo/board/pull/16)
 - 검증 기준: `(현재 시각 - 30분, 현재 시각]`에 들어온 검색 횟수
@@ -53,6 +54,7 @@
 | `pnpm --dir board-front/board-front-ui test` | 프런트 28개 파일·275개 통과 |
 | `pnpm build`, `pnpm lint` | 타입 검사·Vite 빌드 통과, lint 오류 0·경고 494 |
 | 두 실행 JAR 빌드 | API·프런트 API bootJar 통과 |
+| 독립 코드 리뷰 | 구현·실제 Redis 테스트·시간 경계·동시 기록을 검토했고 중대한 결함 없음 |
 | 실제 HTTP + Redis | 기록 중 만료 제거, 조회만 할 때 만료 제거, 누적 점수 보존, 정규화된 횟수와 source 집계 확인 |
 | 실제 API + 1440×1000 / 390×844 브라우저 | `redis study` 2회·`kotlin window` 1회 표시, 검색어 버튼 너비 64px, 가로 넘침 없음 |
 
@@ -77,4 +79,3 @@
 2. 점수 ZSET과 시각 ZSET은 각각 무엇을 정렬하는가?
 3. 같은 밀리초의 반복 입력을 왜 UUID로 구분하는가?
 4. 원자성과 오류 rollback은 어떻게 다른가?
-
