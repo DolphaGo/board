@@ -74,15 +74,15 @@ const rankingFlowSteps = [
     order: 1,
     label: '기록',
     // 검색 결과 조회 API와 헤더 검색 폼은 모두 검색어를 정규화한 뒤 Redis ZSET 점수를 올린다.
-    // 누적 ZSET은 오래 쌓인 자동완성 후보를 만들고, live ZSET은 TTL이 있어 최근 분위기만 보여준다.
+    // 누적 ZSET은 오래 쌓인 자동완성 후보를 만들고, live 순위는 이벤트 시각으로 최근 30분만 집계한다.
     description: '검색 성공 시 정규화된 검색어를 누적 ZSET과 최근 30분 live ZSET에 함께 +1로 저장',
   },
   {
     order: 2,
     label: '집계',
-    // 서버는 live ZSET을 reverseRangeWithScores로 읽어 실시간 검색어를 만든다.
+    // 서버는 Lua에서 오래된 이벤트를 정리한 뒤 live ZSET을 점수순으로 읽는다.
     // 자동완성은 같은 검색어라도 누적 ZSET을 읽고 prefix/초성/음절 토큰으로 좁혀 장기 인기 후보를 유지한다.
-    description: '/api/search/rankings는 live ZSET을 높은 점수순으로 읽고, 자동완성은 누적 ZSET을 prefix/초성/음절로 필터링',
+    description: '/api/search/rankings는 30분 밖 기록을 제외한 뒤 점수순으로 읽고, 자동완성은 누적 ZSET을 prefix/초성/음절로 필터링',
   },
   {
     order: 3,
@@ -266,6 +266,7 @@ onUnmounted(() => {
 }
 
 .rank-score {
+  max-width: 100px;
   color: #757575;
   display: grid;
   gap: 2px;

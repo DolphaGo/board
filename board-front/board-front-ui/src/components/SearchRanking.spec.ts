@@ -70,7 +70,7 @@ describe('# Search ranking component', function () {
     const steps = wrapper.findAll('[data-testid="ranking-flow-step"]').map(step => step.text())
     expect(steps).toEqual([
       '1. 기록: 검색 성공 시 정규화된 검색어를 누적 ZSET과 최근 30분 live ZSET에 함께 +1로 저장',
-      '2. 집계: /api/search/rankings는 live ZSET을 높은 점수순으로 읽고, 자동완성은 누적 ZSET을 prefix/초성/음절로 필터링',
+      '2. 집계: /api/search/rankings는 30분 밖 기록을 제외한 뒤 점수순으로 읽고, 자동완성은 누적 ZSET을 prefix/초성/음절로 필터링',
       '3. 갱신: 30초 polling 또는 검색 성공 이벤트가 사이드바의 최근 순위를 다시 조회',
     ])
 

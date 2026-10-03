@@ -5,7 +5,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.data.redis.core.ZSetOperations
-import java.time.Duration
+import org.springframework.data.redis.core.script.RedisScript
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -15,58 +15,28 @@ class SearchRankingServiceTest {
     private val searchRankingService = SearchRankingService(redisTemplate)
 
     @Test
-    fun `검색어 기록 시 정규화된 검색어 점수를 1 증가시킨다`() {
-        every { redisTemplate.opsForZSet() } returns zSetOperations
-        every {
-            zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
-        } returns 1.0
-        every {
-            zSetOperations.incrementScore(SearchRankingService.LIVE_RANKING_KEY, "kotlin springboot", 1.0)
-        } returns 1.0
-        every {
-            zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "direct", 1.0)
-        } returns 1.0
-        every {
-            redisTemplate.expire(SearchRankingService.LIVE_RANKING_KEY, Duration.ofMinutes(30))
-        } returns true
-
+    fun `검색어 기록 시 정규화된 누적 점수와 live 이벤트를 기록한다`() {
+        prepareRecord("direct")
         searchRankingService.record("  Kotlin   SpringBoot  ")
-
         verify(exactly = 1) {
             zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
         }
         verify(exactly = 1) {
-            zSetOperations.incrementScore(SearchRankingService.LIVE_RANKING_KEY, "kotlin springboot", 1.0)
+            redisTemplate.execute(
+                any<RedisScript<List<*>>>(),
+                listOf(SearchRankingService.LIVE_RANKING_KEY, SearchRankingService.LIVE_EVENTS_KEY),
+                "1800000", "record", "kotlin springboot", any<String>(), "0",
+            )
         }
         verify(exactly = 1) {
             zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "direct", 1.0)
-        }
-        verify(exactly = 1) {
-            redisTemplate.expire(SearchRankingService.LIVE_RANKING_KEY, Duration.ofMinutes(30))
         }
     }
 
     @Test
     fun `검색어 기록 시 검색 유입 경로 점수도 1 증가시킨다`() {
-        every { redisTemplate.opsForZSet() } returns zSetOperations
-        every {
-            zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
-        } returns 1.0
-        every {
-            zSetOperations.incrementScore(SearchRankingService.LIVE_RANKING_KEY, "kotlin springboot", 1.0)
-        } returns 1.0
-        every {
-            zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "suggestion", 1.0)
-        } returns 1.0
-        every {
-            redisTemplate.expire(SearchRankingService.LIVE_RANKING_KEY, Duration.ofMinutes(30))
-        } returns true
-
+        prepareRecord("suggestion")
         searchRankingService.record("  Kotlin   SpringBoot  ", "suggestion")
-
-        verify(exactly = 1) {
-            zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
-        }
         verify(exactly = 1) {
             zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "suggestion", 1.0)
         }
@@ -74,58 +44,36 @@ class SearchRankingServiceTest {
 
     @Test
     fun `검색 유입 경로가 알 수 없는 값이면 직접 검색으로 기록한다`() {
-        every { redisTemplate.opsForZSet() } returns zSetOperations
-        every {
-            zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0)
-        } returns 1.0
-        every {
-            zSetOperations.incrementScore(SearchRankingService.LIVE_RANKING_KEY, "kotlin springboot", 1.0)
-        } returns 1.0
-        every {
-            zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "direct", 1.0)
-        } returns 1.0
-        every {
-            redisTemplate.expire(SearchRankingService.LIVE_RANKING_KEY, Duration.ofMinutes(30))
-        } returns true
-
+        prepareRecord("direct")
         searchRankingService.record("  Kotlin   SpringBoot  ", "unknown")
-
         verify(exactly = 1) {
             zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, "direct", 1.0)
         }
     }
 
     @Test
-    fun `검색어 순위는 높은 점수 순으로 조회한다`() {
-        val first = mockk<ZSetOperations.TypedTuple<String>>()
-        val second = mockk<ZSetOperations.TypedTuple<String>>()
-
-        every { first.value } returns "kotlin"
-        every { first.score } returns 5.0
-        every { second.value } returns "spring boot"
-        every { second.score } returns 3.0
-        every { redisTemplate.opsForZSet() } returns zSetOperations
+    fun `검색어 순위는 시간창 정리 스크립트의 높은 점수 순으로 조회한다`() {
         every {
-            zSetOperations.reverseRangeWithScores(SearchRankingService.LIVE_RANKING_KEY, 0, 1)
-        } returns linkedSetOf(first, second)
-
-        val result = searchRankingService.getTopKeywords(limit = 2)
-
+            redisTemplate.execute(
+                any<RedisScript<List<*>>>(),
+                listOf(SearchRankingService.LIVE_RANKING_KEY, SearchRankingService.LIVE_EVENTS_KEY),
+                "1800000", "read", "", "", "1",
+            )
+        } returns listOf("kotlin", "5", "spring boot", "3")
+        val result = searchRankingService.getTopKeywords(2)
+        assertEquals(listOf("kotlin", "spring boot"), result.map { it.keyword })
+        assertEquals(listOf(5L, 3L), result.map { it.score })
         assertEquals(
-            listOf(
-                SearchRankingItem(
-                    keyword = "kotlin",
-                    score = 5,
-                    scoreDescription = "Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다.",
-                ),
-                SearchRankingItem(
-                    keyword = "spring boot",
-                    score = 3,
-                    scoreDescription = "Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다.",
-                ),
-            ),
-            result,
+            "Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다.",
+            result.first().scoreDescription,
         )
+    }
+
+    private fun prepareRecord(source: String) {
+        every { redisTemplate.opsForZSet() } returns zSetOperations
+        every { zSetOperations.incrementScore(SearchRankingService.RANKING_KEY, "kotlin springboot", 1.0) } returns 1.0
+        every { zSetOperations.incrementScore(SearchRankingService.SOURCE_RANKING_KEY, source, 1.0) } returns 1.0
+        every { redisTemplate.execute(any<RedisScript<List<*>>>(), any(), *anyVararg()) } returns emptyList<Any>()
     }
 
     @Test
