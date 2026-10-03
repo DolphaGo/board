@@ -114,3 +114,4 @@ API 입력/출력, 데이터 모델, 권한/실패 조건은 변경한 경우에
 | [0005. PR 검증과 이미지 게시 분리](study/0005-pr-ci.md) | CI/CD, 실행 조건, 최신 도구, 러너 통합 검증 | [#17](https://github.com/DolphaGo/board/pull/17) |
 | [0006. 프론트엔드 최신 안정 버전과 테스트 도구 이전](study/0006-latest-frontend.md) | 최신 의존성, Vitest, TypeScript 공식 호환 API, 설치 정책 | [#12](https://github.com/DolphaGo/board/pull/12) |
 | [0007. 최신 안정 백엔드 버전으로 이행하기](study/0007-latest-backend.md) | Java 27, JVM 26 출력, 최신 의존성, BOM 정렬, 실제 H2/API 검증 | [#13](https://github.com/DolphaGo/board/pull/13) |
+| [0008. 검색어 랭킹의 실제 최근 30분 집계](study/0008-search-ranking-window.md) | 시간창, 이벤트 ZSET, Lua 원자성, TTL, 실제 Redis 검증 | [#20](https://github.com/DolphaGo/board/pull/20) |

@@ -1,8 +1,11 @@
 package dev.dolphago.search
 
+import org.springframework.core.io.ClassPathResource
 import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.data.redis.core.script.DefaultRedisScript
 import org.springframework.stereotype.Service
 import java.time.Duration
+import java.util.UUID
 
 data class SearchRankingItem(
     val keyword: String,
@@ -69,6 +72,13 @@ enum class SearchRankingSource(
 class SearchRankingService(
     private val redisTemplate: StringRedisTemplate,
 ) {
+    private val liveRankingScript =
+        DefaultRedisScript<List<*>>().apply {
+            setLocation(ClassPathResource("redis/live-search-ranking.lua"))
+            setResultType(List::class.java)
+        }
+    private val liveKeys = listOf(LIVE_RANKING_KEY, LIVE_EVENTS_KEY)
+
     private data class SuggestionMatch(
         val matchType: SearchKeywordSuggestionMatchType,
         val inputToken: String,
@@ -88,11 +98,17 @@ class SearchRankingService(
         // 점수가 높은 순서로 읽으면 되기 때문에 ZSET이 가장 단순한 모델이다.
         zSetOperations.incrementScore(RANKING_KEY, keyword.value, 1.0)
 
-        // RANKING_KEY는 자동완성과 장기 학습용 누적 데이터다.
-        // 반면 화면에 보이는 "실시간 검색어"는 최근 분위기를 보여줘야 하므로 별도 ZSET에 기록하고 TTL을 갱신한다.
-        // 새 검색이 들어올 때마다 TTL을 다시 걸면 트래픽이 끊긴 뒤 자연스럽게 최근 랭킹이 비워진다.
-        zSetOperations.incrementScore(LIVE_RANKING_KEY, keyword.value, 1.0)
-        redisTemplate.expire(LIVE_RANKING_KEY, LIVE_RANKING_TTL)
+        // 이벤트 시각으로 30분 밖의 횟수를 차감한다. UUID를 써야 같은 검색어가
+        // 같은 밀리초에 들어와도 ZSET member를 덮어쓰지 않는다.
+        redisTemplate.execute(
+            liveRankingScript,
+            liveKeys,
+            LIVE_WINDOW_MILLIS,
+            "record",
+            keyword.value,
+            UUID.randomUUID().toString(),
+            "0",
+        )
 
         // source 랭킹은 "어디에서 검색이 시작됐는지"를 보는 학습용 이벤트 집계다.
         // 검색어 랭킹과 같은 ZSET 패턴을 쓰면 header/suggestion/ranking/direct 유입 비중을 같은 방식으로 읽을 수 있다.
@@ -102,19 +118,15 @@ class SearchRankingService(
     fun getTopKeywords(limit: Long): List<SearchRankingItem> {
         require(limit > 0) { "조회 개수는 1 이상이어야 합니다." }
 
+        // 새 검색이 없어도 조회 시 시간창 밖의 이벤트를 정리한 뒤 순위를 읽는다.
         return redisTemplate
-            .opsForZSet()
-            // 프론트의 "실시간 검색어" 영역은 장기 누적 순위가 아니라 최근 검색 흐름을 보여준다.
-            // 그래서 자동완성용 누적 RANKING_KEY와 분리된 LIVE_RANKING_KEY를 읽는다.
-            .reverseRangeWithScores(LIVE_RANKING_KEY, 0, limit - 1)
+            .execute(liveRankingScript, liveKeys, LIVE_WINDOW_MILLIS, "read", "", "", (limit - 1).toString())
             .orEmpty()
-            .mapNotNull { tuple ->
-                val keyword = tuple.value ?: return@mapNotNull null
+            .chunked(2)
+            .map { (keyword, score) ->
                 SearchRankingItem(
-                    keyword = keyword,
-                    score = tuple.score?.toLong() ?: 0L,
-                    // 검색어 랭킹의 score는 ES BM25 점수가 아니라 Redis ZSET 집계 점수다.
-                    // 둘 다 "점수"라는 단어를 쓰기 때문에 응답에 설명을 함께 담아 검색 관련도 점수와 랭킹 점수를 구분해 둔다.
+                    keyword = keyword as String,
+                    score = (score as String).toDouble().toLong(),
                     scoreDescription = KEYWORD_SCORE_DESCRIPTION,
                 )
             }
@@ -239,9 +251,12 @@ class SearchRankingService(
 
     companion object {
         const val RANKING_KEY = "board:search:keyword-ranking"
-        const val LIVE_RANKING_KEY = "board:search:keyword-ranking:live"
+        // 시각이 없는 기존 live 점수를 재사용하지 않고 새 시간창을 시작한다.
+        // 두 live 키의 hash tag가 같아 Redis Cluster에서도 같은 슬롯에서 Lua를 실행한다.
+        const val LIVE_RANKING_KEY = "board:search:keyword-ranking:{live}:v2"
+        const val LIVE_EVENTS_KEY = "$LIVE_RANKING_KEY:events"
         const val SOURCE_RANKING_KEY = "board:search:source-ranking"
-        private val LIVE_RANKING_TTL: Duration = Duration.ofMinutes(30)
+        private val LIVE_WINDOW_MILLIS = Duration.ofMinutes(30).toMillis().toString()
         private const val KEYWORD_SCORE_DESCRIPTION = "Redis ZSET score는 최근 30분 동안 정규화된 검색어가 기록된 횟수입니다."
     }
 }

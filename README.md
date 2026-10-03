@@ -189,6 +189,18 @@ pnpm --dir board-front/board-front-ui test
 pnpm --dir board-front/board-front-ui build
 ```
 
+게시판 API 전체 테스트에는 전용 Redis 8.10.2가 필요합니다. 테스트는 16379 포트의 랭킹 키를 초기화하므로 기존 사용자·운영 Redis와 구분합니다. 최신 Redis가 설치돼 있다면 별도 터미널에서 실행합니다.
+
+```bash
+redis-server --bind 127.0.0.1 --port 16379 --save '' --appendonly no
+```
+
+Docker 환경에서는 전용 컨테이너를 사용할 수 있습니다.
+
+```bash
+docker run --rm -p 127.0.0.1:16379:6379 redis:8.10.2-alpine
+```
+
 게시판 API 전체 테스트, 실행 JAR 생성, 프론트 보조 API 컴파일(JDK 27):
 
 ```bash
@@ -213,6 +225,8 @@ git diff --check
 - 검색어가 실시간 랭킹에 어떻게 기록되는지
 
 실시간 검색어는 Redis ZSET으로 누적 점수를 관리합니다. 검색어 추천은 랭킹 데이터를 기반으로 prefix를 좁혀서 보여주는 방식입니다.
+
+실시간 순위는 이벤트 시각으로 최근 30분 밖의 횟수를 제외합니다. TTL은 유휴 키 정리에 사용하며, 자동완성용 누적 점수와 source 집계는 따로 유지합니다. [시간창 집계 학습 기록](docs/study/0008-search-ranking-window.md)을 참고하세요.
 
 ## 개발 순서 추천
 
