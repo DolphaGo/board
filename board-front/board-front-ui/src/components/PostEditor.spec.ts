@@ -675,7 +675,7 @@ describe('# Post editor component', () => {
     consoleError.mockRestore()
   })
   it('keeps the draft after save failure and allows a successful retry', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockedPostService.createPost.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({
       id: 101, title: '재시도', content: '보존할 본문', imageUrls: [], viewCount: 0, display: true, notice: false,
     })

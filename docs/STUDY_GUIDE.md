@@ -110,5 +110,6 @@ API 입력/출력, 데이터 모델, 권한/실패 조건은 변경한 경우에
 | [0001. 기능별 PR과 학습 기록](study/0001-development-workflow.md) | 작업 단위, Git/PR 개념, 기록과 검증 기준 | [#9](https://github.com/DolphaGo/board/pull/9) |
 | [0002. 실제 API로 게시글 목록 읽기](study/0002-post-list.md) | H2 학습 데이터, proxy, URL 페이지 상태와 응답 순서 | [#10](https://github.com/DolphaGo/board/pull/10) |
 | [0003. 현재 글을 정확히 읽고 목록으로 돌아가기](study/0003-post-detail.md) | 404 계약, 상태 범위, 비동기 응답과 목록 복귀 | [#11](https://github.com/DolphaGo/board/pull/11) |
+| [0004. 글을 검증하고 저장한 뒤 다시 읽기](study/0004-post-write.md) | DTO 검증, 긴 본문, 제출 상태, 실제 저장·재조회 | [#16](https://github.com/DolphaGo/board/pull/16) |
 | [0006. 프론트엔드 최신 안정 버전과 테스트 도구 이전](study/0006-latest-frontend.md) | 최신 의존성, Vitest, TypeScript 공식 호환 API, 설치 정책 | [#12](https://github.com/DolphaGo/board/pull/12) |
-| [0007. 최신 안정 백엔드 버전으로 이행하기](study/0007-latest-backend.md) | Java 27, JVM 26 출력, 최신 의존성, BOM 정렬, 실제 H2/API 검증 | PR 준비 |
+| [0007. 최신 안정 백엔드 버전으로 이행하기](study/0007-latest-backend.md) | Java 27, JVM 26 출력, 최신 의존성, BOM 정렬, 실제 H2/API 검증 | [#13](https://github.com/DolphaGo/board/pull/13) |
