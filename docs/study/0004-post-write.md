@@ -92,4 +92,4 @@ flowchart LR
 - disabled 표시와 함수 진입 guard가 모두 필요한 이유는 무엇인가?
 - study에서 원본 저장이 성공해도 실제 검색 색인 성공을 뜻하지 않는 이유는 무엇인가?
 
-실제 로그인, 서버 멱등성, 외부 검색·채팅·이미지 저장소와 운영 DB 반영은 이 PR 범위가 아니다. CI의 최종 GitHub 러너 결과는 [#17](https://github.com/DolphaGo/board/pull/17)의 학습 기록에서 확인한다.
+실제 로그인, 서버 멱등성, 외부 검색·채팅·이미지 저장소와 운영 DB 반영은 이 PR 범위가 아니다. CI 설정과 기존 실행 이력은 [#17](https://github.com/DolphaGo/board/pull/17)의 학습 기록에서 확인한다. 해당 CI가 글쓰기 브랜치에 연결된 후 최신 head의 결과는 [#16 Checks](https://github.com/DolphaGo/board/pull/16/checks)에서 확인한다.
