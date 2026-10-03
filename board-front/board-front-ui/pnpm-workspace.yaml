@@ -6,3 +6,4 @@ minimumReleaseAgeExclude:
   - '@types/node@26.6.4'
   - '@vue/language-core@3.3.12'
   - vue-tsc@3.3.12
+  - eslint@10.12.0
