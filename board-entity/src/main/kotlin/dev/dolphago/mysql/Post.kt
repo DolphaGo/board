@@ -23,7 +23,7 @@ data class Post(
     val member: Member,
     @Column(name = "title", nullable = false)
     val title: String,
-    @Column(name = "content", nullable = false)
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     val content: String,
     @Column(name = "image_urls", nullable = false, columnDefinition = "TEXT")
     @Convert(converter = PostImageUrlsConverter::class)

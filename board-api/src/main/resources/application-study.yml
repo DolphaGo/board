@@ -10,3 +10,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+board:
+  search:
+    indexing-enabled: false

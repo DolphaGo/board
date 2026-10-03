@@ -101,7 +101,7 @@ API 입력/출력, 데이터 모델, 권한/실패 조건은 변경한 경우에
 - 문서 변경: 로컬 링크와 설명이 실제 코드에 맞는지 확인하고, 새 파일까지 stage한 뒤 `git diff --cached --check`.
 - 실제 연동 변경: 위 검사에 더해 필요한 인프라와 API/브라우저 재현 결과를 기록.
 
-현재 [CI](../.github/workflows/ci.yml)는 Jib 이미지 빌드·게시 작업이다. CI 성공을 위 테스트 전부의 통과로 표현하지 않는다. CI 상태와 직접 실행한 검증을 PR에 각각 적는다.
+현재 [CI](../.github/workflows/ci.yml)는 PR에서 백엔드 테스트·JAR 빌드와 프런트 테스트·lint·타입 검사·빌드를 수행한다. 검증된 `develop` 푸시에서만 Jib 이미지를 게시한다. 브라우저·실제 인프라 검증은 별도로 기록하며, 각 PR의 CI 결과와 직접 실행한 결과를 구분한다.
 
 ## 기록 목록
 
@@ -110,5 +110,7 @@ API 입력/출력, 데이터 모델, 권한/실패 조건은 변경한 경우에
 | [0001. 기능별 PR과 학습 기록](study/0001-development-workflow.md) | 작업 단위, Git/PR 개념, 기록과 검증 기준 | [#9](https://github.com/DolphaGo/board/pull/9) |
 | [0002. 실제 API로 게시글 목록 읽기](study/0002-post-list.md) | H2 학습 데이터, proxy, URL 페이지 상태와 응답 순서 | [#10](https://github.com/DolphaGo/board/pull/10) |
 | [0003. 현재 글을 정확히 읽고 목록으로 돌아가기](study/0003-post-detail.md) | 404 계약, 상태 범위, 비동기 응답과 목록 복귀 | [#11](https://github.com/DolphaGo/board/pull/11) |
+| [0004. 글을 검증하고 저장한 뒤 다시 읽기](study/0004-post-write.md) | DTO 검증, 긴 본문, 제출 상태, 실제 저장·재조회 | [#16](https://github.com/DolphaGo/board/pull/16) |
+| [0005. PR 검증과 이미지 게시 분리](study/0005-pr-ci.md) | CI/CD, 실행 조건, 최신 도구, 러너 통합 검증 | [#17](https://github.com/DolphaGo/board/pull/17) |
 | [0006. 프론트엔드 최신 안정 버전과 테스트 도구 이전](study/0006-latest-frontend.md) | 최신 의존성, Vitest, TypeScript 공식 호환 API, 설치 정책 | [#12](https://github.com/DolphaGo/board/pull/12) |
-| [0007. 최신 안정 백엔드 버전으로 이행하기](study/0007-latest-backend.md) | Java 27, JVM 26 출력, 최신 의존성, BOM 정렬, 실제 H2/API 검증 | PR 준비 |
+| [0007. 최신 안정 백엔드 버전으로 이행하기](study/0007-latest-backend.md) | Java 27, JVM 26 출력, 최신 의존성, BOM 정렬, 실제 H2/API 검증 | [#13](https://github.com/DolphaGo/board/pull/13) |

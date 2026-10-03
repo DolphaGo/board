@@ -19,6 +19,11 @@ export const submitPostEditorForm = async ({
   createPost,
   moveToPostDetail,
 }: SubmitPostEditorFormOptions): Promise<string> => {
+  // 프론트 검증은 빠른 입력 피드백이다. 직접 API 요청도 같은 규칙으로 서버에서 검증한다.
+  if (title.trim().length === 0) return '제목을 입력해 주세요.'
+  if (title.length > 255) return '제목은 255자 이내로 입력해 주세요.'
+  if (content.trim().length === 0) return '본문을 입력해 주세요.'
+
   const payload: CreatePostPayload = {
     title,
     content,
