@@ -1,6 +1,6 @@
 # 0008. 검색어 랭킹의 실제 최근 30분 집계
 
-- 상태: PR 공개, 로컬 검증·독립 리뷰 완료, CI 확인 중
+- 상태: 로컬·독립 리뷰·GitHub 검증 완료, PR 리뷰 대기
 - PR: [#20](https://github.com/DolphaGo/board/pull/20)
 - 이슈: [#19](https://github.com/DolphaGo/board/issues/19)
 - 선행 PR: [#16](https://github.com/DolphaGo/board/pull/16)
@@ -79,3 +79,7 @@
 2. 점수 ZSET과 시각 ZSET은 각각 무엇을 정렬하는가?
 3. 같은 밀리초의 반복 입력을 왜 UUID로 구분하는가?
 4. 원자성과 오류 rollback은 어떻게 다른가?
+
+## GitHub 검증
+
+[실행 37096467308](https://github.com/DolphaGo/board/actions/runs/37096467308)의 head `9056661`에서 Redis 서비스 준비, backend·frontend 성공, 이미지 게시 skipped를 확인했다. 이 결과를 기록한 후속 문서 커밋의 상태는 PR Checks에서 확인한다. 운영 배포는 수행하지 않았다.
