@@ -148,7 +148,7 @@ pnpm --dir board-front/board-front-ui dev:api
 - `dev:api`: fixture를 끄고 `/api`를 Spring 서버로 전달합니다. 기본 주소는 `http://localhost:8080`이며, 포트가 다르면 `BOARD_API_URL=http://localhost:18080 pnpm --dir board-front/board-front-ui dev:api`처럼 지정합니다.
 - `study`: 전용 H2 메모리 DB와 학습용 관리자(1번)·회원(2번), 공지 1개·일반 글 12개·숨김 글 1개를 준비합니다. 서버를 종료하면 이 프로필의 데이터는 사라집니다. 실제 로그인은 아직 연결하지 않았습니다.
 - 검색·랭킹·채팅은 각각 Elasticsearch·Redis·MongoDB가 필요합니다. `dev:api`는 이 API도 실제 서버로 전달하므로 인프라 없이 실행하면 해당 영역은 실패할 수 있습니다.
-- 현재 글쓰기는 검색 색인도 함께 실행합니다. 외부 Elasticsearch 없이 저장하는 학습 흐름은 후속 글쓰기 PR에서 다룹니다.
+- `study`는 검색 색인을 명시적으로 꺼서 외부 Elasticsearch 없이 H2에 글을 저장하고 다시 읽을 수 있습니다. 일반 프로필은 검색 색인을 실행하므로 Elasticsearch가 필요합니다. [글쓰기 학습 기록](docs/study/0004-post-write.md)에 입력 검증과 저장·재조회 과정을 설명했습니다.
 
 설계·개념·검증은 [게시글 목록 학습 기록](docs/study/0002-post-list.md)을 참고하세요. 일반 백엔드와 연결할 때도 `dev:api`를 사용하며, 해당 환경의 DB 데이터와 외부 인프라는 별도로 준비합니다.
 

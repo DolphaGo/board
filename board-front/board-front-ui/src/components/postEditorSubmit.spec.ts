@@ -65,8 +65,8 @@ describe('# Post editor submit', () => {
     ['제목', ' \n\t ', '본문을 입력해 주세요.'],
     ['가'.repeat(256), '본문', '제목은 255자 이내로 입력해 주세요.'],
   ])('rejects invalid input without saving: %s', async (title, content, message) => {
-    const createPost = jest.fn().mockResolvedValue({ id: 1 })
-    const moveToPostDetail = jest.fn()
+    const createPost = vi.fn().mockResolvedValue({ id: 1 })
+    const moveToPostDetail = vi.fn()
     expect(await submitPostEditorForm({ title, content, createPost, moveToPostDetail })).toBe(message)
     expect(createPost).not.toHaveBeenCalled()
     expect(moveToPostDetail).not.toHaveBeenCalled()
@@ -75,8 +75,8 @@ describe('# Post editor submit', () => {
   it('preserves a long Markdown body and accepts a 255-character title', async () => {
     const title = '가'.repeat(255)
     const content = '# 제목\n\n' + '긴 Markdown 본문\n'.repeat(100)
-    const createPost = jest.fn().mockResolvedValue({ id: 79 })
-    await submitPostEditorForm({ title, content, createPost, moveToPostDetail: jest.fn() })
+    const createPost = vi.fn().mockResolvedValue({ id: 79 })
+    await submitPostEditorForm({ title, content, createPost, moveToPostDetail: vi.fn() })
     expect(createPost).toHaveBeenCalledWith({ title, content, imageUrls: [], actorRole: 'user' })
   })
 
