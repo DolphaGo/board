@@ -54,6 +54,10 @@ jobs:
         working-directory: board-front/board-front-ui
         run: pnpm test
 
+      - name: Lint frontend
+        working-directory: board-front/board-front-ui
+        run: pnpm lint
+
       - name: Type-check and build frontend application
         run: ./gradlew :board-front:board-front-api:bootJar
 
